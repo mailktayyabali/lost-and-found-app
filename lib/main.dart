@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'features/home/presentation/home_screen.dart';
+import 'features/splash/presentation/splash_screen.dart';
 
 void main() {
   runApp(const LostAndFoundApp());
@@ -14,7 +14,7 @@ class LostAndFoundApp extends StatelessWidget {
     return MaterialApp(
       title: 'Lost and Found',
       theme: AppTheme.lightTheme,
-      home: const HomeScreen(),
+      home: const SplashScreen(),
       debugShowCheckedModeBanner: false,
     );
   }
