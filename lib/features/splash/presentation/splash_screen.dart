@@ -138,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen> {
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w800,
-        color: AppColors.primaryBlue.withOpacity(0.85),
+        color: AppColors.primaryTeal.withOpacity(0.85),
         letterSpacing: 1.8,
       ),
     );
@@ -151,8 +151,8 @@ class _SplashScreenState extends State<SplashScreen> {
         borderRadius: BorderRadius.circular(4),
         child: LinearProgressIndicator(
           value: null, // Indeterminate without animation
-          backgroundColor: AppColors.primaryBlue.withOpacity(0.12),
-          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryBlue),
+          backgroundColor: AppColors.primaryTeal.withOpacity(0.12),
+          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryTeal),
           minHeight: 4,
         ),
       ),
