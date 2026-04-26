@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../messages/presentation/messages_screen.dart';
+import '../home_screen.dart';
 
 class HomeBottomNavBar extends StatelessWidget {
-  const HomeBottomNavBar({super.key});
+  final int currentIndex;
+
+  const HomeBottomNavBar({super.key, this.currentIndex = 0});
+
 
   @override
   Widget build(BuildContext context) {
@@ -20,6 +25,28 @@ class HomeBottomNavBar extends StatelessWidget {
       child: SafeArea(
         child: BottomNavigationBar(
           type: BottomNavigationBarType.fixed,
+          currentIndex: currentIndex,
+          onTap: (index) {
+            if (index == 0 && currentIndex != 0) {
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation1, animation2) => const HomeScreen(),
+                  transitionDuration: Duration.zero,
+                  reverseTransitionDuration: Duration.zero,
+                ),
+              );
+            } else if (index == 3 && currentIndex != 3) {
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation1, animation2) => const MessagesScreen(),
+                  transitionDuration: Duration.zero,
+                  reverseTransitionDuration: Duration.zero,
+                ),
+              );
+            }
+          },
           backgroundColor: Colors.transparent,
           elevation: 0,
           selectedItemColor: AppColors.primaryTeal,
