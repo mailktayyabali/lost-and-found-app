@@ -20,8 +20,8 @@ class _SplashScreenState extends State<SplashScreen> {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (_, __, ___) => const LoginScreen(),
-            transitionsBuilder: (_, animation, __, child) {
+            pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },
             transitionDuration: const Duration(milliseconds: 800),
@@ -67,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -138,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen> {
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w800,
-        color: AppColors.primaryTeal.withOpacity(0.85),
+        color: AppColors.primaryTeal.withValues(alpha: 0.85),
         letterSpacing: 1.8,
       ),
     );
@@ -151,7 +151,7 @@ class _SplashScreenState extends State<SplashScreen> {
         borderRadius: BorderRadius.circular(4),
         child: LinearProgressIndicator(
           value: null, // Indeterminate without animation
-          backgroundColor: AppColors.primaryTeal.withOpacity(0.12),
+          backgroundColor: AppColors.primaryTeal.withValues(alpha: 0.12),
           valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryTeal),
           minHeight: 4,
         ),

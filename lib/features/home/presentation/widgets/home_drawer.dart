@@ -61,7 +61,7 @@ class HomeDrawer extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.primaryTeal.withOpacity(0.85),
+                            color: AppColors.primaryTeal.withValues(alpha: 0.85),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -130,12 +130,12 @@ class HomeDrawer extends StatelessWidget {
           color: isSelected ? Colors.white : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: isSelected 
-              ? Border.all(color: AppColors.fieldBorder.withOpacity(0.6)) 
+              ? Border.all(color: AppColors.fieldBorder.withValues(alpha: 0.6)) 
               : Border.all(color: Colors.transparent),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
+                    color: Colors.black.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   )
@@ -145,12 +145,12 @@ class HomeDrawer extends StatelessWidget {
         child: ListTile(
           leading: Icon(
             icon,
-            color: isSelected ? AppColors.primaryTeal : AppColors.textLight.withOpacity(0.8),
+            color: isSelected ? AppColors.primaryTeal : AppColors.textLight.withValues(alpha: 0.8),
           ),
           title: Text(
             label,
             style: TextStyle(
-              color: isSelected ? AppColors.primaryTeal : AppColors.textLight.withOpacity(0.8),
+              color: isSelected ? AppColors.primaryTeal : AppColors.textLight.withValues(alpha: 0.8),
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               fontSize: 15,
             ),

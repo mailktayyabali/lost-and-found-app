@@ -57,7 +57,7 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -154,7 +154,7 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -223,7 +223,7 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.02),
+                    color: Colors.black.withValues(alpha: 0.02),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -246,7 +246,7 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
                     height: 120,
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0).withOpacity(0.6),
+                      color: const Color(0xFFE2E8F0).withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: const TextField(

@@ -16,7 +16,7 @@ class HomeBottomNavBar extends StatelessWidget {
         color: AppColors.surfaceWhite,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryTeal.withOpacity(0.1),
+            color: AppColors.primaryTeal.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -50,7 +50,7 @@ class HomeBottomNavBar extends StatelessWidget {
           backgroundColor: Colors.transparent,
           elevation: 0,
           selectedItemColor: AppColors.primaryTeal,
-          unselectedItemColor: AppColors.textLight.withOpacity(0.5),
+          unselectedItemColor: AppColors.textLight.withValues(alpha: 0.5),
           showSelectedLabels: true,
           showUnselectedLabels: true,
           selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),

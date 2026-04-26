@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../notifications/presentation/notifications_screen.dart';
 
 class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
   const HomeAppBar({super.key});
@@ -34,7 +35,11 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           children: [
             IconButton(
               icon: const Icon(Icons.notifications_outlined, color: AppColors.textDark),
-              onPressed: () {},
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                );
+              },
             ),
             Positioned(
               right: 12,

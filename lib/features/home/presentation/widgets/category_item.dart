@@ -34,7 +34,7 @@ class CategoryItem extends StatelessWidget {
               boxShadow: [
                 if (isSelected)
                   BoxShadow(
-                    color: AppColors.primaryTeal.withOpacity(0.3),
+                    color: AppColors.primaryTeal.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )

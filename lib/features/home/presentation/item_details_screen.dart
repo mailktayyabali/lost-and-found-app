@@ -72,7 +72,7 @@ class ItemDetailsScreen extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.2),
+                              color: Colors.black.withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Row(
@@ -489,7 +489,7 @@ class ItemDetailsScreen extends StatelessWidget {
       width: isActive ? 8 : 6,
       height: isActive ? 8 : 6,
       decoration: BoxDecoration(
-        color: isActive ? Colors.white : Colors.white.withOpacity(0.5),
+        color: isActive ? Colors.white : Colors.white.withValues(alpha: 0.5),
         shape: BoxShape.circle,
       ),
     );

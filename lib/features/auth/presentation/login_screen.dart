@@ -164,12 +164,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     setState(() => _isLoading = true);
                     // Mock network delay
                     await Future.delayed(const Duration(seconds: 1));
-                    if (mounted) {
-                      setState(() => _isLoading = false);
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(builder: (_) => const HomeScreen()),
-                      );
-                    }
+                    if (!context.mounted) return;
+                    setState(() => _isLoading = false);
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (_) => const HomeScreen()),
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primaryTeal,

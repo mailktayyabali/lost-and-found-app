@@ -5,6 +5,7 @@ class AppColors {
   static const Color primaryTeal = Color(0xFF07605D);
   static const Color tagFoundGreen = Color(0xFF34C759); // bright green
   static const Color tagLostRed = Color(0xFFFF3B30); // red
+  static const Color buttonBlue = Color(0xFF2D68FE); // bright blue for badges/icons
 
   // Text colors
   static const Color textDark = Color(0xFF1E293B);
