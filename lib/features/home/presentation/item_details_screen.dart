@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'widgets/home_bottom_nav_bar.dart';
+import 'leave_review_screen.dart';
+import '../../messages/presentation/chat_screen.dart';
 
 class ItemDetailsScreen extends StatelessWidget {
   const ItemDetailsScreen({super.key});
@@ -48,14 +50,16 @@ class ItemDetailsScreen extends StatelessWidget {
                     width: double.infinity,
                     height: 300,
                     decoration: const BoxDecoration(
-                      color: Color(0xFFF1F5F9), // Light Grey background behind image
+                      color: Color(
+                        0xFFF1F5F9,
+                      ), // Light Grey background behind image
                     ),
                     child: Stack(
                       alignment: Alignment.center,
                       children: [
                         // Main Image overlaying grey background
                         Image.network(
-                          'https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80',
+                          'https://m.media-amazon.com/images/I/61k1jYk5Q-L._AC_UY1000_.jpg',
                           fit: BoxFit.contain,
                           height: 200,
                         ),
@@ -63,7 +67,10 @@ class ItemDetailsScreen extends StatelessWidget {
                         Positioned(
                           bottom: 16,
                           child: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
                             decoration: BoxDecoration(
                               color: Colors.black.withOpacity(0.2),
                               borderRadius: BorderRadius.circular(12),
@@ -91,7 +98,10 @@ class ItemDetailsScreen extends StatelessWidget {
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: const Color(0xFFFFE4E6),
                                 borderRadius: BorderRadius.circular(12),
@@ -192,7 +202,8 @@ class ItemDetailsScreen extends StatelessWidget {
                               'Get Directions',
                               style: TextStyle(
                                 fontSize: 13,
-                                color: AppColors.primaryTeal, // Adhering to strict primaryTeal rule
+                                color: AppColors
+                                    .primaryTeal, // Adhering to strict primaryTeal rule
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -207,21 +218,34 @@ class ItemDetailsScreen extends StatelessWidget {
                             color: Colors.white,
                             border: Border.all(color: const Color(0xFFE2E8F0)),
                             image: const DecorationImage(
-                              image: NetworkImage('https://maps.googleapis.com/maps/api/staticmap?center=Dolores+Park,San+Francisco&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7CDolores+Park,San+Francisco&key=YOUR_API_KEY_MOCK'), // Fake map mockup
+                              image: NetworkImage(
+                                'https://maps.googleapis.com/maps/api/staticmap?center=Dolores+Park,San+Francisco&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7CDolores+Park,San+Francisco&key=YOUR_API_KEY_MOCK',
+                              ), // Fake map mockup
                             ),
                           ),
                           child: const Center(
-                            child: Icon(Icons.location_on, color: Color(0xFFE11D48), size: 48), // Large red pin fallback
+                            child: Icon(
+                              Icons.location_on,
+                              color: Color(0xFFE11D48),
+                              size: 48,
+                            ), // Large red pin fallback
                           ),
                         ),
                         const SizedBox(height: 8),
                         Row(
                           children: const [
-                            Icon(Icons.navigation_outlined, size: 14, color: Color(0xFF64748B)),
+                            Icon(
+                              Icons.navigation_outlined,
+                              size: 14,
+                              color: Color(0xFF64748B),
+                            ),
                             SizedBox(width: 6),
                             Text(
                               'Near Dolores Park, San Francisco',
-                              style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+                              style: TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 13,
+                              ),
                             ),
                           ],
                         ),
@@ -238,7 +262,9 @@ class ItemDetailsScreen extends StatelessWidget {
                             children: [
                               CircleAvatar(
                                 radius: 24,
-                                backgroundImage: const NetworkImage('https://randomuser.me/api/portraits/men/32.jpg'),
+                                backgroundImage: const NetworkImage(
+                                  'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
+                                ),
                                 backgroundColor: Colors.white,
                               ),
                               const SizedBox(width: 16),
@@ -265,7 +291,11 @@ class ItemDetailsScreen extends StatelessWidget {
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.star, color: Color(0xFFF59E0B), size: 16), // Yellow star
+                              const Icon(
+                                Icons.star,
+                                color: Color(0xFFF59E0B),
+                                size: 16,
+                              ), // Yellow star
                               const SizedBox(width: 4),
                               const Text(
                                 '4.9',
@@ -286,13 +316,20 @@ class ItemDetailsScreen extends StatelessWidget {
                           height: 52,
                           child: ElevatedButton.icon(
                             onPressed: () {},
-                            icon: const Icon(Icons.verified, color: Colors.white),
+                            icon: const Icon(
+                              Icons.verified,
+                              color: Colors.white,
+                            ),
                             label: const Text(
                               'Claim This Item',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryTeal, // Strict theme color
+                              backgroundColor:
+                                  AppColors.primaryTeal, // Strict theme color
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -308,14 +345,35 @@ class ItemDetailsScreen extends StatelessWidget {
                           width: double.infinity,
                           height: 52,
                           child: OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: Icon(Icons.star, color: AppColors.primaryTeal),
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const LeaveReviewScreen(
+                                    userName: 'Marcus Chen',
+                                    userAvatarUrl:
+                                        'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: Icon(
+                              Icons.star,
+                              color: AppColors.primaryTeal,
+                            ),
                             label: Text(
                               'Rate Experience',
-                              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: AppColors.primaryTeal),
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primaryTeal,
+                              ),
                             ),
                             style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: AppColors.primaryTeal, width: 1.5),
+                              side: BorderSide(
+                                color: AppColors.primaryTeal,
+                                width: 1.5,
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -326,7 +384,10 @@ class ItemDetailsScreen extends StatelessWidget {
                         const Center(
                           child: Text(
                             'Let others know about your interaction with Marcus',
-                            style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF94A3B8),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -337,7 +398,7 @@ class ItemDetailsScreen extends StatelessWidget {
               ),
             ),
           ),
-          
+
           // Bottom Pinned Action Bar
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -354,11 +415,17 @@ class ItemDetailsScreen extends StatelessWidget {
                     height: 48,
                     width: 48,
                     decoration: BoxDecoration(
-                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                      border: Border.all(
+                        color: const Color(0xFFE2E8F0),
+                        width: 1.5,
+                      ),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: IconButton(
-                      icon: const Icon(Icons.outlined_flag, color: Color(0xFF475569)),
+                      icon: const Icon(
+                        Icons.outlined_flag,
+                        color: Color(0xFF475569),
+                      ),
                       onPressed: () {},
                     ),
                   ),
@@ -367,14 +434,34 @@ class ItemDetailsScreen extends StatelessWidget {
                     child: SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: const Icon(Icons.chat_bubble_outline, color: Colors.white, size: 18),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const ChatScreen(
+                                userName: 'Marcus Chen',
+                                avatarUrl:
+                                    'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
+                                isOnline: true,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.chat_bubble_outline,
+                          color: Colors.white,
+                          size: 18,
+                        ),
                         label: const Text(
                           'Contact Marcus',
-                          style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryTeal, // Respecting strict format rule!
+                          backgroundColor: AppColors
+                              .primaryTeal, // Respecting strict format rule!
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -390,7 +477,9 @@ class ItemDetailsScreen extends StatelessWidget {
           ),
         ],
       ),
-      bottomNavigationBar: const HomeBottomNavBar(currentIndex: 0), // Base bottom nav shown in mock
+      bottomNavigationBar: const HomeBottomNavBar(
+        currentIndex: 0,
+      ), // Base bottom nav shown in mock
     );
   }
 
