@@ -83,9 +83,8 @@ class HomeDrawer extends StatelessWidget {
               isSelected: true,
             ),
             _buildMenuItem(icon: Icons.bookmark_border, label: 'Saved Items'),
-            _buildMenuItem(icon: Icons.category_outlined, label: 'Categories'),
-            _buildMenuItem(icon: Icons.settings_outlined, label: 'Settings'),
-            _buildMenuItem(icon: Icons.help_outline, label: 'Help'),
+            _buildMenuItem(icon: Icons.notifications_active_outlined, label: 'Create Alerts'),
+            _buildMenuItem(icon: Icons.dark_mode_outlined, label: 'Dark Mode'),
             const Spacer(),
             // Sign Out Button
             Padding(
