@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../reports/presentation/my_posts_screen.dart';
 
 class HomeDrawer extends StatelessWidget {
   const HomeDrawer({super.key});
@@ -78,13 +79,15 @@ class HomeDrawer extends StatelessWidget {
             const SizedBox(height: 24),
             // Menu Items
             _buildMenuItem(
+              context: context,
               icon: Icons.assignment_outlined,
               label: 'My Reports',
               isSelected: true,
             ),
-            _buildMenuItem(icon: Icons.bookmark_border, label: 'Saved Items'),
-            _buildMenuItem(icon: Icons.notifications_active_outlined, label: 'Create Alerts'),
-            _buildMenuItem(icon: Icons.dark_mode_outlined, label: 'Dark Mode'),
+            _buildMenuItem(context: context, icon: Icons.bookmark_border, label: 'Saved Items'),
+            _buildMenuItem(context: context, icon: Icons.category_outlined, label: 'Categories'),
+            _buildMenuItem(context: context, icon: Icons.settings_outlined, label: 'Settings'),
+            _buildMenuItem(context: context, icon: Icons.help_outline, label: 'Help'),
             const Spacer(),
             // Sign Out Button
             Padding(
@@ -119,6 +122,7 @@ class HomeDrawer extends StatelessWidget {
   }
 
   Widget _buildMenuItem({
+    required BuildContext context,
     required IconData icon,
     required String label,
     bool isSelected = false,
@@ -155,7 +159,14 @@ class HomeDrawer extends StatelessWidget {
               fontSize: 15,
             ),
           ),
-          onTap: () {},
+          onTap: () {
+            if (label == 'My Reports') {
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const MyPostsScreen()),
+              );
+            }
+          },
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
         ),
