@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../reports/presentation/my_posts_screen.dart';
 import '../saved_items_screen.dart';
+import '../../../alerts/presentation/create_alert_screen.dart';
 
 class HomeDrawer extends StatelessWidget {
   const HomeDrawer({super.key});
@@ -173,6 +174,11 @@ class HomeDrawer extends StatelessWidget {
               Navigator.of(context).pop(); // Close drawer
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const SavedItemsScreen()),
+              );
+            } else if (label == 'Create Alert') {
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const CreateAlertScreen()),
               );
             }
           },
