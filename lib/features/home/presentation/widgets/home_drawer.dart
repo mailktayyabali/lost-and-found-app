@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../reports/presentation/my_posts_screen.dart';
+import '../saved_items_screen.dart';
 
 class HomeDrawer extends StatelessWidget {
   const HomeDrawer({super.key});
@@ -85,9 +86,12 @@ class HomeDrawer extends StatelessWidget {
               isSelected: true,
             ),
             _buildMenuItem(context: context, icon: Icons.bookmark_border, label: 'Saved Items'),
-            _buildMenuItem(context: context, icon: Icons.category_outlined, label: 'Categories'),
-            _buildMenuItem(context: context, icon: Icons.settings_outlined, label: 'Settings'),
-            _buildMenuItem(context: context, icon: Icons.help_outline, label: 'Help'),
+            _buildMenuItem(
+              context: context,
+              icon: Icons.notifications_none_outlined,
+              label: 'Create Alert',
+            ),
+            _buildDarkModeToggle(context: context),
             const Spacer(),
             // Sign Out Button
             Padding(
@@ -165,8 +169,48 @@ class HomeDrawer extends StatelessWidget {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const MyPostsScreen()),
               );
+            } else if (label == 'Saved Items') {
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const SavedItemsScreen()),
+              );
             }
           },
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDarkModeToggle({
+    required BuildContext context,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: ListTile(
+          leading: Icon(
+            Icons.dark_mode_outlined,
+            color: AppColors.textLight.withValues(alpha: 0.8),
+          ),
+          title: Text(
+            'Dark Mode',
+            style: TextStyle(
+              color: AppColors.textLight.withValues(alpha: 0.8),
+              fontWeight: FontWeight.w500,
+              fontSize: 15,
+            ),
+          ),
+          trailing: Switch(
+            value: false,
+            onChanged: (value) {},
+            activeColor: AppColors.primaryTeal,
+          ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),
         ),

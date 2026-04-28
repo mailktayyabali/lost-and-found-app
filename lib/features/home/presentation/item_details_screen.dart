@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../shared/models/item_model.dart';
+import '../../../shared/services/saved_items_service.dart';
 import 'widgets/home_bottom_nav_bar.dart';
 import 'leave_review_screen.dart';
 import '../../messages/presentation/chat_screen.dart';
 
 class ItemDetailsScreen extends StatelessWidget {
-  const ItemDetailsScreen({super.key});
+  final Item item;
+  const ItemDetailsScreen({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
@@ -32,6 +35,21 @@ class ItemDetailsScreen extends StatelessWidget {
           ),
         ),
         actions: [
+          ListenableBuilder(
+            listenable: SavedItemsService(),
+            builder: (context, _) {
+              final isSaved = SavedItemsService().isSaved(item.id);
+              return IconButton(
+                icon: Icon(
+                  isSaved ? Icons.bookmark : Icons.bookmark_border,
+                  color: isSaved ? AppColors.primaryTeal : Colors.black87,
+                ),
+                onPressed: () {
+                  SavedItemsService().toggleSave(item);
+                },
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.share, color: Colors.black87),
             onPressed: () {},
@@ -59,7 +77,7 @@ class ItemDetailsScreen extends StatelessWidget {
                       children: [
                         // Main Image overlaying grey background
                         Image.network(
-                          'https://m.media-amazon.com/images/I/61k1jYk5Q-L._AC_UY1000_.jpg',
+                          item.imageUrl,
                           fit: BoxFit.contain,
                           height: 200,
                         ),
@@ -119,7 +137,7 @@ class ItemDetailsScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 6),
                                   const Text(
-                                    'LOST',
+                                    'STATUS',
                                     style: TextStyle(
                                       color: Color(0xFFE11D48),
                                       fontSize: 10,
@@ -131,9 +149,9 @@ class ItemDetailsScreen extends StatelessWidget {
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Text(
-                              'Reported 2 hours ago',
-                              style: TextStyle(
+                            Text(
+                              'Reported ${item.timeAgo}',
+                              style: const TextStyle(
                                 color: Color(0xFF64748B),
                                 fontSize: 12,
                               ),
@@ -143,9 +161,9 @@ class ItemDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 16),
 
                         // Title
-                        const Text(
-                          'Blue Leather Bellroy Wallet',
-                          style: TextStyle(
+                        Text(
+                          item.title,
+                          style: const TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
                             color: Color(0xFF0F172A),
@@ -154,9 +172,9 @@ class ItemDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 12),
 
                         // Description
-                        const Text(
-                          "I lost my navy blue leather wallet yesterday around 3 PM. It contains my ID, a transit card, and some cash. There's a small scratch on the bottom right corner of the front face. It's very important to me as it was a gift.",
-                          style: TextStyle(
+                        Text(
+                          item.description,
+                          style: const TextStyle(
                             fontSize: 14,
                             color: Color(0xFF334155),
                             height: 1.5,
@@ -179,7 +197,7 @@ class ItemDetailsScreen extends StatelessWidget {
                               child: _buildInfoCard(
                                 icon: Icons.category,
                                 label: 'CATEGORY',
-                                value: 'Personal Effects',
+                                value: item.category,
                               ),
                             ),
                           ],
@@ -233,16 +251,16 @@ class ItemDetailsScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 8),
                         Row(
-                          children: const [
-                            Icon(
+                          children: [
+                            const Icon(
                               Icons.navigation_outlined,
                               size: 14,
                               color: Color(0xFF64748B),
                             ),
-                            SizedBox(width: 6),
+                            const SizedBox(width: 6),
                             Text(
-                              'Near Dolores Park, San Francisco',
-                              style: TextStyle(
+                              'Near ${item.location}',
+                              style: const TextStyle(
                                 color: Color(0xFF64748B),
                                 fontSize: 13,
                               ),

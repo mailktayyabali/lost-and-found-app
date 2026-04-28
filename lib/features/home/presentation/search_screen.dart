@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../shared/models/item_model.dart';
+import '../../../shared/services/saved_items_service.dart';
+import 'item_details_screen.dart';
 import 'widgets/home_bottom_nav_bar.dart';
 
 class SearchScreen extends StatefulWidget {
@@ -272,26 +275,50 @@ class _SearchScreenState extends State<SearchScreen> {
             const SizedBox(height: 16),
 
             // List of Items
-            _buildResultItem(
-              title: 'Gold Rolex Watch',
-              isLost: true,
-              timeAgo: '2h ago',
-              location: 'Central Park, NY',
-              imageUrl: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=200',
-            ),
-            _buildResultItem(
-              title: 'Friendly Golden Retriever',
-              isLost: false,
-              timeAgo: '5h ago',
-              location: 'Brooklyn, NY',
-              imageUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=200',
-            ),
-            _buildResultItem(
-              title: 'Brown Leather Wallet',
-              isLost: true,
-              timeAgo: '1d ago',
-              location: 'Grand Central Terminal',
-              imageUrl: 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200',
+            ListenableBuilder(
+              listenable: SavedItemsService(),
+              builder: (context, _) {
+                return Column(
+                  children: [
+                    _buildResultItem(
+                      item: Item(
+                        id: '1',
+                        title: 'Gold Rolex Watch',
+                        isLost: true,
+                        timeAgo: '2h ago',
+                        location: 'Central Park, NY',
+                        description: 'Found a gold rolex watch near the fountain.',
+                        imageUrl: 'https://images.unsplash.com/photo-1523170335258-f5ed11844a49?auto=format&fit=crop&q=80&w=200',
+                        category: 'Electronics',
+                      ),
+                    ),
+                    _buildResultItem(
+                      item: Item(
+                        id: '2',
+                        title: 'Friendly Golden Retriever',
+                        isLost: false,
+                        timeAgo: '5h ago',
+                        location: 'Brooklyn, NY',
+                        description: 'Found a friendly golden retriever near the park.',
+                        imageUrl: 'https://images.unsplash.com/photo-1552053831-71594a27632d?auto=format&fit=crop&q=80&w=200',
+                        category: 'Pets',
+                      ),
+                    ),
+                    _buildResultItem(
+                      item: Item(
+                        id: '3',
+                        title: 'Brown Leather Wallet',
+                        isLost: true,
+                        timeAgo: '1d ago',
+                        location: 'Grand Central Terminal',
+                        description: 'Lost a brown leather wallet near the station.',
+                        imageUrl: 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200',
+                        category: 'Wallets',
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
             const SizedBox(height: 24),
           ],
@@ -343,31 +370,37 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildResultItem({
-    required String title,
-    required bool isLost,
-    required String timeAgo,
-    required String location,
-    required String imageUrl,
+    required Item item,
   }) {
-    final badgeColor = isLost ? AppColors.tagLostRed.withValues(alpha: 0.15) : AppColors.tagFoundGreen.withValues(alpha: 0.15);
-    final badgeTextColor = isLost ? AppColors.tagLostRed : AppColors.tagFoundGreen;
-    final badgeText = isLost ? 'LOST' : 'FOUND';
+    final isSaved = SavedItemsService().isSaved(item.id);
+    final badgeColor = item.isLost ? AppColors.tagLostRed.withValues(alpha: 0.15) : AppColors.tagFoundGreen.withValues(alpha: 0.15);
+    final badgeTextColor = item.isLost ? AppColors.tagLostRed : AppColors.tagFoundGreen;
+    final badgeText = item.isLost ? 'LOST' : 'FOUND';
 
-    return Container(
-      margin: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => ItemDetailsScreen(item: item),
+          ),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceWhite,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Image
           ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: Image.network(
-              imageUrl,
+              item.imageUrl,
               width: 80,
               height: 80,
               fit: BoxFit.cover,
@@ -405,7 +438,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       ),
                     ),
                     Text(
-                      timeAgo,
+                      item.timeAgo,
                       style: const TextStyle(
                         color: AppColors.textLight,
                         fontSize: 11,
@@ -416,7 +449,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  title,
+                  item.title,
                   style: const TextStyle(
                     color: AppColors.textDark,
                     fontSize: 14,
@@ -432,7 +465,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        location,
+                        item.location,
                         style: const TextStyle(
                           color: AppColors.textLight,
                           fontSize: 12,
@@ -448,20 +481,26 @@ class _SearchScreenState extends State<SearchScreen> {
           ),
           const SizedBox(width: 12),
           // Bookmark Icon
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              shape: BoxShape.circle,
-            ),
-            child: const Icon(
-              Icons.bookmark_border,
-              color: AppColors.textLight,
-              size: 20,
+          GestureDetector(
+            onTap: () {
+              SavedItemsService().toggleSave(item);
+            },
+            child: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isSaved ? Icons.bookmark : Icons.bookmark_border,
+                color: isSaved ? AppColors.primaryTeal : AppColors.textLight,
+                size: 20,
+              ),
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
