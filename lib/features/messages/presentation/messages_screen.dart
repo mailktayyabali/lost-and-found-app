@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
+import '../../home/presentation/home_screen.dart';
 import 'chat_screen.dart';
 
 class MessagesScreen extends StatelessWidget {
@@ -17,9 +18,14 @@ class MessagesScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
           onPressed: () {
-            if (Navigator.of(context).canPop()) {
-              Navigator.of(context).pop();
-            }
+            Navigator.pushReplacement(
+              context,
+              PageRouteBuilder(
+                pageBuilder: (context, animation1, animation2) => const HomeScreen(),
+                transitionDuration: Duration.zero,
+                reverseTransitionDuration: Duration.zero,
+              ),
+            );
           },
         ),
         title: const Text(

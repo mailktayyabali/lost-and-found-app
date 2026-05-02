@@ -215,7 +215,7 @@ class HomeDrawer extends StatelessWidget {
           trailing: Switch(
             value: false,
             onChanged: (value) {},
-            activeColor: AppColors.primaryTeal,
+            activeThumbColor: AppColors.primaryTeal,
           ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16),

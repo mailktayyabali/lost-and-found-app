@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../item_details_screen.dart';
 import '../../../../shared/models/item_model.dart';
-import '../../../../shared/services/saved_items_service.dart';
 import 'section_header.dart';
 import 'item_card.dart';
 

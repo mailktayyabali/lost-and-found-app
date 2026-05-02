@@ -3,6 +3,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../messages/presentation/messages_screen.dart';
 import '../home_screen.dart';
 import '../search_screen.dart';
+import '../../../reports/presentation/create_report_screen.dart';
 
 class HomeBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -44,6 +45,13 @@ class HomeBottomNavBar extends StatelessWidget {
                   pageBuilder: (context, animation1, animation2) => const SearchScreen(),
                   transitionDuration: Duration.zero,
                   reverseTransitionDuration: Duration.zero,
+                ),
+              );
+            } else if (index == 2 && currentIndex != 2) {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const CreateReportScreen(),
                 ),
               );
             } else if (index == 3 && currentIndex != 3) {
