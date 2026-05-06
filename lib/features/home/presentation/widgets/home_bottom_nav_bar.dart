@@ -15,10 +15,10 @@ class HomeBottomNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
+        color: context.colors.surfaceWhite,
         boxShadow: [
           BoxShadow(
-            color: AppColors.primaryTeal.withValues(alpha: 0.1),
+            color: context.colors.primaryTeal.withValues(alpha: 0.1),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
@@ -67,12 +67,12 @@ class HomeBottomNavBar extends StatelessWidget {
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
-          selectedItemColor: AppColors.primaryTeal,
-          unselectedItemColor: AppColors.textLight.withValues(alpha: 0.5),
+          selectedItemColor: context.colors.primaryTeal,
+          unselectedItemColor: context.colors.textLight.withValues(alpha: 0.5),
           showSelectedLabels: true,
           showUnselectedLabels: true,
-          selectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-          unselectedLabelStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+          selectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+          unselectedLabelStyle: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, letterSpacing: 0.5),
           items: [
             const BottomNavigationBarItem(
               icon: Padding(
@@ -90,13 +90,13 @@ class HomeBottomNavBar extends StatelessWidget {
             ),
             BottomNavigationBarItem(
               icon: Container(
-                margin: const EdgeInsets.only(bottom: 4),
-                padding: const EdgeInsets.all(8),
-                decoration: const BoxDecoration(
-                  color: AppColors.primaryTeal,
+                margin: EdgeInsets.only(bottom: 4),
+                padding: EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: context.colors.primaryTeal,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.add, color: Colors.white, size: 20),
+                child: Icon(Icons.add, color: Colors.white, size: 20),
               ),
               label: 'REPORT',
             ),

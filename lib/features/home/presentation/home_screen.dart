@@ -14,24 +14,24 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: const HomeAppBar(),
       drawer: const HomeDrawer(),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             const SearchField(),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             SectionHeader(
               title: 'Categories',
               actionText: 'See All',
               onActionTap: () {},
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             const CategoryList(),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             const RecentItemsList(),
           ],
         ),

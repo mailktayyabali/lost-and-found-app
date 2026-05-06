@@ -22,7 +22,7 @@ class ChatNotificationItem extends StatelessWidget {
     return Container(
       // Ensure the blue indicator is aligned properly on the left edge if unread
       color: Colors.transparent,
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: EdgeInsets.symmetric(vertical: 12),
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -33,8 +33,8 @@ class ChatNotificationItem extends StatelessWidget {
               bottom: 8,
               child: Container(
                 width: 4,
-                decoration: const BoxDecoration(
-                  color: AppColors.buttonBlue, // Bright blue for unread indicator
+                decoration: BoxDecoration(
+                  color: context.colors.buttonBlue, // Bright blue for unread indicator
                   borderRadius: BorderRadius.only(
                     topRight: Radius.circular(4),
                     bottomRight: Radius.circular(4),
@@ -43,16 +43,16 @@ class ChatNotificationItem extends StatelessWidget {
               ),
             ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(horizontal: 24),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 CircleAvatar(
                   radius: 24,
                   backgroundImage: NetworkImage(avatarUrl),
-                  backgroundColor: AppColors.iconBackground,
+                  backgroundColor: context.colors.iconBackground,
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -66,29 +66,29 @@ class ChatNotificationItem extends StatelessWidget {
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: isUnread ? FontWeight.bold : FontWeight.w600,
-                                color: AppColors.textDark,
+                                color: context.colors.textDark,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text(
                             timeAgo,
                             style: TextStyle(
                               fontSize: 12,
-                              color: isUnread ? AppColors.buttonBlue : AppColors.textLight,
+                              color: isUnread ? context.colors.buttonBlue : context.colors.textLight,
                               fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         subtitle,
                         style: TextStyle(
                           fontSize: 14,
-                          color: isUnread ? AppColors.textDark : AppColors.textLight,
+                          color: isUnread ? context.colors.textDark : context.colors.textLight,
                           height: 1.4,
                         ),
                       ),

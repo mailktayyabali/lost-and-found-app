@@ -14,17 +14,17 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: Builder(
         builder: (context) {
           return IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.textDark),
+            icon: Icon(Icons.menu, color: context.colors.textDark),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
           );
         }
       ),
-      title: const Text(
+      title: Text(
         'Lost & Found',
         style: TextStyle(
-          color: AppColors.textDark,
+          color: context.colors.textDark,
           fontWeight: FontWeight.bold,
           fontSize: 18,
         ),
@@ -34,7 +34,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
           alignment: Alignment.center,
           children: [
             IconButton(
-              icon: const Icon(Icons.notifications_outlined, color: AppColors.textDark),
+              icon: Icon(Icons.notifications_outlined, color: context.colors.textDark),
               onPressed: () {
                 Navigator.of(context).push(
                   MaterialPageRoute(builder: (context) => const NotificationsScreen()),
@@ -47,7 +47,7 @@ class HomeAppBar extends StatelessWidget implements PreferredSizeWidget {
               child: Container(
                 width: 8,
                 height: 8,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: Colors.red,
                   shape: BoxShape.circle,
                 ),

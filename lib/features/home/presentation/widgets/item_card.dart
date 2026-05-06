@@ -26,7 +26,7 @@ class ItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final bool isFound = status == ItemStatus.found;
-    final Color badgeColor = isFound ? AppColors.tagFoundGreen : AppColors.tagLostRed;
+    final Color badgeColor = isFound ? context.colors.tagFoundGreen : context.colors.tagLostRed;
     final String badgeText = isFound ? 'FOUND' : 'LOST';
     final String actionText = isFound ? 'Claim Item' : 'I Found This';
 
@@ -34,21 +34,21 @@ class ItemCard extends StatelessWidget {
     // we use a colored container as a placeholder if imageUrl is empty.
     Widget imageWidget = imageUrl.isNotEmpty
         ? Image.network(imageUrl, height: 160, width: double.infinity, fit: BoxFit.cover)
-        : Container(height: 160, width: double.infinity, color: AppColors.iconBackground);
+        : Container(height: 160, width: double.infinity, color: context.colors.iconBackground);
 
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20.0),
+      margin: EdgeInsets.symmetric(horizontal: 20.0),
       decoration: BoxDecoration(
-        color: AppColors.surfaceWhite,
+        color: context.colors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.fieldBorder),
+        border: Border.all(color: context.colors.fieldBorder),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Image and Badge
           ClipRRect(
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
             child: Stack(
               children: [
                 imageWidget,
@@ -56,14 +56,14 @@ class ItemCard extends StatelessWidget {
                   top: 12,
                   right: 12,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: badgeColor,
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       badgeText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
@@ -77,7 +77,7 @@ class ItemCard extends StatelessWidget {
           ),
           // Details
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -87,10 +87,10 @@ class ItemCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
+                          color: context.colors.textDark,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -98,25 +98,25 @@ class ItemCard extends StatelessWidget {
                     ),
                     Text(
                       timeAgo,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
-                        color: AppColors.textAccent,
+                        color: context.colors.textAccent,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, size: 14, color: AppColors.textLight),
-                    const SizedBox(width: 4),
+                    Icon(Icons.location_on, size: 14, color: context.colors.textLight),
+                    SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         location,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.textLight,
+                          color: context.colors.textLight,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -124,7 +124,7 @@ class ItemCard extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: 16),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -132,16 +132,16 @@ class ItemCard extends StatelessWidget {
                       children: [
                         CircleAvatar(
                           radius: 12,
-                          backgroundColor: AppColors.iconBackground,
-                          child: const Icon(Icons.person, size: 16, color: AppColors.primaryTeal),
+                          backgroundColor: context.colors.iconBackground,
+                          child: Icon(Icons.person, size: 16, color: context.colors.primaryTeal),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           userName,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: AppColors.textDark,
+                            color: context.colors.textDark,
                           ),
                         ),
                       ],
@@ -149,22 +149,22 @@ class ItemCard extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () {},
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: isFound ? AppColors.primaryTeal : Colors.white,
-                        foregroundColor: isFound ? Colors.white : AppColors.primaryTeal,
+                        backgroundColor: isFound ? context.colors.primaryTeal : Colors.white,
+                        foregroundColor: isFound ? Colors.white : context.colors.primaryTeal,
                         elevation: 0,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                           side: isFound 
                             ? BorderSide.none 
-                            : const BorderSide(color: AppColors.primaryTeal),
+                            : BorderSide(color: context.colors.primaryTeal),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         minimumSize: Size.zero,
                         tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       ),
                       child: Text(
                         actionText,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),

@@ -4,25 +4,27 @@ import '../../../reports/presentation/my_posts_screen.dart';
 import '../saved_items_screen.dart';
 import '../../../alerts/presentation/create_alert_screen.dart';
 
+import '../../../../core/theme/theme_manager.dart';
+
 class HomeDrawer extends StatelessWidget {
   const HomeDrawer({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Drawer(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       child: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Padding(
-              padding: const EdgeInsets.fromLTRB(24, 40, 24, 24),
+              padding: EdgeInsets.fromLTRB(24, 40, 24, 24),
               child: Row(
                 children: [
                   Stack(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 28,
                         backgroundImage: NetworkImage(
                           'https://randomuser.me/api/portraits/men/32.jpg',
@@ -37,34 +39,34 @@ class HomeDrawer extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: const Color(0xFF1ABC9C), // Green status dot
                             shape: BoxShape.circle,
-                            border: Border.all(color: AppColors.background, width: 2),
+                            border: Border.all(color: context.colors.background, width: 2),
                           ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(width: 16),
+                  SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Alex Morgan',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.textDark,
+                            color: context.colors.textDark,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           'VERIFIED FINDER',
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w800,
-                            color: AppColors.primaryTeal.withValues(alpha: 0.85),
+                            color: context.colors.primaryTeal.withValues(alpha: 0.85),
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -74,11 +76,11 @@ class HomeDrawer extends StatelessWidget {
                 ],
               ),
             ),
-            const Padding(
+            Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
-              child: Divider(color: AppColors.dividerColor, height: 1),
+              child: Divider(color: context.colors.dividerColor, height: 1),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
             // Menu Items
             _buildMenuItem(
               context: context,
@@ -96,23 +98,23 @@ class HomeDrawer extends StatelessWidget {
             const Spacer(),
             // Sign Out Button
             Padding(
-              padding: const EdgeInsets.all(24.0),
+              padding: EdgeInsets.all(24.0),
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {},
-                  icon: const Icon(Icons.logout, color: AppColors.textDark, size: 20),
-                  label: const Text(
+                  icon: Icon(Icons.logout, color: context.colors.textDark, size: 20),
+                  label: Text(
                     'Secure Sign Out',
                     style: TextStyle(
-                      color: AppColors.textDark,
+                      color: context.colors.textDark,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFE2E8F0), // faint grey
+                    backgroundColor: context.colors.dividerColor, // faint grey
                     elevation: 0,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -133,18 +135,18 @@ class HomeDrawer extends StatelessWidget {
     bool isSelected = false,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Container(
         decoration: BoxDecoration(
-          color: isSelected ? Colors.white : Colors.transparent,
+          color: isSelected ? context.colors.surfaceWhite : Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: isSelected 
-              ? Border.all(color: AppColors.fieldBorder.withValues(alpha: 0.6)) 
+              ? Border.all(color: context.colors.fieldBorder.withValues(alpha: 0.6)) 
               : Border.all(color: Colors.transparent),
           boxShadow: isSelected
               ? [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.03),
+                    color: context.colors.textDark.withValues(alpha: 0.03),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   )
@@ -154,12 +156,12 @@ class HomeDrawer extends StatelessWidget {
         child: ListTile(
           leading: Icon(
             icon,
-            color: isSelected ? AppColors.primaryTeal : AppColors.textLight.withValues(alpha: 0.8),
+            color: isSelected ? context.colors.primaryTeal : context.colors.textLight.withValues(alpha: 0.8),
           ),
           title: Text(
             label,
             style: TextStyle(
-              color: isSelected ? AppColors.primaryTeal : AppColors.textLight.withValues(alpha: 0.8),
+              color: isSelected ? context.colors.primaryTeal : context.colors.textLight.withValues(alpha: 0.8),
               fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
               fontSize: 15,
             ),
@@ -183,7 +185,7 @@ class HomeDrawer extends StatelessWidget {
             }
           },
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16),
         ),
       ),
     );
@@ -193,7 +195,7 @@ class HomeDrawer extends StatelessWidget {
     required BuildContext context,
   }) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.transparent,
@@ -202,23 +204,25 @@ class HomeDrawer extends StatelessWidget {
         child: ListTile(
           leading: Icon(
             Icons.dark_mode_outlined,
-            color: AppColors.textLight.withValues(alpha: 0.8),
+            color: context.colors.textLight.withValues(alpha: 0.8),
           ),
           title: Text(
             'Dark Mode',
             style: TextStyle(
-              color: AppColors.textLight.withValues(alpha: 0.8),
+              color: context.colors.textLight.withValues(alpha: 0.8),
               fontWeight: FontWeight.w500,
               fontSize: 15,
             ),
           ),
           trailing: Switch(
-            value: false,
-            onChanged: (value) {},
-            activeThumbColor: AppColors.primaryTeal,
+            value: Theme.of(context).brightness == Brightness.dark,
+            onChanged: (value) {
+              ThemeManager.toggleTheme();
+            },
+            activeThumbColor: context.colors.primaryTeal,
           ),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16),
         ),
       ),
     );

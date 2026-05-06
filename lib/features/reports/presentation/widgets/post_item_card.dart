@@ -20,17 +20,17 @@ class PostItemCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      margin: EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.fieldBorder),
+        border: Border.all(color: context.colors.fieldBorder),
       ),
       child: Column(
         children: [
           // Top section with Image and Details
           Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: EdgeInsets.all(16.0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -50,20 +50,20 @@ class PostItemCard extends StatelessWidget {
                             ]),
                             child: Opacity(
                               opacity: 0.5,
-                              child: _buildImage(),
+                              child: _buildImage(context),
                             ),
                           )
-                        : _buildImage(),
+                        : _buildImage(context),
                     ),
                     if (isRecovered)
-                      const Icon(
+                      Icon(
                         Icons.check_circle_outline,
                         color: Colors.white,
                         size: 48,
                       ),
                   ],
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 // Details
                 Expanded(
                   child: Column(
@@ -71,35 +71,35 @@ class PostItemCard extends StatelessWidget {
                     children: [
                       Text(
                         dateStr,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: AppColors.textLight,
+                          color: context.colors.textLight,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         title,
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: isRecovered ? AppColors.textLight : AppColors.textDark,
+                          color: isRecovered ? context.colors.textLight : context.colors.textDark,
                           decoration: isRecovered ? TextDecoration.lineThrough : null,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                       ),
                       if (!isRecovered) ...[
-                        const SizedBox(height: 8),
+                        SizedBox(height: 8),
                         Row(
                           children: [
-                            const Icon(Icons.location_on, size: 14, color: AppColors.textLight),
-                            const SizedBox(width: 4),
+                            Icon(Icons.location_on, size: 14, color: context.colors.textLight),
+                            SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 location,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 13,
-                                  color: AppColors.textLight,
+                                  color: context.colors.textLight,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -108,19 +108,19 @@ class PostItemCard extends StatelessWidget {
                           ],
                         ),
                       ] else ...[
-                        const SizedBox(height: 12),
+                        SizedBox(height: 12),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          padding: EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                           decoration: BoxDecoration(
                             color: const Color(0xFFE6F3FE), // Very light blue
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: const Text(
+                          child: Text(
                             'RECOVERED',
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.bold,
-                              color: AppColors.buttonBlue,
+                              color: context.colors.buttonBlue,
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -133,25 +133,25 @@ class PostItemCard extends StatelessWidget {
             ),
           ),
           
-          const Divider(height: 1, color: AppColors.dividerColor),
+          Divider(height: 1, color: context.colors.dividerColor),
           
           // Action Row
           if (isRecovered)
             Row(
               children: [
                 Expanded(
-                  child: _buildActionButton(
+                  child: _buildActionButton(context, 
                     icon: Icons.remove_red_eye,
                     label: 'View Details',
-                    color: AppColors.textLight,
+                    color: context.colors.textLight,
                   ),
                 ),
-                Container(width: 1, height: 24, color: AppColors.dividerColor),
+                Container(width: 1, height: 24, color: context.colors.dividerColor),
                 Expanded(
-                  child: _buildActionButton(
+                  child: _buildActionButton(context, 
                     icon: Icons.delete_outline,
                     label: 'Remove Post',
-                    color: AppColors.tagLostRed,
+                    color: context.colors.tagLostRed,
                   ),
                 ),
               ],
@@ -160,26 +160,26 @@ class PostItemCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: _buildActionButton(
+                  child: _buildActionButton(context, 
                     icon: Icons.edit,
                     label: 'Edit',
-                    color: AppColors.textDark,
+                    color: context.colors.textDark,
                   ),
                 ),
-                Container(width: 1, height: 24, color: AppColors.dividerColor),
+                Container(width: 1, height: 24, color: context.colors.dividerColor),
                 Expanded(
-                  child: _buildActionButton(
+                  child: _buildActionButton(context, 
                     icon: Icons.delete_outline,
                     label: 'Delete',
-                    color: AppColors.tagLostRed,
+                    color: context.colors.tagLostRed,
                   ),
                 ),
-                Container(width: 1, height: 24, color: AppColors.dividerColor),
+                Container(width: 1, height: 24, color: context.colors.dividerColor),
                 Expanded(
-                  child: _buildActionButton(
+                  child: _buildActionButton(context, 
                     icon: Icons.check_circle,
                     label: 'Recovered',
-                    color: AppColors.buttonBlue,
+                    color: context.colors.buttonBlue,
                   ),
                 ),
               ],
@@ -189,21 +189,21 @@ class PostItemCard extends StatelessWidget {
     );
   }
 
-  Widget _buildImage() {
+  Widget _buildImage(BuildContext context) {
     return Container(
       width: 100,
       height: 100,
       decoration: BoxDecoration(
-        color: AppColors.iconBackground,
+        color: context.colors.iconBackground,
         borderRadius: BorderRadius.circular(12),
       ),
       child: imageUrl.isNotEmpty
           ? Image.network(imageUrl, fit: BoxFit.cover)
-          : const Icon(Icons.image, color: AppColors.textLight),
+          : Icon(Icons.image, color: context.colors.textLight),
     );
   }
 
-  Widget _buildActionButton({
+  Widget _buildActionButton(BuildContext context, {
     required IconData icon,
     required String label,
     required Color color,
@@ -211,11 +211,11 @@ class PostItemCard extends StatelessWidget {
     return InkWell(
       onTap: () {},
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: EdgeInsets.symmetric(vertical: 16),
         child: Column(
           children: [
             Icon(icon, size: 20, color: color),
-            const SizedBox(height: 4),
+            SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(

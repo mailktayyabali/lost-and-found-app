@@ -7,29 +7,29 @@ class SearchField extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      padding: EdgeInsets.symmetric(horizontal: 20.0),
       child: TextField(
         decoration: InputDecoration(
           hintText: 'Search for items, pets, etc.',
-          hintStyle: const TextStyle(
-            color: AppColors.textLight,
+          hintStyle: TextStyle(
+            color: context.colors.textLight,
             fontSize: 14,
           ),
-          prefixIcon: const Icon(
+          prefixIcon: Icon(
             Icons.search,
-            color: AppColors.textLight,
+            color: context.colors.textLight,
             size: 20,
           ),
           filled: true,
-          fillColor: AppColors.surfaceWhite,
-          contentPadding: const EdgeInsets.symmetric(vertical: 0),
+          fillColor: context.colors.surfaceWhite,
+          contentPadding: EdgeInsets.symmetric(vertical: 0),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.fieldBorder),
+            borderSide: BorderSide(color: context.colors.fieldBorder),
           ),
           focusedBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: AppColors.primaryTeal),
+            borderSide: BorderSide(color: context.colors.primaryTeal),
           ),
         ),
       ),

@@ -20,22 +20,22 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.colors.background,
         elevation: 0,
         leading: Builder(
           builder: (context) => IconButton(
-            icon: const Icon(Icons.menu, color: AppColors.textDark),
+            icon: Icon(Icons.menu, color: context.colors.textDark),
             onPressed: () {
               Scaffold.of(context).openDrawer();
             },
           ),
         ),
-        title: const Text(
+        title: Text(
           'Saved Items',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: context.colors.textDark,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
@@ -43,7 +43,7 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.bookmark, color: AppColors.primaryTeal),
+            icon: Icon(Icons.bookmark, color: context.colors.primaryTeal),
             onPressed: () {},
           ),
         ],
@@ -51,18 +51,18 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
       drawer: const HomeDrawer(),
       body: Column(
         children: [
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           // Categories
           SizedBox(
             height: 40,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 20),
+              padding: EdgeInsets.symmetric(horizontal: 20),
               itemCount: _categories.length,
               itemBuilder: (context, index) {
                 final isSelected = index == _selectedCategoryIndex;
                 return Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
+                  padding: EdgeInsets.only(right: 8.0),
                   child: GestureDetector(
                     onTap: () {
                       setState(() {
@@ -70,19 +70,19 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                       });
                     },
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      padding: EdgeInsets.symmetric(horizontal: 20),
                       decoration: BoxDecoration(
-                        color: isSelected ? AppColors.primaryTeal : AppColors.surfaceWhite,
+                        color: isSelected ? context.colors.primaryTeal : context.colors.surfaceWhite,
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(
-                          color: isSelected ? AppColors.primaryTeal : AppColors.fieldBorder,
+                          color: isSelected ? context.colors.primaryTeal : context.colors.fieldBorder,
                         ),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         _categories[index],
                         style: TextStyle(
-                          color: isSelected ? Colors.white : AppColors.textDark,
+                          color: isSelected ? Colors.white : context.colors.textDark,
                           fontWeight: FontWeight.w600,
                           fontSize: 14,
                         ),
@@ -93,7 +93,7 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
               },
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           // Saved Items List
           Expanded(
             child: ListenableBuilder(
@@ -113,12 +113,12 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.bookmark_border, size: 64, color: AppColors.textLight.withValues(alpha: 0.5)),
-                        const SizedBox(height: 16),
+                        Icon(Icons.bookmark_border, size: 64, color: context.colors.textLight.withValues(alpha: 0.5)),
+                        SizedBox(height: 16),
                         Text(
                           'No saved items yet',
                           style: TextStyle(
-                            color: AppColors.textLight,
+                            color: context.colors.textLight,
                             fontSize: 16,
                             fontWeight: FontWeight.w500,
                           ),
@@ -129,7 +129,7 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.only(bottom: 24),
+                  padding: EdgeInsets.only(bottom: 24),
                   itemCount: filteredItems.length,
                   itemBuilder: (context, index) {
                     final item = filteredItems[index];
@@ -148,8 +148,8 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
   Widget _buildSavedItemCard({
     required Item item,
   }) {
-    final badgeColor = item.isLost ? AppColors.tagLostRed.withValues(alpha: 0.15) : AppColors.tagFoundGreen.withValues(alpha: 0.15);
-    final badgeTextColor = item.isLost ? AppColors.tagLostRed : AppColors.tagFoundGreen;
+    final badgeColor = item.isLost ? context.colors.tagLostRed.withValues(alpha: 0.15) : context.colors.tagFoundGreen.withValues(alpha: 0.15);
+    final badgeTextColor = item.isLost ? context.colors.tagLostRed : context.colors.tagFoundGreen;
     final badgeText = item.isLost ? 'LOST' : 'FOUND';
     final actionText = item.isLost ? 'VIEW DETAILS' : 'CLAIM ITEM';
     final isFilledAction = !item.isLost;
@@ -164,14 +164,14 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+        margin: EdgeInsets.symmetric(horizontal: 20, vertical: 12),
         decoration: BoxDecoration(
-          color: AppColors.surfaceWhite,
+          color: context.colors.surfaceWhite,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.fieldBorder),
+          border: Border.all(color: context.colors.fieldBorder),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.03),
+              color: context.colors.textDark.withValues(alpha: 0.03),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -184,7 +184,7 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 child: Image.network(
                   item.imageUrl,
                   height: 180,
@@ -194,7 +194,7 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                     return Container(
                       height: 180,
                       width: double.infinity,
-                      color: AppColors.iconBackground,
+                      color: context.colors.iconBackground,
                     );
                   },
                 ),
@@ -204,7 +204,7 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                 top: 16,
                 left: 16,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: badgeColor,
                     borderRadius: BorderRadius.circular(20),
@@ -229,14 +229,14 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                     SavedItemsService().toggleSave(item);
                   },
                   child: Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.3),
+                      color: context.colors.textDark.withValues(alpha: 0.3),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.bookmark,
-                      color: AppColors.surfaceWhite,
+                      color: context.colors.surfaceWhite,
                       size: 20,
                     ),
                   ),
@@ -247,7 +247,7 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
           
           // Details Section
           Padding(
-            padding: const EdgeInsets.all(20),
+            padding: EdgeInsets.all(20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -257,10 +257,10 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                     Expanded(
                       child: Text(
                         item.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.textDark,
+                          color: context.colors.textDark,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -268,31 +268,31 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.location_on, color: AppColors.textLight, size: 14),
-                        const SizedBox(width: 4),
+                        Icon(Icons.location_on, color: context.colors.textLight, size: 14),
+                        SizedBox(width: 4),
                         Text(
                           item.location,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
-                            color: AppColors.textLight,
+                            color: context.colors.textLight,
                           ),
                         ),
                       ],
                     ),
                   ],
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 Text(
                   item.description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: AppColors.textLight,
+                    color: context.colors.textLight,
                     height: 1.5,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20),
                 
                 // Action Button
                 SizedBox(
@@ -301,19 +301,19 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                   child: ElevatedButton(
                     onPressed: () {},
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isFilledAction ? AppColors.primaryTeal : Colors.transparent,
-                      foregroundColor: isFilledAction ? Colors.white : AppColors.primaryTeal,
+                      backgroundColor: isFilledAction ? context.colors.primaryTeal : Colors.transparent,
+                      foregroundColor: isFilledAction ? Colors.white : context.colors.primaryTeal,
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: isFilledAction 
                             ? BorderSide.none 
-                            : const BorderSide(color: AppColors.primaryTeal, width: 1.5),
+                            : BorderSide(color: context.colors.primaryTeal, width: 1.5),
                       ),
                     ),
                     child: Text(
                       actionText,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.0,

@@ -18,20 +18,20 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.colors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: AppColors.textDark, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new, color: context.colors.textDark, size: 20),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
-        title: const Text(
+        title: Text(
           'Find Items',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: context.colors.textDark,
             fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
@@ -43,50 +43,50 @@ class _SearchScreenState extends State<SearchScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             // Search Field
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Search keys, wallets, pets...',
-                  hintStyle: const TextStyle(
-                    color: AppColors.textLight,
+                  hintStyle: TextStyle(
+                    color: context.colors.textLight,
                     fontSize: 14,
                   ),
-                  prefixIcon: const Icon(
+                  prefixIcon: Icon(
                     Icons.search,
-                    color: AppColors.textLight,
+                    color: context.colors.textLight,
                     size: 22,
                   ),
                   filled: true,
-                  fillColor: AppColors.surfaceWhite,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                  fillColor: context.colors.surfaceWhite,
+                  contentPadding: EdgeInsets.symmetric(vertical: 0),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.fieldBorder),
+                    borderSide: BorderSide(color: context.colors.fieldBorder),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: const BorderSide(color: AppColors.primaryTeal),
+                    borderSide: BorderSide(color: context.colors.primaryTeal),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            const Divider(color: AppColors.dividerColor, thickness: 1, height: 1),
-            const SizedBox(height: 20),
+            SizedBox(height: 20),
+            Divider(color: context.colors.dividerColor, thickness: 1, height: 1),
+            SizedBox(height: 20),
 
             // Category Section
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'CATEGORY',
                     style: TextStyle(
-                      color: AppColors.textLight,
+                      color: context.colors.textLight,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       letterSpacing: 1.0,
@@ -94,10 +94,10 @@ class _SearchScreenState extends State<SearchScreen> {
                   ),
                   GestureDetector(
                     onTap: () {},
-                    child: const Text(
+                    child: Text(
                       'Clear',
                       style: TextStyle(
-                        color: AppColors.primaryTeal,
+                        color: context.colors.primaryTeal,
                         fontWeight: FontWeight.w600,
                         fontSize: 12,
                       ),
@@ -106,9 +106,9 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Wrap(
                 spacing: 8.0,
                 runSpacing: 8.0,
@@ -122,61 +122,61 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Time Period Section
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: const Text(
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
+              child: Text(
                 'TIME PERIOD',
                 style: TextStyle(
-                  color: AppColors.textLight,
+                  color: context.colors.textLight,
                   fontWeight: FontWeight.bold,
                   fontSize: 12,
                   letterSpacing: 1.0,
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Row(
                 children: [
                   Expanded(child: _buildChip('Last 24h', isExpanded: true)),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(child: _buildChip('This Week', isSelectedState2: true, isExpanded: true)),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   Expanded(child: _buildChip('Select Date', isExpanded: true)),
                 ],
               ),
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
 
             // Location Range Section
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'LOCATION RANGE',
                     style: TextStyle(
-                      color: AppColors.textLight,
+                      color: context.colors.textLight,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                       letterSpacing: 1.0,
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: AppColors.primaryTeal.withValues(alpha: 0.1),
+                      color: context.colors.primaryTeal.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
                       '${_locationSliderValue.toInt()} km',
-                      style: const TextStyle(
-                        color: AppColors.primaryTeal,
+                      style: TextStyle(
+                        color: context.colors.primaryTeal,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -185,39 +185,39 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                 decoration: BoxDecoration(
-                  color: AppColors.surfaceWhite,
+                  color: context.colors.surfaceWhite,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.fieldBorder),
+                  border: Border.all(color: context.colors.fieldBorder),
                 ),
                 child: Column(
                   children: [
                     Row(
                       children: [
-                        const Icon(Icons.location_on, color: AppColors.textLight, size: 20),
-                        const SizedBox(width: 8),
-                        const Text(
+                        Icon(Icons.location_on, color: context.colors.textLight, size: 20),
+                        SizedBox(width: 8),
+                        Text(
                           'New York City, NY',
                           style: TextStyle(
-                            color: AppColors.textDark,
+                            color: context.colors.textDark,
                             fontWeight: FontWeight.w500,
                             fontSize: 14,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     SliderTheme(
                       data: SliderThemeData(
-                        activeTrackColor: AppColors.primaryTeal,
-                        inactiveTrackColor: AppColors.fieldBorder,
-                        thumbColor: AppColors.primaryTeal,
-                        overlayColor: AppColors.primaryTeal.withValues(alpha: 0.2),
+                        activeTrackColor: context.colors.primaryTeal,
+                        inactiveTrackColor: context.colors.fieldBorder,
+                        thumbColor: context.colors.primaryTeal,
+                        overlayColor: context.colors.primaryTeal.withValues(alpha: 0.2),
                         trackHeight: 4.0,
                         thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8.0),
                         overlayShape: const RoundSliderOverlayShape(overlayRadius: 16.0),
@@ -237,32 +237,32 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            const Divider(color: AppColors.dividerColor, thickness: 1, height: 1),
-            const SizedBox(height: 16),
+            SizedBox(height: 24),
+            Divider(color: context.colors.dividerColor, thickness: 1, height: 1),
+            SizedBox(height: 16),
 
             // Results Header
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: EdgeInsets.symmetric(horizontal: 20.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Found 24 Results',
                     style: TextStyle(
-                      color: AppColors.textLight,
+                      color: context.colors.textLight,
                       fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
                   ),
                   Row(
                     children: [
-                      const Icon(Icons.swap_vert, color: AppColors.textDark, size: 16),
-                      const SizedBox(width: 4),
-                      const Text(
+                      Icon(Icons.swap_vert, color: context.colors.textDark, size: 16),
+                      SizedBox(width: 4),
+                      Text(
                         'Sort by: Recent',
                         style: TextStyle(
-                          color: AppColors.textDark,
+                          color: context.colors.textDark,
                           fontWeight: FontWeight.w600,
                           fontSize: 12,
                         ),
@@ -272,7 +272,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 ],
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
 
             // List of Items
             ListenableBuilder(
@@ -320,7 +320,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 );
               },
             ),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
           ],
         ),
       ),
@@ -329,22 +329,22 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildChip(String label, {bool isSelected = false, bool isSelectedState2 = false, bool isExpanded = false}) {
-    Color bgColor = AppColors.surfaceWhite;
-    Color textColor = AppColors.textDark;
-    Color borderColor = AppColors.fieldBorder;
+    Color bgColor = context.colors.surfaceWhite;
+    Color textColor = context.colors.textDark;
+    Color borderColor = context.colors.fieldBorder;
 
     if (isSelected) {
-      bgColor = AppColors.primaryTeal;
+      bgColor = context.colors.primaryTeal;
       textColor = Colors.white;
-      borderColor = AppColors.primaryTeal;
+      borderColor = context.colors.primaryTeal;
     } else if (isSelectedState2) {
-      bgColor = AppColors.primaryTeal.withValues(alpha: 0.1);
-      textColor = AppColors.primaryTeal;
-      borderColor = AppColors.primaryTeal.withValues(alpha: 0.2);
+      bgColor = context.colors.primaryTeal.withValues(alpha: 0.1);
+      textColor = context.colors.primaryTeal;
+      borderColor = context.colors.primaryTeal.withValues(alpha: 0.2);
     }
 
     Widget chip = Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
@@ -373,8 +373,8 @@ class _SearchScreenState extends State<SearchScreen> {
     required Item item,
   }) {
     final isSaved = SavedItemsService().isSaved(item.id);
-    final badgeColor = item.isLost ? AppColors.tagLostRed.withValues(alpha: 0.15) : AppColors.tagFoundGreen.withValues(alpha: 0.15);
-    final badgeTextColor = item.isLost ? AppColors.tagLostRed : AppColors.tagFoundGreen;
+    final badgeColor = item.isLost ? context.colors.tagLostRed.withValues(alpha: 0.15) : context.colors.tagFoundGreen.withValues(alpha: 0.15);
+    final badgeTextColor = item.isLost ? context.colors.tagLostRed : context.colors.tagFoundGreen;
     final badgeText = item.isLost ? 'LOST' : 'FOUND';
 
     return GestureDetector(
@@ -387,10 +387,10 @@ class _SearchScreenState extends State<SearchScreen> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.only(left: 20, right: 20, bottom: 16),
-        padding: const EdgeInsets.all(12),
+        margin: EdgeInsets.only(left: 20, right: 20, bottom: 16),
+        padding: EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppColors.surfaceWhite,
+          color: context.colors.surfaceWhite,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(
@@ -408,12 +408,12 @@ class _SearchScreenState extends State<SearchScreen> {
                 return Container(
                   width: 80,
                   height: 80,
-                  color: AppColors.iconBackground,
+                  color: context.colors.iconBackground,
                 );
               },
             ),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           // Details
           Expanded(
             child: Column(
@@ -423,7 +423,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                       decoration: BoxDecoration(
                         color: badgeColor,
                         borderRadius: BorderRadius.circular(6),
@@ -439,35 +439,35 @@ class _SearchScreenState extends State<SearchScreen> {
                     ),
                     Text(
                       item.timeAgo,
-                      style: const TextStyle(
-                        color: AppColors.textLight,
+                      style: TextStyle(
+                        color: context.colors.textLight,
                         fontSize: 11,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Text(
                   item.title,
-                  style: const TextStyle(
-                    color: AppColors.textDark,
+                  style: TextStyle(
+                    color: context.colors.textDark,
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 8),
+                SizedBox(height: 8),
                 Row(
                   children: [
-                    const Icon(Icons.location_on, color: AppColors.textLight, size: 14),
-                    const SizedBox(width: 4),
+                    Icon(Icons.location_on, color: context.colors.textLight, size: 14),
+                    SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         item.location,
-                        style: const TextStyle(
-                          color: AppColors.textLight,
+                        style: TextStyle(
+                          color: context.colors.textLight,
                           fontSize: 12,
                         ),
                         maxLines: 1,
@@ -479,21 +479,21 @@ class _SearchScreenState extends State<SearchScreen> {
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          SizedBox(width: 12),
           // Bookmark Icon
           GestureDetector(
             onTap: () {
               SavedItemsService().toggleSave(item);
             },
             child: Container(
-              padding: const EdgeInsets.all(8),
+              padding: EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: context.colors.background,
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 isSaved ? Icons.bookmark : Icons.bookmark_border,
-                color: isSaved ? AppColors.primaryTeal : AppColors.textLight,
+                color: isSaved ? context.colors.primaryTeal : context.colors.textLight,
                 size: 20,
               ),
             ),

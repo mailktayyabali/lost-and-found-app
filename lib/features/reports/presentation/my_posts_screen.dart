@@ -10,27 +10,27 @@ class MyPostsScreen extends StatelessWidget {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: context.colors.background,
         appBar: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: context.colors.surfaceWhite,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
+            icon: Icon(Icons.arrow_back, color: context.colors.textDark),
             onPressed: () => Navigator.of(context).pop(),
           ),
-          title: const Text(
+          title: Text(
             'My Posts',
             style: TextStyle(
-              color: AppColors.textDark,
+              color: context.colors.textDark,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
           ),
           centerTitle: true,
-          bottom: const TabBar(
-            labelColor: AppColors.buttonBlue,
-            unselectedLabelColor: AppColors.textLight,
-            indicatorColor: AppColors.buttonBlue,
+          bottom: TabBar(
+            labelColor: context.colors.buttonBlue,
+            unselectedLabelColor: context.colors.textLight,
+            indicatorColor: context.colors.buttonBlue,
             indicatorWeight: 3,
             labelStyle: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
             unselectedLabelStyle: TextStyle(fontWeight: FontWeight.normal, fontSize: 14),
@@ -40,7 +40,7 @@ class MyPostsScreen extends StatelessWidget {
             ],
           ),
         ),
-        body: const TabBarView(
+        body: TabBarView(
           children: [
             // My Lost Items Tab
             _LostItemsList(),
@@ -49,16 +49,16 @@ class MyPostsScreen extends StatelessWidget {
             Center(
               child: Text(
                 'No found items yet.',
-                style: TextStyle(color: AppColors.textLight),
+                style: TextStyle(color: context.colors.textLight),
               ),
             ),
           ],
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {},
-          backgroundColor: AppColors.buttonBlue,
+          backgroundColor: context.colors.buttonBlue,
           shape: const CircleBorder(),
-          child: const Icon(Icons.add, color: Colors.white, size: 28),
+          child: Icon(Icons.add, color: Colors.white, size: 28),
         ),
       ),
     );
@@ -71,8 +71,8 @@ class _LostItemsList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.only(top: 16, bottom: 80), // Padding for FAB
-      children: const [
+      padding: EdgeInsets.only(top: 16, bottom: 80), // Padding for FAB
+      children: [
         PostItemCard(
           title: 'Golden Retriever',
           dateStr: 'Lost on Oct 12, 2023',

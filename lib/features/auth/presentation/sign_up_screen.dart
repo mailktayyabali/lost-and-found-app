@@ -17,23 +17,23 @@ class _SignUpScreenState extends State<SignUpScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.textDark),
+          icon: Icon(Icons.arrow_back, color: context.colors.textDark),
           onPressed: () {
             if (Navigator.of(context).canPop()) {
               Navigator.of(context).pop();
             }
           },
         ),
-        title: const Text(
+        title: Text(
           'Sign Up',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: context.colors.textDark,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -41,7 +41,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          padding: EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
@@ -50,65 +50,65 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 width: 64,
                 height: 64,
                 decoration: BoxDecoration(
-                  color: AppColors.iconBackground,
+                  color: context.colors.iconBackground,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Center(
                   child: Icon(
                     Icons.person_add_alt_1, // Best match for person with plus
-                    color: AppColors.primaryTeal,
+                    color: context.colors.primaryTeal,
                     size: 32,
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               // Title
-              const Text(
+              Text(
                 'Create Account',
                 style: TextStyle(
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
-                  color: AppColors.textDark,
+                  color: context.colors.textDark,
                   letterSpacing: -0.5,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               // Subtitle
-              const Text(
+              Text(
                 'Join our community to help find lost items\nand return them to owners.',
                 style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w400,
-                  color: AppColors.textLight,
+                  color: context.colors.textLight,
                   height: 1.4,
                 ),
                 textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               
               // Full Name Field
               _buildFieldLabel('Full Name'),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildTextField(
                 hint: 'Enter your full name',
                 icon: Icons.person_outline,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
 
               // Email Field
               _buildFieldLabel('Email'),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildTextField(
                 hint: 'example@mail.com',
                 icon: Icons.mail_outline,
                 keyboardType: TextInputType.emailAddress,
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
 
               // Password Field
               _buildFieldLabel('Password'),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildTextField(
                 hint: 'Create a password',
                 icon: Icons.lock_outline,
@@ -120,11 +120,11 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   });
                 },
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
 
               // Confirm Password Field
               _buildFieldLabel('Confirm Password'),
-              const SizedBox(height: 8),
+              SizedBox(height: 8),
               _buildTextField(
                 hint: 'Repeat your password',
                 icon: Icons.restore_rounded, // Best match for circular arrow
@@ -136,7 +136,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   });
                 },
               ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
 
               // Terms of Service Checkbox
               Row(
@@ -155,16 +155,16 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(4),
                       ),
-                      side: const BorderSide(color: AppColors.fieldBorder, width: 1.5),
-                      activeColor: AppColors.primaryTeal,
+                      side: BorderSide(color: context.colors.fieldBorder, width: 1.5),
+                      activeColor: context.colors.primaryTeal,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: RichText(
                       text: TextSpan(
-                        style: const TextStyle(
-                          color: AppColors.textLight,
+                        style: TextStyle(
+                          color: context.colors.textLight,
                           fontSize: 14,
                           height: 1.5,
                         ),
@@ -172,12 +172,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           const TextSpan(text: 'I agree to the '),
                           TextSpan(
                             text: 'Terms of Service',
-                            style: TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: context.colors.primaryTeal, fontWeight: FontWeight.w600),
                           ),
                           const TextSpan(text: ' and '),
                           TextSpan(
                             text: 'Privacy\nPolicy',
-                            style: TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.w600),
+                            style: TextStyle(color: context.colors.primaryTeal, fontWeight: FontWeight.w600),
                           ),
                           const TextSpan(text: '.'),
                         ],
@@ -186,7 +186,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
 
               // Create Account Button
               SizedBox(
@@ -203,7 +203,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryTeal,
+                    backgroundColor: context.colors.primaryTeal,
                     foregroundColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
@@ -211,7 +211,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     elevation: 0,
                   ),
                   child: _isLoading 
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 24,
                         width: 24,
                         child: CircularProgressIndicator(
@@ -219,7 +219,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                           strokeWidth: 2.5,
                         ),
                       )
-                    : const Text(
+                    : Text(
                         'Create Account',
                         style: TextStyle(
                           fontSize: 16,
@@ -228,36 +228,36 @@ class _SignUpScreenState extends State<SignUpScreen> {
                       ),
                 ),
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
               
               // OR Divider
               Row(
                 children: [
-                  const Expanded(child: Divider(color: AppColors.dividerColor)),
+                  Expanded(child: Divider(color: context.colors.dividerColor)),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: EdgeInsets.symmetric(horizontal: 16),
                     child: Text(
                        'OR',
                        style: TextStyle(
-                         color: AppColors.textLight,
+                         color: context.colors.textLight,
                          fontSize: 13,
                          fontWeight: FontWeight.w600,
                          letterSpacing: 0.5,
                        ),
                     ),
                   ),
-                  const Expanded(child: Divider(color: AppColors.dividerColor)),
+                  Expanded(child: Divider(color: context.colors.dividerColor)),
                 ],
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
 
               // Already have an account
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Text(
+                  Text(
                     "Already have an account? ",
-                    style: TextStyle(color: AppColors.textLight, fontSize: 15),
+                    style: TextStyle(color: context.colors.textLight, fontSize: 15),
                   ),
                   GestureDetector(
                     onTap: () {
@@ -268,7 +268,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     child: Text(
                       'Log In',
                       style: TextStyle(
-                        color: AppColors.primaryTeal,
+                        color: context.colors.primaryTeal,
                         fontSize: 15,
                         fontWeight: FontWeight.bold,
                       ),
@@ -276,7 +276,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              SizedBox(height: 24),
             ],
           ),
         ),
@@ -289,10 +289,10 @@ class _SignUpScreenState extends State<SignUpScreen> {
       alignment: Alignment.centerLeft,
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w600,
-          color: AppColors.textDark,
+          color: context.colors.textDark,
         ),
       ),
     );
@@ -309,31 +309,31 @@ class _SignUpScreenState extends State<SignUpScreen> {
     return TextField(
       obscureText: obscureText,
       keyboardType: keyboardType,
-      style: const TextStyle(color: AppColors.textDark, fontSize: 15),
+      style: TextStyle(color: context.colors.textDark, fontSize: 15),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: const TextStyle(color: AppColors.textLight),
-        prefixIcon: Icon(icon, color: AppColors.textLight),
+        hintStyle: TextStyle(color: context.colors.textLight),
+        prefixIcon: Icon(icon, color: context.colors.textLight),
         suffixIcon: isPassword
             ? IconButton(
                 icon: Icon(
                   obscureText ? Icons.visibility_off_outlined : Icons.remove_red_eye_rounded,
-                  color: AppColors.textLight,
+                  color: context.colors.textLight,
                 ),
                 onPressed: onVisibilityToggle,
               )
             : null,
         filled: true,
-        fillColor: AppColors.background,
+        fillColor: context.colors.background,
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.fieldBorder),
+          borderSide: BorderSide(color: context.colors.fieldBorder),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: AppColors.primaryTeal),
+          borderSide: BorderSide(color: context.colors.primaryTeal),
         ),
-        contentPadding: const EdgeInsets.symmetric(vertical: 16),
+        contentPadding: EdgeInsets.symmetric(vertical: 16),
       ),
     );
   }

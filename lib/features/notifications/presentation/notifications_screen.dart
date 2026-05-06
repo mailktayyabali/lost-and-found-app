@@ -10,18 +10,18 @@ class NotificationsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.textDark, size: 20),
+          icon: Icon(Icons.arrow_back_ios, color: context.colors.textDark, size: 20),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Notifications',
           style: TextStyle(
-            color: AppColors.textDark,
+            color: context.colors.textDark,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -29,7 +29,7 @@ class NotificationsScreen extends StatelessWidget {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(Icons.done_all, color: AppColors.buttonBlue),
+            icon: Icon(Icons.done_all, color: context.colors.buttonBlue),
             onPressed: () {
               // Action to mark all as read
             },
@@ -37,16 +37,16 @@ class NotificationsScreen extends StatelessWidget {
         ],
       ),
       body: ListView(
-        children: const [
+        children: [
           // MATCHING ALERTS
           NotificationSectionHeader(
             title: 'Matching Alerts',
             icon: Icons.stars,
-            iconColor: AppColors.buttonBlue,
+            iconColor: context.colors.buttonBlue,
           ),
           AlertNotificationItem(
             icon: Icons.search,
-            iconColor: AppColors.buttonBlue,
+            iconColor: context.colors.buttonBlue,
             iconBackgroundColor: Color(0xFFE8F2FF), // Very light blue
             title: 'New Potential Match Found',
             subtitle: 'A \'Black Leather Wallet\' was found near your last reported location in Downtown.',
@@ -54,11 +54,11 @@ class NotificationsScreen extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Divider(color: AppColors.dividerColor, height: 1),
+            child: Divider(color: context.colors.dividerColor, height: 1),
           ),
           AlertNotificationItem(
             icon: Icons.pets,
-            iconColor: AppColors.buttonBlue,
+            iconColor: context.colors.buttonBlue,
             iconBackgroundColor: Color(0xFFE8F2FF),
             title: 'Item Update',
             subtitle: 'Your reported \'Golden Retriever\' has 3 new potential matches from the community.',
@@ -69,7 +69,7 @@ class NotificationsScreen extends StatelessWidget {
           NotificationSectionHeader(
             title: 'Chat Alerts',
             icon: Icons.chat_bubble,
-            iconColor: AppColors.textLight,
+            iconColor: context.colors.textLight,
           ),
           ChatNotificationItem(
             avatarUrl: 'https://randomuser.me/api/portraits/men/44.jpg',
@@ -80,7 +80,7 @@ class NotificationsScreen extends StatelessWidget {
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Divider(color: AppColors.dividerColor, height: 1),
+            child: Divider(color: context.colors.dividerColor, height: 1),
           ),
           ChatNotificationItem(
             avatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
@@ -94,24 +94,24 @@ class NotificationsScreen extends StatelessWidget {
           NotificationSectionHeader(
             title: 'System Alerts',
             icon: Icons.settings,
-            iconColor: AppColors.textLight,
+            iconColor: context.colors.textLight,
           ),
           AlertNotificationItem(
             icon: Icons.security,
-            iconColor: AppColors.textLight,
-            iconBackgroundColor: Color(0xFFF1F5F9), // Light grey
+            iconColor: context.colors.textLight,
+            iconBackgroundColor: context.colors.background, // Light grey
             title: 'Security Alert',
             subtitle: 'Your account was logged in from a new device: iPhone 15 Pro.',
             timeAgo: 'Yesterday',
           ),
           Padding(
             padding: EdgeInsets.symmetric(horizontal: 24),
-            child: Divider(color: AppColors.dividerColor, height: 1),
+            child: Divider(color: context.colors.dividerColor, height: 1),
           ),
           AlertNotificationItem(
             icon: Icons.system_update_alt,
-            iconColor: AppColors.textLight,
-            iconBackgroundColor: Color(0xFFF1F5F9),
+            iconColor: context.colors.textLight,
+            iconBackgroundColor: context.colors.background,
             title: 'App Update Available',
             subtitle: 'Version 2.4.0 is now available with improved map accuracy and new filter options.',
             timeAgo: '2 days ago',

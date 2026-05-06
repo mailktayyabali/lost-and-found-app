@@ -26,15 +26,15 @@ class CategoryItem extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: isSelected ? AppColors.primaryTeal : AppColors.surfaceWhite,
+              color: isSelected ? context.colors.primaryTeal : context.colors.surfaceWhite,
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: isSelected ? AppColors.primaryTeal : AppColors.fieldBorder,
+                color: isSelected ? context.colors.primaryTeal : context.colors.fieldBorder,
               ),
               boxShadow: [
                 if (isSelected)
                   BoxShadow(
-                    color: AppColors.primaryTeal.withValues(alpha: 0.3),
+                    color: context.colors.primaryTeal.withValues(alpha: 0.3),
                     blurRadius: 8,
                     offset: const Offset(0, 4),
                   )
@@ -48,17 +48,17 @@ class CategoryItem extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              color: isSelected ? Colors.white : AppColors.textDark,
+              color: isSelected ? Colors.white : context.colors.textDark,
               size: 28,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Text(
             label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
-              color: AppColors.textDark,
+              color: context.colors.textDark,
             ),
           ),
         ],

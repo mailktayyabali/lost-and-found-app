@@ -16,16 +16,16 @@ class SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      padding: EdgeInsets.symmetric(horizontal: 20.0),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
+              color: context.colors.textDark,
             ),
           ),
           TextButton(
@@ -37,10 +37,10 @@ class SectionHeader extends StatelessWidget {
             ),
             child: Text(
               actionText,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
-                color: AppColors.textAccent,
+                color: context.colors.textAccent,
               ),
             ),
           ),

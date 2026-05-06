@@ -16,22 +16,22 @@ class NotificationSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 24, 24, 16),
+      padding: EdgeInsets.fromLTRB(24, 24, 24, 16),
       child: Row(
         children: [
           Icon(
             icon,
             size: 20,
-            color: iconColor ?? AppColors.textLight,
+            color: iconColor ?? context.colors.textLight,
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
           Text(
             title.toUpperCase(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
-              color: AppColors.textDark,
+              color: context.colors.textDark,
             ),
           ),
         ],

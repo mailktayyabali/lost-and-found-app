@@ -66,9 +66,9 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   void _submitReport() {
     // Show success dialog or snackbar and navigate back
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text('Report submitted successfully!'),
-        backgroundColor: AppColors.primaryTeal,
+        backgroundColor: context.colors.primaryTeal,
       ),
     );
     Navigator.of(context).pop();
@@ -77,24 +77,24 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   Widget _buildToggle() {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F5F9),
+        color: context.colors.background,
         borderRadius: BorderRadius.circular(24),
       ),
-      padding: const EdgeInsets.all(4),
+      padding: EdgeInsets.all(4),
       child: Row(
         children: [
           Expanded(
             child: GestureDetector(
               onTap: () => setState(() => _isLost = true),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: _isLost ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: _isLost
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: context.colors.textDark.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           )
@@ -105,7 +105,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 child: Text(
                   'I Lost Something',
                   style: TextStyle(
-                    color: _isLost ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                    color: _isLost ? context.colors.textDark : context.colors.textLight,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -117,14 +117,14 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
             child: GestureDetector(
               onTap: () => setState(() => _isLost = false),
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
+                padding: EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: !_isLost ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: !_isLost
                       ? [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: context.colors.textDark.withValues(alpha: 0.05),
                             blurRadius: 4,
                             offset: const Offset(0, 2),
                           )
@@ -135,7 +135,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 child: Text(
                   'I Found Something',
                   style: TextStyle(
-                    color: !_isLost ? const Color(0xFF0F172A) : const Color(0xFF64748B),
+                    color: !_isLost ? context.colors.textDark : context.colors.textLight,
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
                   ),
@@ -154,31 +154,31 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF0F172A),
+            color: context.colors.textDark,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         TextField(
           controller: controller,
           maxLines: maxLines,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            hintStyle: TextStyle(color: context.colors.textLight, fontSize: 14),
+            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: BorderSide(color: context.colors.dividerColor),
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
+              borderSide: BorderSide(color: context.colors.dividerColor),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
-              borderSide: const BorderSide(color: AppColors.primaryTeal),
+              borderSide: BorderSide(color: context.colors.primaryTeal),
             ),
           ),
         ),
@@ -192,28 +192,28 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF0F172A),
+            color: context.colors.textDark,
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: const Color(0xFFE2E8F0)),
+            border: Border.all(color: context.colors.dividerColor),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: _selectedCategory,
               isExpanded: true,
-              icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF64748B)),
+              icon: Icon(Icons.keyboard_arrow_down, color: context.colors.textLight),
               items: ['Electronics', 'Wallets', 'Keys', 'Pets', 'Bags', 'Other']
                   .map((category) => DropdownMenuItem(
                         value: category,
-                        child: Text(category, style: const TextStyle(fontSize: 14)),
+                        child: Text(category, style: TextStyle(fontSize: 14)),
                       ))
                   .toList(),
               onChanged: (value) {
@@ -233,12 +233,12 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         RichText(
-          text: const TextSpan(
+          text: TextSpan(
             text: 'Upload Photos ',
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF0F172A),
+              color: context.colors.textDark,
             ),
             children: [
               TextSpan(
@@ -248,45 +248,45 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
             ],
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 24),
+          padding: EdgeInsets.symmetric(vertical: 24),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8FAFC),
+            color: context.colors.background,
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: const Color(0xFFE2E8F0),
+              color: context.colors.dividerColor,
               style: BorderStyle.solid,
             ),
           ),
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF94A3B8),
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: context.colors.textLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.cloud_upload, color: Colors.white, size: 24),
+                child: Icon(Icons.cloud_upload, color: Colors.white, size: 24),
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               RichText(
-                text: const TextSpan(
+                text: TextSpan(
                   text: 'Drag & drop files here or ',
-                  style: TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                  style: TextStyle(color: context.colors.textLight, fontSize: 12),
                   children: [
                     TextSpan(
                       text: 'browse',
-                      style: TextStyle(color: AppColors.primaryTeal, fontWeight: FontWeight.bold),
+                      style: TextStyle(color: context.colors.primaryTeal, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 4),
-              const Text(
+              SizedBox(height: 4),
+              Text(
                 'PNG, JPG, GIF up to 10MB',
-                style: TextStyle(color: Color(0xFF94A3B8), fontSize: 10),
+                style: TextStyle(color: context.colors.textLight, fontSize: 10),
               ),
             ],
           ),
@@ -298,26 +298,26 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   List<Step> _buildSteps() {
     return [
       Step(
-        title: const Text('About the Item', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('About the Item', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           children: [
             _buildTextField('Item Name', 'e.g., Black Leather Wallet', _itemNameController),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(
               children: [
                 Expanded(child: _buildDropdown('Category')),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(child: _buildTextField('Color', 'e.g., Red', _colorController)),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildTextField(
               'Detailed Description',
               'Describe any distinctive features, brand, condition, or contents...',
               _descriptionController,
               maxLines: 4,
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildPhotoUpload(),
           ],
         ),
@@ -325,15 +325,15 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         state: _currentStep > 0 ? StepState.complete : StepState.indexed,
       ),
       Step(
-        title: const Text('Where & When', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Where & When', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           children: [
             _buildTextField('Location', 'e.g., Central Park, near the fountain', _locationController),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Row(
               children: [
                 Expanded(child: _buildTextField('Date Lost', 'dd/mm/yyyy', _dateController)),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(child: _buildTextField('Approximate Time', '--:-- --', _timeController)),
               ],
             ),
@@ -343,34 +343,34 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         state: _currentStep > 1 ? StepState.complete : StepState.indexed,
       ),
       Step(
-        title: const Text('Your Contact Details', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: Text('Your Contact Details', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           children: [
             Row(
               children: [
                 Expanded(child: _buildTextField('Your Name', 'John Doe', _nameController)),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(child: _buildTextField('Email Address', 'you@example.com', _emailController)),
               ],
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildTextField('Phone Number', 'e.g., +1 234 567 890', _phoneController),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFE2E8F0)),
+                color: context.colors.surfaceWhite,
+borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: context.colors.dividerColor),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.lock, color: Color(0xFFF59E0B), size: 16),
-                  const SizedBox(width: 12),
+                  Icon(Icons.lock, color: Color(0xFFF59E0B), size: 16),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Your contact information will be kept private and shared only with a user who has a confirmed match for your item.',
-                      style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+                      style: TextStyle(fontSize: 11, color: context.colors.textLight),
                     ),
                   ),
                 ],
@@ -386,19 +386,19 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.colors.surfaceWhite,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.colors.surfaceWhite,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppColors.primaryTeal),
+          icon: Icon(Icons.arrow_back, color: context.colors.primaryTeal),
           onPressed: () => Navigator.of(context).pop(),
         ),
-        title: const Text(
+        title: Text(
           'Report an Item',
           style: TextStyle(
-            color: Color(0xFF0F172A),
+            color: context.colors.textDark,
             fontSize: 22,
             fontWeight: FontWeight.w900,
           ),
@@ -406,20 +406,20 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       ),
       body: Column(
         children: [
-          const Text(
+          Text(
             'Help reunite lost items with their owners',
-            style: TextStyle(color: Color(0xFF64748B), fontSize: 13),
+            style: TextStyle(color: context.colors.textLight, fontSize: 13),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
+            padding: EdgeInsets.symmetric(horizontal: 24),
             child: _buildToggle(),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           Expanded(
             child: Theme(
               data: Theme.of(context).copyWith(
-                colorScheme: ColorScheme.light(primary: AppColors.primaryTeal),
+                colorScheme: ColorScheme.light(primary: context.colors.primaryTeal),
               ),
               child: Stepper(
                 type: StepperType.vertical,
@@ -430,7 +430,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                 steps: _buildSteps(),
                 controlsBuilder: (BuildContext context, ControlsDetails details) {
                   return Padding(
-                    padding: const EdgeInsets.only(top: 24.0),
+                    padding: EdgeInsets.only(top: 24.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -438,32 +438,32 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                           TextButton(
                             onPressed: details.onStepCancel,
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                side: BorderSide(color: context.colors.dividerColor),
                               ),
                             ),
-                            child: const Text('Back', style: TextStyle(color: Color(0xFF0F172A))),
+                            child: Text('Back', style: TextStyle(color: context.colors.textDark)),
                           ),
                         if (_currentStep == 0)
                           TextButton(
                             onPressed: details.onStepCancel,
                             style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
-                                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                                side: BorderSide(color: context.colors.dividerColor),
                               ),
                             ),
-                            child: const Text('Cancel', style: TextStyle(color: Color(0xFF0F172A))),
+                            child: Text('Cancel', style: TextStyle(color: context.colors.textDark)),
                           ),
-                        const SizedBox(width: 12),
+                        SizedBox(width: 12),
                         ElevatedButton(
                           onPressed: details.onStepContinue,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryTeal,
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            backgroundColor: context.colors.primaryTeal,
+                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -471,7 +471,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                           ),
                           child: Text(
                             _currentStep == 2 ? 'Submit Report' : 'Continue',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                         ),
                       ],

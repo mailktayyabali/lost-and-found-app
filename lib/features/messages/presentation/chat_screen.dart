@@ -16,16 +16,16 @@ class ChatScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF8FAFC),
+      backgroundColor: context.colors.background,
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(64),
         child: AppBar(
-          backgroundColor: Colors.white,
+          backgroundColor: context.colors.surfaceWhite,
           elevation: 0,
           leadingWidth: 40,
           leading: IconButton(
             padding: const EdgeInsets.only(left: 16),
-            icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
+            icon: Icon(Icons.arrow_back_ios_new, color: context.colors.textDark, size: 20),
             onPressed: () => Navigator.of(context).pop(),
           ),
           title: Row(
@@ -41,8 +41,8 @@ class ChatScreen extends StatelessWidget {
                 children: [
                    Text(
                     userName,
-                    style: const TextStyle(
-                      color: Colors.black87,
+                    style: TextStyle(
+                      color: context.colors.textDark,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
@@ -62,7 +62,7 @@ class ChatScreen extends StatelessWidget {
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.more_vert, color: Colors.black87),
+              icon: Icon(Icons.more_vert, color: context.colors.textDark),
               onPressed: () {},
             ),
           ],
@@ -73,11 +73,11 @@ class ChatScreen extends StatelessWidget {
           // Post reference banner
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Color(0xFFF8FAFC),
+            decoration: BoxDecoration(
+              color: context.colors.background,
               border: Border(
-                top: BorderSide(color: Color(0xFFE2E8F0)),
-                bottom: BorderSide(color: Color(0xFFE2E8F0)),
+                top: BorderSide(color: context.colors.dividerColor),
+                bottom: BorderSide(color: context.colors.dividerColor),
               ),
             ),
             child: Row(
@@ -86,9 +86,9 @@ class ChatScreen extends StatelessWidget {
                   width: 40,
                   height: 40,
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: context.colors.surfaceWhite,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: const Color(0xFFE2E8F0)),
+                    border: Border.all(color: context.colors.dividerColor),
                     image: const DecorationImage(
                       image: NetworkImage('https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'),
                       fit: BoxFit.cover,
@@ -110,10 +110,10 @@ class ChatScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 2),
-                      const Text(
+                      Text(
                         'Lost: Brown Leather Wallet',
                         style: TextStyle(
-                          color: Color(0xFF334155),
+                          color: context.colors.textDark,
                           fontSize: 14,
                           fontWeight: FontWeight.w500,
                         ),
@@ -135,13 +135,13 @@ class ChatScreen extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE2E8F0).withValues(alpha: 0.5),
+                      color: context.colors.dividerColor.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(16),
                     ),
-                    child: const Text(
+                    child: Text(
                       'TODAY',
                       style: TextStyle(
-                        color: Color(0xFF64748B),
+                        color: context.colors.textLight,
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
@@ -152,7 +152,7 @@ class ChatScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Incoming Message
-                _buildIncomingMessage(
+                _buildIncomingMessage(context,
                   text: 'Hi there! I think I found your wallet at the Central Park bench near the fountain.',
                   time: '10:24 AM',
                   avatarUrl: avatarUrl,
@@ -160,14 +160,14 @@ class ChatScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Outgoing Message
-                _buildOutgoingMessage(
+                _buildOutgoingMessage(context,
                   text: 'Oh thank goodness! Does it have a library card with the name "Alex" inside?',
                   time: '10:25 AM',
                 ),
                 const SizedBox(height: 24),
 
                 // Incoming Message without Image
-                _buildIncomingMessage(
+                _buildIncomingMessage(context,
                   text: 'Yes, it does. I checked inside and found a library card with your name.',
                   time: '10:27 AM',
                   avatarUrl: avatarUrl,
@@ -175,7 +175,7 @@ class ChatScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Outgoing Message
-                _buildOutgoingMessage(
+                _buildOutgoingMessage(context,
                   text: "That's definitely mine! Where can we meet for the handover? I'm happy to...",
                   time: '10:28 AM',
                 ),
@@ -186,9 +186,9 @@ class ChatScreen extends StatelessWidget {
           // Input Area
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+            decoration: BoxDecoration(
+              color: context.colors.surfaceWhite,
+              border: Border(top: BorderSide(color: context.colors.dividerColor)),
             ),
             child: SafeArea(
               child: Row(
@@ -196,26 +196,27 @@ class ChatScreen extends StatelessWidget {
                   Container(
                     width: 36,
                     height: 36,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF475569),
+                    decoration: BoxDecoration(
+                      color: context.colors.textLight,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.add, color: Colors.white, size: 20),
+                    child: Icon(Icons.add, color: context.colors.surfaceWhite, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF1F5F9),
+                        color: context.colors.background,
                         borderRadius: BorderRadius.circular(24),
                       ),
-                      child: const TextField(
+                      child: TextField(
+                        style: TextStyle(color: context.colors.textDark),
                         decoration: InputDecoration(
                           hintText: 'Type a message...',
-                          hintStyle: TextStyle(color: Color(0xFF64748B), fontSize: 15),
+                          hintStyle: TextStyle(color: context.colors.textLight, fontSize: 15),
                           border: InputBorder.none,
-                          contentPadding: EdgeInsets.symmetric(vertical: 12),
+                          contentPadding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
@@ -239,7 +240,7 @@ class ChatScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildIncomingMessage({
+  Widget _buildIncomingMessage(BuildContext context, {
     required String text,
     required String time,
     required String avatarUrl,
@@ -260,22 +261,22 @@ class ChatScreen extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: context.colors.surfaceWhite,
                   borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(16),
                     topRight: Radius.circular(16),
                     bottomRight: Radius.circular(16),
                     bottomLeft: Radius.circular(4),
                   ),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                  border: Border.all(color: context.colors.dividerColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       text,
-                      style: const TextStyle(
-                        color: Color(0xFF1E293B),
+                      style: TextStyle(
+                        color: context.colors.textDark,
                         fontSize: 15,
                         height: 1.4,
                       ),
@@ -298,8 +299,8 @@ class ChatScreen extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 time,
-                style: const TextStyle(
-                  color: Color(0xFF94A3B8),
+                style: TextStyle(
+                  color: context.colors.textLight,
                   fontSize: 11,
                 ),
               ),
@@ -311,7 +312,7 @@ class ChatScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildOutgoingMessage({
+  Widget _buildOutgoingMessage(BuildContext context, {
     required String text,
     required String time,
   }) {
@@ -350,8 +351,8 @@ class ChatScreen extends StatelessWidget {
                 children: [
                   Text(
                     time,
-                    style: const TextStyle(
-                      color: Color(0xFF94A3B8),
+                    style: TextStyle(
+                      color: context.colors.textLight,
                       fontSize: 11,
                     ),
                   ),

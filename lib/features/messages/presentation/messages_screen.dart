@@ -10,13 +10,13 @@ class MessagesScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: context.colors.surfaceWhite,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.colors.surfaceWhite,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Colors.black87, size: 20),
+          icon: Icon(Icons.arrow_back_ios_new, color: context.colors.textDark, size: 20),
           onPressed: () {
             Navigator.pushReplacement(
               context,
@@ -28,45 +28,45 @@ class MessagesScreen extends StatelessWidget {
             );
           },
         ),
-        title: const Text(
+        title: Text(
           'Messages',
           style: TextStyle(
-            color: Colors.black87,
+            color: context.colors.textDark,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.search, color: Colors.black87),
+            icon: Icon(Icons.search, color: context.colors.textDark),
             onPressed: () {},
           ),
-          const SizedBox(width: 8),
+          SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
           // Search Bar
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Container(
               height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9), // Light grey matching image
+                color: context.colors.background, // Light grey matching image
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const TextField(
+              child: TextField(
                 decoration: InputDecoration(
                   hintText: 'Search conversations...',
-                  hintStyle: TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-                  prefixIcon: Icon(Icons.search, color: Color(0xFF94A3B8), size: 18),
+                  hintStyle: TextStyle(color: context.colors.textLight, fontSize: 14),
+                  prefixIcon: Icon(Icons.search, color: context.colors.textLight, size: 18),
                   border: InputBorder.none,
                   contentPadding: EdgeInsets.symmetric(vertical: 10), // centers text with 40 height
                 ),
               ),
             ),
           ),
-          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          Divider(height: 1, color: context.colors.background),
           
           Expanded(
             child: ListView(
@@ -132,7 +132,7 @@ class MessagesScreen extends StatelessWidget {
               ),
             );
           },
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
           leading: Stack(
             children: [
               CircleAvatar(
@@ -149,7 +149,7 @@ class MessagesScreen extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: const Color(0xFF10B981), // Green status dot
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: context.colors.surfaceWhite, width: 2),
                     ),
                   ),
                 ),
@@ -161,10 +161,10 @@ class MessagesScreen extends StatelessWidget {
               Expanded(
                 child: Text(
                   name,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 15,
-                    color: Colors.black87,
+                    color: context.colors.textDark,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
@@ -175,7 +175,7 @@ class MessagesScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
-                  color: isUnread ? const Color(0xFF94A3B8) : const Color(0xFF94A3B8), // Sameish color, mostly font weight differs
+                  color: isUnread ? context.colors.textLight : context.colors.textLight, // Sameish color, mostly font weight differs
                 ),
               ),
             ],
@@ -187,7 +187,7 @@ class MessagesScreen extends StatelessWidget {
                 child: Text(
                   message,
                   style: TextStyle(
-                    color: isUnread ? AppColors.primaryTeal : const Color(0xFF64748B),
+                    color: isUnread ? context.colors.primaryTeal : context.colors.textLight,
                     fontWeight: isUnread ? FontWeight.w500 : FontWeight.normal,
                     fontSize: 14,
                   ),
@@ -195,14 +195,14 @@ class MessagesScreen extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: 8),
               if (isUnread)
                 Container(
                   width: 8,
                   height: 8,
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: const BoxDecoration(
-                    color: AppColors.primaryTeal,
+                  margin: EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: context.colors.primaryTeal,
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -212,7 +212,7 @@ class MessagesScreen extends StatelessWidget {
                 height: 48,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: const Color(0xFFF1F5F9),
+                  color: context.colors.background,
                   image: DecorationImage(
                     image: NetworkImage(itemImageUrl),
                     fit: BoxFit.cover,
@@ -222,7 +222,7 @@ class MessagesScreen extends StatelessWidget {
             ],
           ),
         ),
-        const Divider(height: 1, color: Color(0xFFF1F5F9)),
+        Divider(height: 1, color: context.colors.background),
       ],
     );
   }

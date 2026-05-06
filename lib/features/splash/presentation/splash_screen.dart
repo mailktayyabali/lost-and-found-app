@@ -34,24 +34,24 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: context.colors.background,
       body: SafeArea(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             const Spacer(flex: 3),
             _buildLogo(),
-            const SizedBox(height: 32),
+            SizedBox(height: 32),
             _buildTitle(),
-            const SizedBox(height: 6),
+            SizedBox(height: 6),
             _buildSubtitle(),
             const Spacer(flex: 2),
             _buildProgressBar(),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             _buildStatusText(),
             const Spacer(flex: 3),
             _buildFooter(),
-            const SizedBox(height: 24),
+            SizedBox(height: 24),
           ],
         ),
       ),
@@ -67,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen> {
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
+            color: context.colors.textDark.withValues(alpha: 0.04),
             blurRadius: 24,
             offset: const Offset(0, 12),
           ),
@@ -77,10 +77,10 @@ class _SplashScreenState extends State<SplashScreen> {
         alignment: Alignment.center,
         children: [
           // Magnifying Glass
-          const Icon(
+          Icon(
             Icons.search_rounded,
             size: 100,
-            color: AppColors.textDark,
+            color: context.colors.textDark,
           ),
           // Inner group
           Positioned(
@@ -90,25 +90,25 @@ class _SplashScreenState extends State<SplashScreen> {
               clipBehavior: Clip.none,
               children: [
                 // Wallet inside
-                const Icon(
+                Icon(
                   Icons.account_balance_wallet_rounded,
                   size: 42,
-                  color: AppColors.textDark,
+                  color: context.colors.textDark,
                 ),
                 // Location pin offset to top-left
                 Positioned(
                   top: -12,
                   left: -8,
                   child: Container(
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: AppColors.background,
+                      color: context.colors.background,
                     ),
-                    padding: const EdgeInsets.all(2),
-                    child: const Icon(
+                    padding: EdgeInsets.all(2),
+                    child: Icon(
                       Icons.location_on_rounded,
                       size: 24,
-                      color: AppColors.textDark,
+                      color: context.colors.textDark,
                     ),
                   ),
                 ),
@@ -121,12 +121,12 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Widget _buildTitle() {
-    return const Text(
+    return Text(
       'FoundIt',
       style: TextStyle(
         fontSize: 34,
         fontWeight: FontWeight.w900,
-        color: AppColors.textDark,
+        color: context.colors.textDark,
         letterSpacing: -0.5,
       ),
     );
@@ -138,7 +138,7 @@ class _SplashScreenState extends State<SplashScreen> {
       style: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w800,
-        color: AppColors.primaryTeal.withValues(alpha: 0.85),
+        color: context.colors.primaryTeal.withValues(alpha: 0.85),
         letterSpacing: 1.8,
       ),
     );
@@ -146,13 +146,13 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Widget _buildProgressBar() {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 48.0),
+      padding: EdgeInsets.symmetric(horizontal: 48.0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(4),
         child: LinearProgressIndicator(
           value: null, // Indeterminate without animation
-          backgroundColor: AppColors.primaryTeal.withValues(alpha: 0.12),
-          valueColor: const AlwaysStoppedAnimation<Color>(AppColors.primaryTeal),
+          backgroundColor: context.colors.primaryTeal.withValues(alpha: 0.12),
+          valueColor: AlwaysStoppedAnimation<Color>(context.colors.primaryTeal),
           minHeight: 4,
         ),
       ),
@@ -160,23 +160,23 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Widget _buildStatusText() {
-    return const Text(
+    return Text(
       'Initializing secure search...',
       style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w500,
-        color: AppColors.textLight,
+        color: context.colors.textLight,
       ),
     );
   }
 
   Widget _buildFooter() {
-    return const Text(
+    return Text(
       'SECURE & TRUSTED',
       style: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w700,
-        color: AppColors.textLight,
+        color: context.colors.textLight,
         letterSpacing: 1.2,
       ),
     );
