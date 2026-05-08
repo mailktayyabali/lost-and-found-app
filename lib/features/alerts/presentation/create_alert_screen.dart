@@ -146,7 +146,7 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
               padding: EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: context.colors.surfaceWhite,
-borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: context.colors.dividerColor),
               ),
               child: Column(
@@ -169,7 +169,7 @@ borderRadius: BorderRadius.circular(16),
             Container(
               decoration: BoxDecoration(
                 color: context.colors.surfaceWhite,
-borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: context.colors.dividerColor),
               ),
               child: Column(
@@ -267,7 +267,21 @@ borderRadius: BorderRadius.circular(16),
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('Alert created successfully!'),
+                      backgroundColor: context.colors.primaryTeal,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                  Future.delayed(const Duration(seconds: 1), () {
+                    if (context.mounted) Navigator.pop(context);
+                  });
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.colors.primaryTeal,
                   foregroundColor: Colors.white,

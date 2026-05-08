@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'report_success_screen.dart';
 
 class CreateReportScreen extends StatefulWidget {
   const CreateReportScreen({super.key});
@@ -64,14 +65,11 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   void _submitReport() {
-    // Show success dialog or snackbar and navigate back
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Report submitted successfully!'),
-        backgroundColor: context.colors.primaryTeal,
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (context) => const ReportSuccessScreen(),
       ),
     );
-    Navigator.of(context).pop();
   }
 
   Widget _buildToggle() {

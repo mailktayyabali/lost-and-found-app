@@ -4,6 +4,7 @@ import '../../../messages/presentation/messages_screen.dart';
 import '../home_screen.dart';
 import '../search_screen.dart';
 import '../../../reports/presentation/create_report_screen.dart';
+import '../../../profile/presentation/profile_screen.dart';
 
 class HomeBottomNavBar extends StatelessWidget {
   final int currentIndex;
@@ -59,6 +60,15 @@ class HomeBottomNavBar extends StatelessWidget {
                 context,
                 PageRouteBuilder(
                   pageBuilder: (context, animation1, animation2) => const MessagesScreen(),
+                  transitionDuration: Duration.zero,
+                  reverseTransitionDuration: Duration.zero,
+                ),
+              );
+            } else if (index == 4 && currentIndex != 4) {
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation1, animation2) => const ProfileScreen(),
                   transitionDuration: Duration.zero,
                   reverseTransitionDuration: Duration.zero,
                 ),
