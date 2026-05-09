@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/presentation/login_screen.dart';
-
+import '../../auth/domain/auth_service.dart';
+import '../../home/presentation/home_screen.dart';
+import '../../admin/presentation/screens/admin_dashboard_screen.dart';
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -15,12 +17,23 @@ class _SplashScreenState extends State<SplashScreen> {
   void initState() {
     super.initState();
     
-    // Navigate to login after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () {
+    // Navigate after 3 seconds
+    Future.delayed(const Duration(seconds: 3), () async {
       if (mounted) {
+        final authService = AuthService();
+        final isLoggedIn = authService.currentUser != null;
+
+        Widget targetScreen = const LoginScreen();
+        if (isLoggedIn) {
+          final isAdmin = await authService.isAdmin();
+          targetScreen = isAdmin ? const AdminDashboardScreen() : const HomeScreen();
+        }
+
+        if (!mounted) return;
+
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
-            pageBuilder: (context, animation, secondaryAnimation) => const LoginScreen(),
+            pageBuilder: (context, animation, secondaryAnimation) => targetScreen,
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               return FadeTransition(opacity: animation, child: child);
             },

@@ -3,6 +3,9 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../reports/presentation/my_posts_screen.dart';
 import '../saved_items_screen.dart';
 import '../../../alerts/presentation/create_alert_screen.dart';
+import '../../../auth/domain/auth_service.dart';
+import '../../../auth/presentation/login_screen.dart';
+import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
 
 import '../../../../core/theme/theme_manager.dart';
 
@@ -95,6 +98,19 @@ class HomeDrawer extends StatelessWidget {
               label: 'Create Alert',
             ),
             _buildDarkModeToggle(context: context),
+            FutureBuilder<bool>(
+              future: AuthService().isAdmin(),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data == true) {
+                  return _buildMenuItem(
+                    context: context,
+                    icon: Icons.admin_panel_settings_outlined,
+                    label: 'Admin Panel',
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             const Spacer(),
             // Sign Out Button
             Padding(
@@ -102,7 +118,21 @@ class HomeDrawer extends StatelessWidget {
               child: SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(
-                  onPressed: () {},
+                  onPressed: () async {
+                    try {
+                      await AuthService().signOut();
+                      if (!context.mounted) return;
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const LoginScreen()),
+                        (route) => false,
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Error signing out: $e')),
+                      );
+                    }
+                  },
                   icon: Icon(Icons.logout, color: context.colors.textDark, size: 20),
                   label: Text(
                     'Secure Sign Out',
@@ -181,6 +211,11 @@ class HomeDrawer extends StatelessWidget {
               Navigator.of(context).pop(); // Close drawer
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const CreateAlertScreen()),
+              );
+            } else if (label == 'Admin Panel') {
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
               );
             }
           },

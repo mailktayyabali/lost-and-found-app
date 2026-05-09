@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../home/presentation/home_screen.dart';
+import '../domain/auth_service.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -9,10 +11,24 @@ class SignUpScreen extends StatefulWidget {
 }
 
 class _SignUpScreenState extends State<SignUpScreen> {
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _agreedToTerms = false;
   bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -91,6 +107,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               _buildFieldLabel('Full Name'),
               SizedBox(height: 8),
               _buildTextField(
+                controller: _nameController,
                 hint: 'Enter your full name',
                 icon: Icons.person_outline,
               ),
@@ -100,6 +117,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               _buildFieldLabel('Email'),
               SizedBox(height: 8),
               _buildTextField(
+                controller: _emailController,
                 hint: 'example@mail.com',
                 icon: Icons.mail_outline,
                 keyboardType: TextInputType.emailAddress,
@@ -110,6 +128,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               _buildFieldLabel('Password'),
               SizedBox(height: 8),
               _buildTextField(
+                controller: _passwordController,
                 hint: 'Create a password',
                 icon: Icons.lock_outline,
                 isPassword: true,
@@ -126,6 +145,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
               _buildFieldLabel('Confirm Password'),
               SizedBox(height: 8),
               _buildTextField(
+                controller: _confirmPasswordController,
                 hint: 'Repeat your password',
                 icon: Icons.restore_rounded, // Best match for circular arrow
                 isPassword: true,
@@ -194,12 +214,49 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : () async {
+                    if (_nameController.text.trim().isEmpty || 
+                        _emailController.text.trim().isEmpty || 
+                        _passwordController.text.trim().isEmpty || 
+                        _confirmPasswordController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please fill in all fields')),
+                      );
+                      return;
+                    }
+                    if (_passwordController.text != _confirmPasswordController.text) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Passwords do not match')),
+                      );
+                      return;
+                    }
+                    if (!_agreedToTerms) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please agree to the Terms of Service')),
+                      );
+                      return;
+                    }
+
                     setState(() => _isLoading = true);
-                    // Mock network delay
-                    await Future.delayed(const Duration(seconds: 1));
-                    if (mounted) {
-                      setState(() => _isLoading = false);
-                      // Normally this would go to home or verify screen
+                    try {
+                      await AuthService().signUpWithEmailAndPassword(
+                        email: _emailController.text.trim(),
+                        password: _passwordController.text.trim(),
+                        name: _nameController.text.trim(),
+                      );
+                      if (!context.mounted) return;
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        (route) => false,
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    } finally {
+                      if (context.mounted) {
+                        setState(() => _isLoading = false);
+                      }
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -299,6 +356,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   }
 
   Widget _buildTextField({
+    TextEditingController? controller,
     required String hint,
     required IconData icon,
     TextInputType keyboardType = TextInputType.text,
@@ -307,6 +365,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
     VoidCallback? onVisibilityToggle,
   }) {
     return TextField(
+      controller: controller,
       obscureText: obscureText,
       keyboardType: keyboardType,
       style: TextStyle(color: context.colors.textDark, fontSize: 15),

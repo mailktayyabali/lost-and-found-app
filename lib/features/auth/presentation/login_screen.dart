@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../home/presentation/home_screen.dart';
+import '../domain/auth_service.dart';
 import 'sign_up_screen.dart';
+import '../../admin/presentation/screens/admin_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,8 +13,17 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +93,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SizedBox(height: 8),
               TextField(
+                controller: _emailController,
                 keyboardType: TextInputType.emailAddress,
                 decoration: InputDecoration(
                   hintText: 'name@example.com',
@@ -111,6 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SizedBox(height: 8),
               TextField(
+                controller: _passwordController,
                 obscureText: _obscurePassword,
                 decoration: InputDecoration(
                   hintText: 'Enter your password',
@@ -161,14 +174,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 height: 52,
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : () async {
+                    if (_emailController.text.trim().isEmpty || _passwordController.text.trim().isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('Please fill in all fields')),
+                      );
+                      return;
+                    }
                     setState(() => _isLoading = true);
-                    // Mock network delay
-                    await Future.delayed(const Duration(seconds: 1));
-                    if (!context.mounted) return;
-                    setState(() => _isLoading = false);
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(builder: (_) => const HomeScreen()),
-                    );
+                    try {
+                      await AuthService().signInWithEmailAndPassword(
+                        email: _emailController.text.trim(),
+                        password: _passwordController.text.trim(),
+                      );
+                      if (!context.mounted) return;
+                      
+                      final isAdmin = await AuthService().isAdmin();
+                      if (!context.mounted) return;
+                      
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => isAdmin ? const AdminDashboardScreen() : const HomeScreen(),
+                        ),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    } finally {
+                      if (context.mounted) {
+                        setState(() => _isLoading = false);
+                      }
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: context.colors.primaryTeal,

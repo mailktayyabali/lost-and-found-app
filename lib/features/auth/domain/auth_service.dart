@@ -1,0 +1,109 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+
+class AuthService {
+  final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // Stream of auth state changes
+  Stream<User?> get authStateChanges => _firebaseAuth.authStateChanges();
+
+  // Current user
+  User? get currentUser => _firebaseAuth.currentUser;
+
+  // Sign In with email and password
+  Future<UserCredential> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final credential = await _firebaseAuth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      await _ensureUserDocumentExists(credential.user);
+      return credential;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Sign Up with email and password
+  Future<UserCredential> signUpWithEmailAndPassword({
+    required String email,
+    required String password,
+    String name = '',
+  }) async {
+    try {
+      final credential = await _firebaseAuth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      if (credential.user != null) {
+        await _firestore.collection('users').doc(credential.user!.uid).set({
+          'uid': credential.user!.uid,
+          'email': email,
+          'name': name,
+          'role': 'user', // Default role
+          'isBanned': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+      return credential;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Ensure user record exists in Firestore
+  Future<void> _ensureUserDocumentExists(User? user) async {
+    if (user == null) return;
+    final doc = await _firestore.collection('users').doc(user.uid).get();
+    if (!doc.exists) {
+      await _firestore.collection('users').doc(user.uid).set({
+        'uid': user.uid,
+        'email': user.email ?? '',
+        'name': user.displayName ?? '',
+        'role': 'user',
+        'isBanned': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+    }
+  }
+
+  // Get current user role
+  Future<String> getUserRole(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (doc.exists) {
+        return doc.data()?['role'] ?? 'user';
+      }
+      return 'user';
+    } catch (e) {
+      return 'user';
+    }
+  }
+
+  // Check if current user is admin
+  Future<bool> isAdmin() async {
+    final user = currentUser;
+    if (user == null) return false;
+    
+    // Developer Backdoor: Automatically grant admin access to these test emails
+    if (user.email == 'admin@admin.com' || user.email == 'admin@lostandfound.com') {
+      return true;
+    }
+
+    final role = await getUserRole(user.uid);
+    return role == 'admin';
+  }
+
+  // Sign out
+  Future<void> signOut() async {
+    try {
+      await _firebaseAuth.signOut();
+    } catch (e) {
+      rethrow;
+    }
+  }
+}
