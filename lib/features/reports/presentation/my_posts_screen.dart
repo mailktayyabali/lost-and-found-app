@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
 import 'widgets/post_item_card.dart';
 
 class MyPostsScreen extends StatelessWidget {
@@ -65,11 +66,43 @@ class MyPostsScreen extends StatelessWidget {
   }
 }
 
-class _LostItemsList extends StatelessWidget {
+class _LostItemsList extends StatefulWidget {
   const _LostItemsList();
 
   @override
+  State<_LostItemsList> createState() => _LostItemsListState();
+}
+
+class _LostItemsListState extends State<_LostItemsList> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.delayed(const Duration(seconds: 1), () {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return ListView.builder(
+        padding: const EdgeInsets.only(top: 16, bottom: 80, left: 20, right: 20),
+        itemCount: 3,
+        itemBuilder: (context, index) {
+          return const Padding(
+            padding: EdgeInsets.only(bottom: 16),
+            child: ShimmerLoader(width: double.infinity, height: 120, borderRadius: 16),
+          );
+        },
+      );
+    }
+
     return ListView(
       padding: EdgeInsets.only(top: 16, bottom: 80), // Padding for FAB
       children: [

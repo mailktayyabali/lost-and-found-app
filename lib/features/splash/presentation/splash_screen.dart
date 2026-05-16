@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../auth/presentation/login_screen.dart';
 import 'onboarding_screen.dart';
 import '../../auth/domain/auth_service.dart';
 import '../../home/presentation/home_screen.dart';

@@ -149,7 +149,7 @@ class SettingsScreen extends StatelessWidget {
         trailing: Switch(
           value: Theme.of(context).brightness == Brightness.dark,
           onChanged: (value) => ThemeManager.toggleTheme(),
-          activeColor: context.colors.primaryTeal,
+          activeThumbColor: context.colors.primaryTeal,
         ),
       ),
     );

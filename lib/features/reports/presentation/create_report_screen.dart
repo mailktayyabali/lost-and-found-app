@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../shared/presentation/widgets/mock_map_widget.dart';
 import 'report_success_screen.dart';
 
 class CreateReportScreen extends StatefulWidget {
@@ -474,8 +475,51 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       Step(
         title: const Text('Where & When', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildTextField('Location', 'e.g., Central Park, near the fountain', _locationController),
+            Text(
+              'Location',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: context.colors.textDark,
+              ),
+            ),
+            const SizedBox(height: 8),
+            MockMapWidget(
+              isPicker: true,
+              height: 150,
+              onTap: () {
+                // In a real app, this would open a full map screen to pick a location
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Mock Map Picker tapped')),
+                );
+                setState(() {
+                  _locationController.text = 'Mock Selected Location';
+                });
+              },
+            ),
+            const SizedBox(height: 8),
+            TextField(
+              controller: _locationController,
+              decoration: InputDecoration(
+                hintText: 'Or enter address manually',
+                hintStyle: TextStyle(color: context.colors.textLight, fontSize: 14),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: context.colors.dividerColor),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: context.colors.dividerColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: context.colors.primaryTeal),
+                ),
+              ),
+            ),
             const SizedBox(height: 16),
             Row(
               children: [
