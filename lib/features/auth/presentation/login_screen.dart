@@ -255,7 +255,35 @@ class _LoginScreenState extends State<LoginScreen> {
               SizedBox(height: 24),
               Center(
                 child: InkWell(
-                  onTap: () {},
+                  onTap: _isLoading ? null : () async {
+                    setState(() => _isLoading = true);
+                    try {
+                      await AuthService().signInWithGoogle();
+                      if (!context.mounted) return;
+                      
+                      final isAdmin = await AuthService().isAdmin();
+                      if (!context.mounted) return;
+                      
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(
+                          builder: (_) => isAdmin ? const AdminDashboardScreen() : const HomeScreen(),
+                        ),
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      // Handle the "cancelled" case specifically if desired
+                      if (e.toString().contains('cancelled')) {
+                        return;
+                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    } finally {
+                      if (context.mounted) {
+                        setState(() => _isLoading = false);
+                      }
+                    }
+                  },
                   borderRadius: BorderRadius.circular(24),
                   child: Container(
                     width: 48,

@@ -307,6 +307,44 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 ],
               ),
               SizedBox(height: 24),
+              Center(
+                child: InkWell(
+                  onTap: _isLoading ? null : () async {
+                    setState(() => _isLoading = true);
+                    try {
+                      await AuthService().signInWithGoogle();
+                      if (!context.mounted) return;
+                      
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        (route) => false,
+                      );
+                    } catch (e) {
+                      if (!context.mounted) return;
+                      if (e.toString().contains('cancelled')) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    } finally {
+                      if (context.mounted) {
+                        setState(() => _isLoading = false);
+                      }
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: context.colors.background,
+                    ),
+                    alignment: Alignment.center,
+                    child: _buildGoogleLogo(),
+                  ),
+                ),
+              ),
+              SizedBox(height: 24),
 
               // Already have an account
               Row(
@@ -393,6 +431,30 @@ class _SignUpScreenState extends State<SignUpScreen> {
           borderSide: BorderSide(color: context.colors.primaryTeal),
         ),
         contentPadding: EdgeInsets.symmetric(vertical: 16),
+      ),
+    );
+  }
+
+  Widget _buildGoogleLogo() {
+    return Container(
+      width: 24,
+      height: 24,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        shape: BoxShape.circle,
+      ),
+      child: Image.network(
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
+        errorBuilder: (context, error, stackTrace) => const Center(
+          child: Text(
+            'G',
+            style: TextStyle(
+               color: Color(0xFFDB4437),
+               fontWeight: FontWeight.bold,
+               fontSize: 18,
+            ),
+          ),
+        ),
       ),
     );
   }
