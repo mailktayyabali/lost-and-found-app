@@ -1,36 +1,106 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/domain/auth_service.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
 
-class EditProfileScreen extends StatelessWidget {
-  const EditProfileScreen({super.key});
+class EditProfileScreen extends StatefulWidget {
+  final String initialName;
+  final String initialBio;
+
+  const EditProfileScreen({
+    super.key,
+    required this.initialName,
+    required this.initialBio,
+  });
+
+  @override
+  State<EditProfileScreen> createState() => _EditProfileScreenState();
+}
+
+class _EditProfileScreenState extends State<EditProfileScreen> {
+  late TextEditingController _nameController;
+  late TextEditingController _bioController;
+  bool _isSaving = false;
+  final AuthService _authService = AuthService();
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.initialName);
+    _bioController = TextEditingController(text: widget.initialBio);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _bioController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveProfile() async {
+    final name = _nameController.text.trim();
+    final bio = _bioController.text.trim();
+
+    if (name.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Name cannot be empty')),
+      );
+      return;
+    }
+
+    setState(() => _isSaving = true);
+
+    try {
+      final user = _authService.currentUser;
+      if (user != null) {
+        await _authService.updateUserProfile(
+          uid: user.uid,
+          name: name,
+          bio: bio,
+        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Profile updated successfully!')),
+          );
+          Navigator.pop(context, true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: ${e.toString()}')),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isSaving = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final user = _authService.currentUser;
+    
     return Scaffold(
-      backgroundColor: Colors.grey[50], // Light background
+      backgroundColor: Colors.grey[50],
       appBar: AppBar(
         backgroundColor: Colors.grey[50],
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.menu, color: context.colors.textDark),
-          onPressed: () {},
+          icon: Icon(Icons.arrow_back, color: context.colors.textDark),
+          onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: Text(
-          'Profile',
+          'Edit Profile',
           style: TextStyle(
             color: context.colors.primaryTeal,
             fontSize: 20,
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.favorite, color: context.colors.primaryTeal),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -47,16 +117,21 @@ class EditProfileScreen extends StatelessWidget {
                     height: 100,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: const Color(0xFF0D2534), // Dark blue from image
+                      color: const Color(0xFF0D2534),
                       border: Border.all(color: Colors.white, width: 4),
+                      image: user?.photoURL != null 
+                        ? DecorationImage(image: NetworkImage(user!.photoURL!), fit: BoxFit.cover)
+                        : null,
                     ),
-                    child: Center(
-                      child: Icon(
-                        Icons.person,
-                        size: 60,
-                        color: const Color(0xFFF3D2BA), // Skin tone from image
-                      ),
-                    ),
+                    child: user?.photoURL == null 
+                      ? const Center(
+                          child: Icon(
+                            Icons.person,
+                            size: 60,
+                            color: Color(0xFFF3D2BA),
+                          ),
+                        )
+                      : null,
                   ),
                   Positioned(
                     bottom: 0,
@@ -84,7 +159,7 @@ class EditProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                'Manage your public presence and account security.',
+                'Manage your public presence and account settings.',
                 style: TextStyle(
                   color: context.colors.textDark.withValues(alpha: 0.7),
                   fontSize: 14,
@@ -93,7 +168,6 @@ class EditProfileScreen extends StatelessWidget {
               ),
               const SizedBox(height: 32),
               
-              // Identity Section
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
@@ -136,107 +210,32 @@ class EditProfileScreen extends StatelessWidget {
                     _buildInputField(
                       context,
                       label: 'FULL NAME',
-                      initialValue: 'Alexandra Sterling',
+                      controller: _nameController,
                     ),
                     const SizedBox(height: 16),
                     _buildInputField(
                       context,
-                      label: 'EMAIL ADDRESS',
-                      initialValue: 'alexandra.s@precision.io',
+                      label: 'EMAIL ADDRESS (Read-only)',
+                      initialValue: user?.email ?? '',
+                      enabled: false,
                     ),
                     const SizedBox(height: 16),
                     _buildInputField(
                       context,
                       label: 'BIO',
-                      initialValue: "Helping the community find what's lost. Dedicated to returning precious belongings to their rightful owners.",
+                      controller: _bioController,
                       maxLines: 3,
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 24),
-
-              // Security Section
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: [
-                    BoxShadow(
-                      color: context.colors.textDark.withValues(alpha: 0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 3,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: context.colors.primaryTeal,
-                            borderRadius: BorderRadius.circular(2),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'SECURITY',
-                          style: TextStyle(
-                            color: context.colors.textDark,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    _buildInputField(
-                      context,
-                      label: 'CURRENT PASSWORD',
-                      initialValue: 'password123',
-                      obscureText: true,
-                    ),
-                    const SizedBox(height: 16),
-                    _buildInputField(
-                      context,
-                      label: 'NEW PASSWORD',
-                      hintText: 'Minimum 8 characters',
-                      obscureText: true,
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(height: 40),
               
-              const SizedBox(height: 32),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.info, color: context.colors.textDark.withValues(alpha: 0.5), size: 16),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Last updated 14 days ago',
-                    style: TextStyle(
-                      color: context.colors.textDark.withValues(alpha: 0.6),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 32),
               Row(
                 children: [
                   Expanded(
                     child: TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
+                      onPressed: _isSaving ? null : () => Navigator.pop(context),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -253,21 +252,7 @@ class EditProfileScreen extends StatelessWidget {
                   const SizedBox(width: 16),
                   Expanded(
                     child: ElevatedButton(
-                      onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: const Text('Profile updated successfully!'),
-                            backgroundColor: context.colors.primaryTeal,
-                            behavior: SnackBarBehavior.floating,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        );
-                        Future.delayed(const Duration(seconds: 1), () {
-                          if (context.mounted) Navigator.pop(context);
-                        });
-                      },
+                      onPressed: _isSaving ? null : _saveProfile,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: context.colors.primaryTeal,
                         foregroundColor: Colors.white,
@@ -277,15 +262,20 @@ class EditProfileScreen extends StatelessWidget {
                         ),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                       ),
-                      child: const Text(
-                        'Save\nChanges',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          height: 1.2,
-                        ),
-                      ),
+                      child: _isSaving 
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Save Changes',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                     ),
                   ),
                 ],
@@ -302,9 +292,9 @@ class EditProfileScreen extends StatelessWidget {
   Widget _buildInputField(
     BuildContext context, {
     required String label,
+    TextEditingController? controller,
     String? initialValue,
-    String? hintText,
-    bool obscureText = false,
+    bool enabled = true,
     int maxLines = 1,
   }) {
     return Column(
@@ -321,21 +311,19 @@ class EditProfileScreen extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         TextFormField(
-          initialValue: initialValue,
-          obscureText: obscureText,
-          maxLines: obscureText ? 1 : maxLines,
+          controller: controller,
+          initialValue: controller == null ? initialValue : null,
+          enabled: enabled,
+          maxLines: maxLines,
           style: TextStyle(
-            color: context.colors.textDark,
+            color: enabled ? context.colors.textDark : context.colors.textLight,
             fontSize: 14,
           ),
           decoration: InputDecoration(
-            hintText: hintText,
-            hintStyle: TextStyle(
-              color: context.colors.textDark.withValues(alpha: 0.4),
-              fontSize: 14,
-            ),
             filled: true,
-            fillColor: const Color(0xFFE2E8F0).withValues(alpha: 0.5),
+            fillColor: enabled 
+                ? const Color(0xFFE2E8F0).withValues(alpha: 0.5)
+                : Colors.grey[200],
             contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),

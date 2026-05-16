@@ -6,6 +6,7 @@ import '../../../alerts/presentation/create_alert_screen.dart';
 import '../../../auth/domain/auth_service.dart';
 import '../../../auth/presentation/login_screen.dart';
 import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../../profile/presentation/settings_screen.dart';
 
 import '../../../../core/theme/theme_manager.dart';
 
@@ -21,63 +22,71 @@ class HomeDrawer extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            Padding(
-              padding: EdgeInsets.fromLTRB(24, 40, 24, 24),
-              child: Row(
-                children: [
-                  Stack(
+            FutureBuilder<Map<String, dynamic>?>(
+              future: AuthService().getUserData(AuthService().currentUser?.uid ?? ''),
+              builder: (context, snapshot) {
+                final user = AuthService().currentUser;
+                final userData = snapshot.data;
+                final name = userData?['name'] ?? user?.displayName ?? 'User';
+                final photoUrl = user?.photoURL ?? 'https://randomuser.me/api/portraits/men/32.jpg';
+
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(24, 40, 24, 24),
+                  child: Row(
                     children: [
-                      CircleAvatar(
-                        radius: 28,
-                        backgroundImage: NetworkImage(
-                          'https://randomuser.me/api/portraits/men/32.jpg',
-                        ),
-                      ),
-                      Positioned(
-                        right: 0,
-                        bottom: 0,
-                        child: Container(
-                          width: 14,
-                          height: 14,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1ABC9C), // Green status dot
-                            shape: BoxShape.circle,
-                            border: Border.all(color: context.colors.background, width: 2),
+                      Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 28,
+                            backgroundImage: NetworkImage(photoUrl),
                           ),
-                        ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 14,
+                              height: 14,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1ABC9C), // Green status dot
+                                shape: BoxShape.circle,
+                                border: Border.all(color: context.colors.background, width: 2),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
+                      SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: context.colors.textDark,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            SizedBox(height: 4),
+                            Text(
+                              'VERIFIED FINDER',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w800,
+                                color: context.colors.primaryTeal.withValues(alpha: 0.85),
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
                     ],
                   ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Alex Morgan',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: context.colors.textDark,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(height: 4),
-                        Text(
-                          'VERIFIED FINDER',
-                          style: TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            color: context.colors.primaryTeal.withValues(alpha: 0.85),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
-                  )
-                ],
-              ),
+                );
+              },
             ),
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 24),
@@ -96,6 +105,11 @@ class HomeDrawer extends StatelessWidget {
               context: context,
               icon: Icons.notifications_none_outlined,
               label: 'Create Alert',
+            ),
+            _buildMenuItem(
+              context: context,
+              icon: Icons.settings_outlined,
+              label: 'Settings',
             ),
             _buildDarkModeToggle(context: context),
             FutureBuilder<bool>(
@@ -216,6 +230,11 @@ class HomeDrawer extends StatelessWidget {
               Navigator.of(context).pop(); // Close drawer
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+              );
+            } else if (label == 'Settings') {
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
               );
             }
           },

@@ -1,4 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import 'report_success_screen.dart';
 
@@ -18,6 +21,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   String _selectedCategory = 'Electronics';
   final _colorController = TextEditingController();
   final _descriptionController = TextEditingController();
+
+  // Media
+  final List<XFile> _selectedImages = [];
+  final ImagePicker _picker = ImagePicker();
 
   // Form Controllers - Phase 2
   final _locationController = TextEditingController();
@@ -43,6 +50,78 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     super.dispose();
   }
 
+  // Image Picking
+  Future<void> _pickImages() async {
+    try {
+      final List<XFile> images = await _picker.pickMultiImage();
+      if (images.isNotEmpty) {
+        setState(() {
+          _selectedImages.addAll(images);
+        });
+      }
+    } catch (e) {
+      debugPrint('Error picking images: $e');
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  // Date Picking
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(2020),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: context.colors.primaryTeal,
+              onPrimary: Colors.white,
+              onSurface: context.colors.textDark,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _dateController.text = DateFormat('dd/MM/yyyy').format(picked);
+      });
+    }
+  }
+
+  // Time Picking
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: context.colors.primaryTeal,
+              onPrimary: Colors.white,
+              onSurface: context.colors.textDark,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _timeController.text = picked.format(context);
+      });
+    }
+  }
+
   void _onStepTapped(int step) {
     setState(() => _currentStep = step);
   }
@@ -51,7 +130,6 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     if (_currentStep < 2) {
       setState(() => _currentStep += 1);
     } else {
-      // Submit Report
       _submitReport();
     }
   }
@@ -78,14 +156,14 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         color: context.colors.background,
         borderRadius: BorderRadius.circular(24),
       ),
-      padding: EdgeInsets.all(4),
+      padding: const EdgeInsets.all(4),
       child: Row(
         children: [
           Expanded(
             child: GestureDetector(
               onTap: () => setState(() => _isLost = true),
               child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: _isLost ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
@@ -115,7 +193,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
             child: GestureDetector(
               onTap: () => setState(() => _isLost = false),
               child: Container(
-                padding: EdgeInsets.symmetric(vertical: 12),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: !_isLost ? Colors.white : Colors.transparent,
                   borderRadius: BorderRadius.circular(20),
@@ -146,7 +224,15 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     );
   }
 
-  Widget _buildTextField(String label, String hint, TextEditingController controller, {int maxLines = 1}) {
+  Widget _buildTextField(
+    String label, 
+    String hint, 
+    TextEditingController controller, {
+    int maxLines = 1,
+    bool readOnly = false,
+    VoidCallback? onTap,
+    IconData? suffixIcon,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -158,14 +244,17 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
             color: context.colors.textDark,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         TextField(
           controller: controller,
           maxLines: maxLines,
+          readOnly: readOnly,
+          onTap: onTap,
           decoration: InputDecoration(
             hintText: hint,
             hintStyle: TextStyle(color: context.colors.textLight, fontSize: 14),
-            contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: context.colors.primaryTeal, size: 20) : null,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide(color: context.colors.dividerColor),
@@ -196,9 +285,9 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
             color: context.colors.textDark,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Container(
-          padding: EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: context.colors.dividerColor),
@@ -211,7 +300,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
               items: ['Electronics', 'Wallets', 'Keys', 'Pets', 'Bags', 'Other']
                   .map((category) => DropdownMenuItem(
                         value: category,
-                        child: Text(category, style: TextStyle(fontSize: 14)),
+                        child: Text(category, style: const TextStyle(fontSize: 14)),
                       ))
                   .toList(),
               onChanged: (value) {
@@ -238,7 +327,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
               fontWeight: FontWeight.w600,
               color: context.colors.textDark,
             ),
-            children: [
+            children: const [
               TextSpan(
                 text: '*',
                 style: TextStyle(color: Colors.red),
@@ -246,49 +335,109 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
             ],
           ),
         ),
-        SizedBox(height: 8),
-        Container(
-          width: double.infinity,
-          padding: EdgeInsets.symmetric(vertical: 24),
-          decoration: BoxDecoration(
-            color: context.colors.background,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: context.colors.dividerColor,
-              style: BorderStyle.solid,
-            ),
-          ),
-          child: Column(
-            children: [
-              Container(
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: context.colors.textLight,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(Icons.cloud_upload, color: Colors.white, size: 24),
-              ),
-              SizedBox(height: 12),
-              RichText(
-                text: TextSpan(
-                  text: 'Drag & drop files here or ',
-                  style: TextStyle(color: context.colors.textLight, fontSize: 12),
+        const SizedBox(height: 8),
+        if (_selectedImages.isNotEmpty)
+          Container(
+            height: 100,
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _selectedImages.length + 1,
+              itemBuilder: (context, index) {
+                if (index == _selectedImages.length) {
+                  return GestureDetector(
+                    onTap: _pickImages,
+                    child: Container(
+                      width: 100,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        color: context.colors.background,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: context.colors.dividerColor),
+                      ),
+                      child: Icon(Icons.add_a_photo, color: context.colors.primaryTeal),
+                    ),
+                  );
+                }
+                return Stack(
                   children: [
-                    TextSpan(
-                      text: 'browse',
-                      style: TextStyle(color: context.colors.primaryTeal, fontWeight: FontWeight.bold),
+                    Container(
+                      width: 100,
+                      margin: const EdgeInsets.only(right: 8),
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        image: DecorationImage(
+                          image: FileImage(File(_selectedImages[index].path)),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: 4,
+                      right: 12,
+                      child: GestureDetector(
+                        onTap: () => _removeImage(index),
+                        child: Container(
+                          padding: const EdgeInsets.all(2),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Icons.close, color: Colors.white, size: 14),
+                        ),
+                      ),
                     ),
                   ],
+                );
+              },
+            ),
+          )
+        else
+          GestureDetector(
+            onTap: _pickImages,
+            child: Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              decoration: BoxDecoration(
+                color: context.colors.background,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: context.colors.dividerColor,
+                  style: BorderStyle.solid,
                 ),
               ),
-              SizedBox(height: 4),
-              Text(
-                'PNG, JPG, GIF up to 10MB',
-                style: TextStyle(color: context.colors.textLight, fontSize: 10),
+              child: Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: context.colors.textLight,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.cloud_upload, color: Colors.white, size: 24),
+                  ),
+                  const SizedBox(height: 12),
+                  RichText(
+                    text: TextSpan(
+                      text: 'Drag & drop files here or ',
+                      style: TextStyle(color: context.colors.textLight, fontSize: 12),
+                      children: [
+                        TextSpan(
+                          text: 'browse',
+                          style: TextStyle(color: context.colors.primaryTeal, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'PNG, JPG, GIF up to 10MB',
+                    style: TextStyle(color: context.colors.textLight, fontSize: 10),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
       ],
     );
   }
@@ -296,26 +445,26 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   List<Step> _buildSteps() {
     return [
       Step(
-        title: Text('About the Item', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('About the Item', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           children: [
             _buildTextField('Item Name', 'e.g., Black Leather Wallet', _itemNameController),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
                 Expanded(child: _buildDropdown('Category')),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(child: _buildTextField('Color', 'e.g., Red', _colorController)),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildTextField(
               'Detailed Description',
               'Describe any distinctive features, brand, condition, or contents...',
               _descriptionController,
               maxLines: 4,
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildPhotoUpload(),
           ],
         ),
@@ -323,16 +472,34 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         state: _currentStep > 0 ? StepState.complete : StepState.indexed,
       ),
       Step(
-        title: Text('Where & When', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Where & When', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           children: [
             _buildTextField('Location', 'e.g., Central Park, near the fountain', _locationController),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(child: _buildTextField('Date Lost', 'dd/mm/yyyy', _dateController)),
-                SizedBox(width: 16),
-                Expanded(child: _buildTextField('Approximate Time', '--:-- --', _timeController)),
+                Expanded(
+                  child: _buildTextField(
+                    'Date ${_isLost ? 'Lost' : 'Found'}', 
+                    'dd/mm/yyyy', 
+                    _dateController,
+                    readOnly: true,
+                    onTap: () => _selectDate(context),
+                    suffixIcon: Icons.calendar_today,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: _buildTextField(
+                    'Approximate Time', 
+                    '--:-- --', 
+                    _timeController,
+                    readOnly: true,
+                    onTap: () => _selectTime(context),
+                    suffixIcon: Icons.access_time,
+                  ),
+                ),
               ],
             ),
           ],
@@ -341,30 +508,30 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         state: _currentStep > 1 ? StepState.complete : StepState.indexed,
       ),
       Step(
-        title: Text('Your Contact Details', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Your Contact Details', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Column(
           children: [
             Row(
               children: [
                 Expanded(child: _buildTextField('Your Name', 'John Doe', _nameController)),
-                SizedBox(width: 16),
+                const SizedBox(width: 16),
                 Expanded(child: _buildTextField('Email Address', 'you@example.com', _emailController)),
               ],
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildTextField('Phone Number', 'e.g., +1 234 567 890', _phoneController),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Container(
-              padding: EdgeInsets.all(12),
+              padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 color: context.colors.surfaceWhite,
-borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(8),
                 border: Border.all(color: context.colors.dividerColor),
               ),
               child: Row(
                 children: [
-                  Icon(Icons.lock, color: Color(0xFFF59E0B), size: 16),
-                  SizedBox(width: 12),
+                  const Icon(Icons.lock, color: Color(0xFFF59E0B), size: 16),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       'Your contact information will be kept private and shared only with a user who has a confirmed match for your item.',
@@ -408,12 +575,12 @@ borderRadius: BorderRadius.circular(8),
             'Help reunite lost items with their owners',
             style: TextStyle(color: context.colors.textLight, fontSize: 13),
           ),
-          SizedBox(height: 24),
+          const SizedBox(height: 24),
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 24),
+            padding: const EdgeInsets.symmetric(horizontal: 24),
             child: _buildToggle(),
           ),
-          SizedBox(height: 16),
+          const SizedBox(height: 16),
           Expanded(
             child: Theme(
               data: Theme.of(context).copyWith(
@@ -428,7 +595,7 @@ borderRadius: BorderRadius.circular(8),
                 steps: _buildSteps(),
                 controlsBuilder: (BuildContext context, ControlsDetails details) {
                   return Padding(
-                    padding: EdgeInsets.only(top: 24.0),
+                    padding: const EdgeInsets.only(top: 24.0),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
@@ -436,7 +603,7 @@ borderRadius: BorderRadius.circular(8),
                           TextButton(
                             onPressed: details.onStepCancel,
                             style: TextButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(color: context.colors.dividerColor),
@@ -448,7 +615,7 @@ borderRadius: BorderRadius.circular(8),
                           TextButton(
                             onPressed: details.onStepCancel,
                             style: TextButton.styleFrom(
-                              padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
                                 side: BorderSide(color: context.colors.dividerColor),
@@ -456,12 +623,12 @@ borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text('Cancel', style: TextStyle(color: context.colors.textDark)),
                           ),
-                        SizedBox(width: 12),
+                        const SizedBox(width: 12),
                         ElevatedButton(
                           onPressed: details.onStepContinue,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: context.colors.primaryTeal,
-                            padding: EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(8),
                             ),
@@ -469,7 +636,7 @@ borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
                             _currentStep == 2 ? 'Submit Report' : 'Continue',
-                            style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
                           ),
                         ),
                       ],

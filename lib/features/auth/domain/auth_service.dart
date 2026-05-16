@@ -112,6 +112,9 @@ class AuthService {
   // Sign In with Google
   Future<UserCredential> signInWithGoogle() async {
     try {
+      // Force account selection by signing out first
+      await _googleSignIn.signOut();
+      
       // Trigger the authentication flow
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
       if (googleUser == null) {
@@ -136,6 +139,42 @@ class AuthService {
       }
       
       return userCredential;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Get user data from Firestore
+  Future<Map<String, dynamic>?> getUserData(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      return doc.data();
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Update user profile in Firestore
+  Future<void> updateUserProfile({
+    required String uid,
+    required String name,
+    required String bio,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'name': name,
+        'bio': bio,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Send password reset email
+  Future<void> resetPassword(String email) async {
+    try {
+      await _firebaseAuth.sendPasswordResetEmail(email: email);
     } catch (e) {
       rethrow;
     }

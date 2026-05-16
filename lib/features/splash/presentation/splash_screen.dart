@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/presentation/login_screen.dart';
+import 'onboarding_screen.dart';
 import '../../auth/domain/auth_service.dart';
 import '../../home/presentation/home_screen.dart';
 import '../../admin/presentation/screens/admin_dashboard_screen.dart';
@@ -23,7 +24,7 @@ class _SplashScreenState extends State<SplashScreen> {
         final authService = AuthService();
         final isLoggedIn = authService.currentUser != null;
 
-        Widget targetScreen = const LoginScreen();
+        Widget targetScreen = const OnboardingScreen();
         if (isLoggedIn) {
           final isAdmin = await authService.isAdmin();
           targetScreen = isAdmin ? const AdminDashboardScreen() : const HomeScreen();
