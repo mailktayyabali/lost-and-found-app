@@ -246,8 +246,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                           Divider(color: context.colors.dividerColor, height: 1),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                            child: Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.end,
                               children: [
                                 OutlinedButton.icon(
                                   icon: Icon(
@@ -265,7 +267,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                                   ),
                                   onPressed: () => _toggleUserRole(uid, role),
                                 ),
-                                const SizedBox(width: 12),
                                 OutlinedButton.icon(
                                   icon: Icon(
                                     isBanned ? Icons.check_circle_outline_rounded : Icons.block_flipped,

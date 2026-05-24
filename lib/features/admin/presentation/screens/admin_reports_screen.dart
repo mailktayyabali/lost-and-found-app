@@ -271,8 +271,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                             const SizedBox(height: 16),
                             Divider(color: context.colors.dividerColor, height: 1),
                             const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
+                            Wrap(
+                              spacing: 12,
+                              runSpacing: 8,
+                              alignment: WrapAlignment.end,
                               children: [
                                 OutlinedButton.icon(
                                   icon: Icon(
@@ -295,7 +297,6 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                                   ),
                                   onPressed: () => _toggleReportResolution(reportId, status),
                                 ),
-                                const SizedBox(width: 12),
                                 OutlinedButton.icon(
                                   icon: Icon(Icons.delete_outline_rounded, size: 16, color: context.colors.tagLostRed),
                                   label: Text(

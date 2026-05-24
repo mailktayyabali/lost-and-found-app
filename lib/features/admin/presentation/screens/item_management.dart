@@ -49,22 +49,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   @override
+  @override
   Widget build(BuildContext context) {
     final tealColor = context.colors.primaryTeal;
     final cardBg = context.colors.surfaceWhite;
     final bg = context.colors.background;
 
     final tabs = [
-      _DashboardTab(signOut: _signOut),
-      _ReportsTab(),
+      _DashboardTab(
+        signOut: _signOut,
+        onNavigate: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+      ),
+      const _AnalyticsTab(),
       const _ItemsTab(),
-      const _AlertsTab(),
-      _ProfileTab(signOut: _signOut),
+      const _ModerationTab(),
+      const _UsersTab(),
     ];
 
     return Scaffold(
       backgroundColor: bg,
-      // No side drawer is set (drawer: null) as per requirements
       appBar: AppBar(
         backgroundColor: cardBg,
         elevation: 0,
@@ -73,7 +80,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           icon: Icon(Icons.menu_rounded, color: tealColor, size: 26),
           tooltip: 'Menu',
           onPressed: () {
-            // Static Menu button - no side drawer will be triggered
+            // Static Menu button
           },
         ),
         title: Text(
@@ -91,11 +98,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             tooltip: 'Search',
             onPressed: () {},
           ),
-          const Padding(
-            padding: EdgeInsets.only(right: 16.0, left: 8.0),
-            child: CircleAvatar(
-              radius: 18,
-              backgroundImage: NetworkImage('https://randomuser.me/api/portraits/men/32.jpg'),
+          GestureDetector(
+            onTap: _signOut,
+            child: const Padding(
+              padding: EdgeInsets.only(right: 16.0, left: 8.0),
+              child: CircleAvatar(
+                radius: 18,
+                backgroundImage: NetworkImage('https://randomuser.me/api/portraits/men/32.jpg'),
+              ),
             ),
           ),
         ],
@@ -138,10 +148,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
           _buildBottomBarItem(0, Icons.grid_view_rounded, 'DASHBOARD', activeColor, inactiveColor),
-          _buildBottomBarItem(1, Icons.assignment_outlined, 'REPORTS', activeColor, inactiveColor),
-          _buildBottomBarItem(2, Icons.stars_rounded, 'ITEMS', activeColor, inactiveColor, isSpecial: true),
-          _buildBottomBarItem(3, Icons.notifications_outlined, 'ALERTS', activeColor, inactiveColor),
-          _buildBottomBarItem(4, Icons.person_outline_rounded, 'PROFILE', activeColor, inactiveColor),
+          _buildBottomBarItem(1, Icons.trending_up_rounded, 'ANALYTICS', activeColor, inactiveColor),
+          _buildBottomBarItem(2, Icons.inventory_2_outlined, 'ITEMS', activeColor, inactiveColor),
+          _buildBottomBarItem(3, Icons.gavel_rounded, 'MODERATION', activeColor, inactiveColor),
+          _buildBottomBarItem(4, Icons.people_outline_rounded, 'USERS', activeColor, inactiveColor),
         ],
       ),
     );
@@ -152,89 +162,73 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     IconData icon,
     String label,
     Color activeColor,
-    Color inactiveColor, {
-    bool isSpecial = false,
-  }) {
+    Color inactiveColor,
+  ) {
     final isSelected = _currentIndex == index;
 
-    if (isSpecial) {
-      if (isSelected) {
-        // Special premium active capsule styling for the selected 'ITEMS' tab
-        return GestureDetector(
+    if (isSelected) {
+      // Premium active capsule styling for the selected tab
+      return Expanded(
+        child: GestureDetector(
           onTap: () => setState(() => _currentIndex = index),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFE2F0EF), // light teal capsule background
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(icon, color: activeColor, size: 22),
-                const SizedBox(width: 6),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: activeColor,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 12,
-                    letterSpacing: 0.5,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE2F0EF), // light teal capsule background
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: activeColor, size: 18),
+                  const SizedBox(width: 4),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        label,
+                        style: TextStyle(
+                          color: activeColor,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 11,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        );
-      } else {
-        // Special inactive standard look
-        return GestureDetector(
-          onTap: () => setState(() => _currentIndex = index),
-          behavior: HitTestBehavior.opaque,
-          child: SizedBox(
-            width: 72,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(icon, color: inactiveColor, size: 24),
-                const SizedBox(height: 4),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: inactiveColor,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      }
+        ),
+      );
     }
 
-    return GestureDetector(
-      onTap: () => setState(() => _currentIndex = index),
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 72,
+    return Expanded(
+      child: GestureDetector(
+        onTap: () => setState(() => _currentIndex = index),
+        behavior: HitTestBehavior.opaque,
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,
-              color: isSelected ? activeColor : inactiveColor,
+              color: inactiveColor,
               size: 24,
             ),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? activeColor : inactiveColor,
-                fontSize: 10,
-                fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
-                letterSpacing: 0.5,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: TextStyle(
+                  color: inactiveColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.5,
+                ),
               ),
             ),
           ],
@@ -979,236 +973,21 @@ class _ItemsTabState extends State<_ItemsTab> {
 }
 
 // ==========================================
-// NEW SECURITY ALERTS TAB
-// ==========================================
-class _AlertsTab extends StatelessWidget {
-  const _AlertsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(24.0),
-      children: [
-        Text(
-          'Security Alerts',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: context.colors.textDark, letterSpacing: -0.5),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Track system flags and notifications',
-          style: TextStyle(fontSize: 14, color: context.colors.textLight, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 24),
-        _buildAlertItem(
-          context,
-          'Flagged Item Report',
-          'A user flagged a listing (Leather Wallet) as spam or duplication.',
-          '10 mins ago',
-          Icons.flag_rounded,
-          context.colors.tagLostRed,
-        ),
-        _buildAlertItem(
-          context,
-          'New Admin Assigned',
-          'Elena Mitchell has been granted primary admin rights by Owner.',
-          '2 hours ago',
-          Icons.admin_panel_settings_rounded,
-          context.colors.primaryTeal,
-        ),
-        _buildAlertItem(
-          context,
-          'High Recovery Alert',
-          'Found items matching rate exceeded 85% in West Terminal!',
-          '1 day ago',
-          Icons.trending_up_rounded,
-          context.colors.tagFoundGreen,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAlertItem(BuildContext context, String title, String body, String time, IconData icon, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          )
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(icon, color: color, size: 20),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: context.colors.textDark, fontSize: 14)),
-                    Text(time, style: TextStyle(color: context.colors.textLight, fontSize: 11)),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  body,
-                  style: TextStyle(color: context.colors.textLight, fontSize: 13, height: 1.4),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ==========================================
-// NEW PROFILE TAB
-// ==========================================
-class _ProfileTab extends StatelessWidget {
-  final VoidCallback signOut;
-  const _ProfileTab({required this.signOut});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(24.0),
-      children: [
-        Text(
-          'Admin Profile',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: context.colors.textDark, letterSpacing: -0.5),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Manage your moderator account settings',
-          style: TextStyle(fontSize: 14, color: context.colors.textLight, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 32),
-        Center(
-          child: Stack(
-            children: [
-              const CircleAvatar(
-                radius: 60,
-                backgroundImage: NetworkImage('https://randomuser.me/api/portraits/men/32.jpg'),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: context.colors.primaryTeal,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                  child: const Icon(Icons.edit_rounded, color: Colors.white, size: 16),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 20),
-        Center(
-          child: Text(
-            'Admin Moderator',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: context.colors.textDark),
-          ),
-        ),
-        Center(
-          child: Text(
-            'Primary Platform Moderator',
-            style: TextStyle(fontSize: 13, color: context.colors.textLight, fontWeight: FontWeight.w500),
-          ),
-        ),
-        const SizedBox(height: 32),
-        _buildProfileTile(context, 'Account Details', 'Edit username, email, phone', Icons.person_rounded),
-        _buildProfileTile(context, 'Moderation Statistics', 'View your actions log and metrics', Icons.analytics_rounded),
-        _buildProfileTile(context, 'Privacy & Security', 'Change password, two-factor auth', Icons.shield_rounded),
-        const SizedBox(height: 32),
-        ElevatedButton.icon(
-          onPressed: signOut,
-          icon: const Icon(Icons.logout_rounded, color: Colors.white),
-          label: const Text('SIGN OUT FROM PANEL', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: context.colors.tagLostRed,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            padding: const EdgeInsets.symmetric(vertical: 16),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildProfileTile(BuildContext context, String title, String subtitle, IconData icon) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 3),
-          )
-        ],
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-        leading: Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: context.colors.primaryTeal.withValues(alpha: 0.08),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, color: context.colors.primaryTeal, size: 20),
-        ),
-        title: Text(title, style: TextStyle(fontWeight: FontWeight.bold, color: context.colors.textDark, fontSize: 14)),
-        subtitle: Text(subtitle, style: TextStyle(color: context.colors.textLight, fontSize: 12)),
-        trailing: Icon(Icons.chevron_right_rounded, color: context.colors.textLight),
-        onTap: () {},
-      ),
-    );
-  }
-}
-
-// ==========================================
-// RETAINED ORIGINAL TABS
+// CURATOR DASHBOARD OVERVIEW TAB
 // ==========================================
 class _DashboardTab extends StatelessWidget {
   final VoidCallback signOut;
-  const _DashboardTab({required this.signOut});
+  final Function(int) onNavigate;
+  const _DashboardTab({required this.signOut, required this.onNavigate});
 
   @override
   Widget build(BuildContext context) {
-    final tealColor = context.colors.primaryTeal;
     return ListView(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.all(24.0),
       children: [
         Text(
-          'Inventory Overview',
+          'Dashboard Overview',
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.bold,
@@ -1218,7 +997,7 @@ class _DashboardTab extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-          'Monitor regional recovery metrics and statistics.',
+          'Welcome back, here\'s what\'s happening today.',
           style: TextStyle(
             fontSize: 14,
             color: context.colors.textLight,
@@ -1226,330 +1005,1607 @@ class _DashboardTab extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 24),
-        Row(
-          children: [
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: Icon(Icons.podcasts_rounded, color: context.colors.textDark, size: 18),
-                label: Text('Broadcast', style: TextStyle(color: context.colors.textDark, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.colors.dividerColor.withValues(alpha: 0.5),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {},
-                icon: const Icon(Icons.ios_share_rounded, color: Colors.white, size: 18),
-                label: const Text('Export Data', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: tealColor,
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-            ),
-          ],
+        _buildOverviewCard(
+          context: context,
+          title: 'TOTAL USERS',
+          value: '12',
+          subtitle: '1 new this month',
+          icon: Icons.people_outline_rounded,
+          accentColor: context.colors.primaryTeal,
+        ),
+        _buildOverviewCard(
+          context: context,
+          title: 'ACTIVE ITEMS',
+          value: '2',
+          subtitle: '0 new this month',
+          icon: Icons.archive_outlined,
+          accentColor: context.colors.tagLostRed,
+        ),
+        _buildOverviewCard(
+          context: context,
+          title: 'PENDING REPORTS',
+          value: '0',
+          subtitle: 'Requires attention',
+          icon: Icons.warning_amber_rounded,
+          accentColor: Colors.orange,
+        ),
+        _buildOverviewCard(
+          context: context,
+          title: 'RESOLVED CASES',
+          value: '0',
+          subtitle: 'All time success',
+          icon: Icons.check_circle_outline_rounded,
+          accentColor: context.colors.buttonBlue,
         ),
         const SizedBox(height: 24),
-        _buildLeftBorderStatCard(context, 'TOTAL REPORTS', '1,482', '+12%', true),
-        _buildLeftBorderStatCard(context, 'ACTIVE USERS', '8,921', '+4.2%', true),
-        _buildLeftBorderStatCard(context, 'PENDING VERIFICATIONS', '43', 'Urgent', false, isUrgent: true),
-        _buildLeftBorderStatCard(context, 'RETURNED ITEMS', '612', '89% rate', false),
+        _buildBarChart(context),
+        const SizedBox(height: 24),
+        _buildLineChart(context),
+        const SizedBox(height: 24),
+        _buildRecentActivitySection(context),
+        const SizedBox(height: 40),
       ],
     );
   }
 
-  Widget _buildLeftBorderStatCard(BuildContext context, String title, String val, String sub, bool isPositive, {bool isUrgent = false}) {
+  Widget _buildOverviewCard({
+    required BuildContext context,
+    required String title,
+    required String value,
+    required String subtitle,
+    required IconData icon,
+    required Color accentColor,
+  }) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: context.colors.surfaceWhite,
-        borderRadius: BorderRadius.circular(12),
-        border: Border(
-          left: BorderSide(color: context.colors.primaryTeal, width: 4),
-        ),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 8, offset: const Offset(0, 4)),
-        ],
-      ),
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            title,
-            style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: context.colors.textLight, letterSpacing: 0.5),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
-            children: [
-              Text(
-                val,
-                style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: context.colors.textDark),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                sub,
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                  color: isUrgent
-                      ? context.colors.tagLostRed
-                      : (isPositive ? context.colors.tagFoundGreen : context.colors.textLight),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ReportsTab extends StatefulWidget {
-  @override
-  State<_ReportsTab> createState() => _ReportsTabState();
-}
-
-class _ReportsTabState extends State<_ReportsTab> {
-  String _activeFilter = 'All Reports';
-
-  @override
-  Widget build(BuildContext context) {
-    final tealColor = context.colors.primaryTeal;
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(24.0),
-      children: [
-        Text(
-          'Review & Moderate',
-          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: context.colors.textDark, letterSpacing: -0.5),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Manage and review community flagged reports',
-          style: TextStyle(fontSize: 14, color: context.colors.textLight, fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 20),
-        SizedBox(
-          height: 38,
-          child: ListView(
-            scrollDirection: Axis.horizontal,
-            children: ['All Reports', 'Lost', 'Found', 'Pending'].map((filter) {
-              final isSelected = _activeFilter == filter;
-              return GestureDetector(
-                onTap: () {
-                  setState(() {
-                    _activeFilter = filter;
-                  });
-                },
-                child: Container(
-                  margin: const EdgeInsets.only(right: 8),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: isSelected ? tealColor : context.colors.dividerColor.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  alignment: Alignment.center,
-                  child: Text(
-                    filter,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? Colors.white : context.colors.textLight,
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 20),
-        TextField(
-          style: TextStyle(color: context.colors.textDark),
-          decoration: InputDecoration(
-            hintText: 'Search reports...',
-            hintStyle: TextStyle(color: context.colors.textLight),
-            prefixIcon: Icon(Icons.search, color: context.colors.textLight),
-            filled: true,
-            fillColor: context.colors.surfaceWhite,
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: context.colors.dividerColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: tealColor),
-            ),
-          ),
-        ),
-        const SizedBox(height: 24),
-        _buildReportVisualCard(
-          context,
-          'Black Leather Wallet',
-          'LOST • TERMINAL 4 LOUNGE',
-          'Jonathan Doe',
-          'Oct 24, 2025',
-          'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200',
-          isNew: true,
-          isWarning: true,
-        ),
-        _buildReportVisualCard(
-          context,
-          'MacBook Pro 16"',
-          'FOUND • KITZBUEHEL SKI RESORT',
-          'Alice Smith',
-          'Oct 23, 2025',
-          'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?auto=format&fit=crop&q=80&w=200',
-          isNew: false,
-          isApprove: false,
-        ),
-        _buildReportVisualCard(
-          context,
-          'Gold Digital Watch',
-          'LOST • FITNESS CENTER',
-          'Mark Kira',
-          'Oct 22, 2025',
-          'https://images.unsplash.com/photo-1524592094714-0f0654e20314?auto=format&fit=crop&q=80&w=200',
-          isNew: false,
-          isApprove: true,
-          isWatch: true,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildReportVisualCard(
-    BuildContext context,
-    String item,
-    String location,
-    String reporter,
-    String date,
-    String imageUrl, {
-    required bool isNew,
-    bool isWarning = false,
-    bool isApprove = true,
-    bool isWatch = false,
-  }) {
-    final tealColor = context.colors.primaryTeal;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 24),
       decoration: BoxDecoration(
         color: context.colors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.colors.dividerColor),
         boxShadow: [
-          BoxShadow(color: Colors.black.withValues(alpha: 0.02), blurRadius: 10, offset: const Offset(0, 4)),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
         ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: accentColor, width: 5),
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                        color: context.colors.textLight,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      value,
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        color: context.colors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: context.colors.textLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: accentColor,
+                  size: 24,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildBarChart(BuildContext context) {
+    final barColor = const Color(0xFF80DEEA);
+    final activeBarColor = context.colors.primaryTeal;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.dividerColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Stack(
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              ClipRRect(
-                borderRadius: const BorderRadius.only(topLeft: Radius.circular(16), topRight: Radius.circular(16)),
-                child: Image.network(
-                  imageUrl,
-                  height: 180,
-                  width: double.infinity,
-                  fit: BoxFit.cover,
+              Text(
+                'User Growth (Last 30 Days)',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.textDark,
                 ),
               ),
-              if (isNew)
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(color: tealColor, borderRadius: BorderRadius.circular(4)),
-                    child: const Text('NEW', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
-                  ),
-                ),
+              Icon(Icons.more_horiz_rounded, color: context.colors.textLight),
             ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(16.0),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 180,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                _buildBar(context, 'WEEK 1', 60, barColor),
+                _buildBar(context, 'WEEK 2', 90, barColor),
+                _buildBar(context, 'WEEK 3', 75, barColor),
+                _buildBar(context, 'WEEK 4', 140, activeBarColor),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBar(BuildContext context, String label, double height, Color color) {
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.end,
+      children: [
+        Container(
+          width: 14,
+          height: height,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+          ),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.bold,
+            color: context.colors.textLight,
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLineChart(BuildContext context) {
+    final teal = context.colors.primaryTeal;
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Item Activity (Last 30 Days)',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.textDark,
+                ),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: teal,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'UPLOADS',
+                    style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: context.colors.textLight),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: context.colors.textLight.withValues(alpha: 0.5),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'EDITS',
+                    style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: context.colors.textLight),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          SizedBox(
+            height: 120,
+            width: double.infinity,
+            child: CustomPaint(
+              painter: LineChartPainter(lineColor: teal, gradientColor: teal),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: ['01 NOV', '10 NOV', '20 NOV', '30 NOV'].map((date) {
+              return Text(
+                date,
+                style: TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.textLight,
+                  letterSpacing: 0.5,
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRecentActivitySection(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: context.colors.surfaceWhite,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'RECENT ACTIVITY',
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.textDark,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              Text(
+                'VIEW ALL',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.primaryTeal,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildActivityItem(
+            context,
+            'New user registered:\n"TheCurator_99"',
+            'Today at 10:45 AM',
+            Icons.person_add_alt_1_rounded,
+            const Color(0xFFE2F0EF),
+            context.colors.primaryTeal,
+          ),
+          const SizedBox(height: 12),
+          _buildActivityItem(
+            context,
+            'Updated item:\n"High-Resolution Satellite Data"',
+            'Yesterday at 4:12 PM',
+            Icons.edit_note_rounded,
+            const Color(0xFFFFEBEE),
+            context.colors.tagLostRed,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivityItem(
+    BuildContext context,
+    String title,
+    String time,
+    IconData icon,
+    Color bgIconColor,
+    Color iconColor,
+  ) {
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: bgIconColor,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: iconColor, size: 20),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: context.colors.textDark,
+                  height: 1.3,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                time,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: context.colors.textLight,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class LineChartPainter extends CustomPainter {
+  final Color lineColor;
+  final Color gradientColor;
+  LineChartPainter({required this.lineColor, required this.gradientColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+
+    final path = Path();
+    path.moveTo(0, size.height * 0.7);
+    path.cubicTo(
+      size.width * 0.3, size.height * 0.8,
+      size.width * 0.5, size.height * 0.85,
+      size.width * 0.6, size.height * 0.6,
+    );
+    path.cubicTo(
+      size.width * 0.8, size.height * 0.3,
+      size.width * 0.9, size.height * 0.2,
+      size.width, size.height * 0.25,
+    );
+
+    final fillPath = Path.from(path);
+    fillPath.lineTo(size.width, size.height);
+    fillPath.lineTo(0, size.height);
+    fillPath.close();
+
+    final fillPaint = Paint()
+      ..shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [
+          gradientColor.withValues(alpha: 0.15),
+          gradientColor.withValues(alpha: 0.0),
+        ],
+      ).createShader(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..style = PaintingStyle.fill;
+
+    canvas.drawPath(fillPath, fillPaint);
+    canvas.drawPath(path, paint);
+
+    final activePointPaint = Paint()
+      ..color = lineColor
+      ..style = PaintingStyle.fill;
+    final activePointBorder = Paint()
+      ..color = Colors.white
+      ..style = PaintingStyle.fill;
+
+    final pointX = size.width * 0.6;
+    final pointY = size.height * 0.6;
+    canvas.drawCircle(Offset(pointX, pointY), 8, activePointPaint);
+    canvas.drawCircle(Offset(pointX, pointY), 4, activePointBorder);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+// ==========================================
+// SYSTEM ANALYTICS TAB
+// ==========================================
+class _AnalyticsTab extends StatefulWidget {
+  const _AnalyticsTab();
+
+  @override
+  State<_AnalyticsTab> createState() => _AnalyticsTabState();
+}
+
+class _AnalyticsTabState extends State<_AnalyticsTab> {
+  String _activeCategory = 'All';
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(24.0),
+      children: [
+        Row(
+          children: [
+            Icon(Icons.analytics_rounded, color: context.colors.primaryTeal, size: 28),
+            const SizedBox(width: 8),
+            Text(
+              'System Analytics',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: context.colors.textDark,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Monitor system activity and performance',
+          style: TextStyle(
+            fontSize: 14,
+            color: context.colors.textLight,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        Row(
+          children: [
+            Expanded(
+              child: _buildTrendCard(
+                context,
+                'ACTIVE USERS',
+                '1,284',
+                '+ 12%',
+                true,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildTrendCard(
+                context,
+                'TOTAL ITEMS',
+                '45.2k',
+                '+ 5%',
+                true,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 28),
+
+        _buildCategoryFilters(),
+        const SizedBox(height: 28),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Recent Activity Log',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: context.colors.textDark,
+              ),
+            ),
+            Text(
+              'VIEW ALL',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+                color: context.colors.primaryTeal,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+
+        _buildLogItem(
+          context,
+          'New user Admin joined',
+          '5/24/2026, 11:37:15 AM',
+          Icons.person_add_rounded,
+          context.colors.primaryTeal,
+        ),
+        _buildLogItem(
+          context,
+          'Collection Meridian Alpha updated',
+          '5/24/2026, 10:15:02 AM',
+          Icons.inventory_2_rounded,
+          Colors.orange,
+        ),
+        _buildLogItem(
+          context,
+          'Security audit Success',
+          '5/24/2026, 09:45:30 AM',
+          Icons.verified_user_rounded,
+          context.colors.tagFoundGreen,
+        ),
+        _buildLogItem(
+          context,
+          'Backup completed for Items DB',
+          '5/24/2026, 08:30:11 AM',
+          Icons.cloud_done_rounded,
+          Colors.blue,
+        ),
+
+        const SizedBox(height: 40),
+        Center(
+          child: Opacity(
+            opacity: 0.1,
+            child: Icon(Icons.waves_rounded, size: 64, color: context.colors.textLight),
+          ),
+        ),
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildTrendCard(
+    BuildContext context,
+    String title,
+    String value,
+    String trend,
+    bool isPositive,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: context.colors.primaryTeal, width: 5),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: context.colors.textLight,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    value,
+                    style: TextStyle(
+                      color: context.colors.textDark,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        isPositive ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                        color: isPositive ? context.colors.tagFoundGreen : context.colors.tagLostRed,
+                        size: 14,
+                      ),
+                      const SizedBox(width: 2),
+                      Text(
+                        trend,
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: isPositive ? context.colors.tagFoundGreen : context.colors.tagLostRed,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryFilters() {
+    final categories = ['All', 'Users', 'Items'];
+    return Container(
+      height: 48,
+      padding: const EdgeInsets.all(4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F3F5),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: categories.map((cat) {
+          final isSelected = _activeCategory == cat;
+          return Expanded(
+            child: GestureDetector(
+              onTap: () => setState(() => _activeCategory = cat),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: isSelected ? context.colors.primaryTeal : Colors.transparent,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  cat,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: isSelected ? Colors.white : context.colors.textLight,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildLogItem(
+    BuildContext context,
+    String title,
+    String timestamp,
+    IconData icon,
+    Color iconColor,
+  ) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.dividerColor),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: iconColor.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        item,
-                        style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: context.colors.textDark),
-                      ),
-                    ),
-                    Icon(
-                      isWarning
-                          ? Icons.warning_rounded
-                          : (isWatch ? Icons.watch_later_outlined : Icons.check_circle_rounded),
-                      color: isWarning
-                          ? context.colors.tagLostRed
-                          : (isWatch ? context.colors.textLight : context.colors.tagFoundGreen),
-                    ),
-                  ],
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: context.colors.textDark,
+                  ),
                 ),
                 const SizedBox(height: 4),
-                Text(location, style: TextStyle(color: context.colors.textLight, fontSize: 11, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    CircleAvatar(
-                      radius: 12,
-                      backgroundColor: tealColor.withValues(alpha: 0.1),
-                      child: Text(reporter[0], style: TextStyle(color: tealColor, fontSize: 10, fontWeight: FontWeight.bold)),
+                Text(
+                  timestamp,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: context.colors.textLight,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==========================================
+// MODERATION QUEUE TAB
+// ==========================================
+class _ModerationTab extends StatefulWidget {
+  const _ModerationTab();
+
+  @override
+  State<_ModerationTab> createState() => _ModerationTabState();
+}
+
+class _ModerationTabState extends State<_ModerationTab> {
+  String _activeFilter = 'PENDING';
+  late List<Map<String, dynamic>> _moderationItems;
+  late List<Map<String, dynamic>> _filteredItems;
+
+  @override
+  void initState() {
+    super.initState();
+    _moderationItems = [
+      {
+        'id': '1',
+        'title': 'Testing',
+        'reportedBy': 'Tayyab Ali',
+        'date': '5/24/2026',
+        'reason': 'fsds',
+        'status': 'PENDING',
+        'isUserReport': true,
+      },
+      {
+        'id': '2',
+        'title': 'wallet',
+        'reportedBy': 'Tayyab Ali',
+        'date': '5/24/2026',
+        'reason': 'thsdf',
+        'status': 'PENDING',
+        'isUserReport': false,
+      },
+    ];
+    _applyFilter();
+  }
+
+  void _applyFilter() {
+    setState(() {
+      _filteredItems = _moderationItems.where((item) => item['status'] == _activeFilter).toList();
+    });
+  }
+
+  void _updateStatus(String id, String newStatus, String snackbarMsg, Color color) {
+    setState(() {
+      final index = _moderationItems.indexWhere((item) => item['id'] == id);
+      if (index != -1) {
+        _moderationItems[index]['status'] = newStatus;
+      }
+      _applyFilter();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(snackbarMsg),
+        backgroundColor: color,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      children: [
+        const SizedBox(height: 24),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(Icons.gavel_rounded, color: context.colors.primaryTeal, size: 28),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Moderation Queue',
+                    style: TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                      color: context.colors.textDark,
+                      letterSpacing: -0.5,
                     ),
-                    const SizedBox(width: 8),
-                    Text(reporter, style: TextStyle(fontWeight: FontWeight.w500, color: context.colors.textDark, fontSize: 12)),
-                    const Spacer(),
-                    Text('Reported $date', style: TextStyle(color: context.colors.textLight, fontSize: 11)),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Review user reports and flagged content across the ecosystem.',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: context.colors.textLight,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        _buildFilterChips(),
+        const SizedBox(height: 24),
+
+        if (_filteredItems.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.done_all_rounded, size: 64, color: context.colors.tagFoundGreen),
+                const SizedBox(height: 16),
+                Text(
+                  'Moderation queue is empty',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: context.colors.textLight,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _filteredItems.length,
+            itemBuilder: (context, index) {
+              return _buildModerationCard(_filteredItems[index]);
+            },
+          ),
+
+        _buildPaginationFooter(),
+      ],
+    );
+  }
+
+  Widget _buildFilterChips() {
+    final filters = ['PENDING', 'RESOLVED', 'DISMISSED'];
+    return SizedBox(
+      height: 40,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: filters.length,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        itemBuilder: (context, index) {
+          final filter = filters[index];
+          final isSelected = _activeFilter == filter;
+          return Padding(
+            padding: const EdgeInsets.only(right: 10),
+            child: InkWell(
+              onTap: () {
+                setState(() => _activeFilter = filter);
+                _applyFilter();
+              },
+              borderRadius: BorderRadius.circular(20),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
+                decoration: BoxDecoration(
+                  color: isSelected ? context.colors.primaryTeal : const Color(0xFFE9ECEF),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Center(
+                  child: Text(
+                    filter,
+                    style: TextStyle(
+                      color: isSelected ? Colors.white : context.colors.textLight,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildModerationCard(Map<String, dynamic> item) {
+    final leftBorderColor = item['isUserReport'] ? context.colors.primaryTeal : const Color(0xFFD32F2F);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16, left: 24, right: 24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: context.colors.dividerColor),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: leftBorderColor, width: 4),
+            ),
+          ),
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  CircleAvatar(
+                    radius: 20,
+                    backgroundColor: const Color(0xFFE9ECEF),
+                    child: Icon(
+                      item['isUserReport'] ? Icons.person_rounded : Icons.wallet_giftcard_rounded,
+                      color: context.colors.textLight,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          item['title'],
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: context.colors.textDark,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        RichText(
+                          text: TextSpan(
+                            style: TextStyle(color: context.colors.textLight, fontSize: 11),
+                            children: [
+                              const TextSpan(text: 'Reported by: '),
+                              TextSpan(
+                                text: item['reportedBy'],
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        'DATE',
+                        style: TextStyle(
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                          color: context.colors.textLight,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        item['date'],
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                          color: context.colors.textDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF8F9FA),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(color: const Color(0xFFE9ECEF)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'REASON',
+                      style: TextStyle(
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFFD32F2F),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '"${item['reason']}"',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontStyle: FontStyle.italic,
+                        color: context.colors.textDark,
+                      ),
+                    ),
                   ],
                 ),
+              ),
+              if (_activeFilter == 'PENDING') ...[
                 const SizedBox(height: 16),
                 Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton(
-                        onPressed: () {},
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: tealColor,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                          elevation: 0,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: OutlinedButton.icon(
+                        onPressed: () => _updateStatus(
+                          item['id'],
+                          'DISMISSED',
+                          'Report dismissed successfully.',
+                          context.colors.textLight,
                         ),
-                        child: Text(
-                          isApprove ? 'Approve' : 'Flag for Review',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        icon: const Icon(Icons.close_rounded, size: 16),
+                        label: const Text('Dismiss', style: TextStyle(fontWeight: FontWeight.bold)),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: context.colors.textDark,
+                          side: BorderSide(color: context.colors.dividerColor),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         ),
                       ),
                     ),
                     const SizedBox(width: 12),
-                    Container(
-                      decoration: BoxDecoration(
-                        color: context.colors.dividerColor.withValues(alpha: 0.5),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: IconButton(
-                        icon: Icon(isApprove ? Icons.delete_outline_rounded : Icons.flag_rounded, color: context.colors.textDark),
-                        onPressed: () {},
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: () => _updateStatus(
+                          item['id'],
+                          'RESOLVED',
+                          'Report resolved successfully.',
+                          context.colors.primaryTeal,
+                        ),
+                        icon: const Icon(Icons.check_rounded, size: 16, color: Colors.white),
+                        label: const Text('Resolve', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: context.colors.primaryTeal,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPaginationFooter() {
+    return Padding(
+      padding: const EdgeInsets.only(left: 24, right: 24, bottom: 32, top: 16),
+      child: Column(
+        children: [
+          Text(
+            'PAGE 1 OF 1 (${_filteredItems.length} ITEMS)',
+            style: TextStyle(
+              color: context.colors.textLight.withValues(alpha: 0.6),
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.8,
             ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              _buildArrowButton(Icons.chevron_left_rounded, onPressed: null),
+              const SizedBox(width: 16),
+              _buildArrowButton(Icons.chevron_right_rounded, onPressed: null),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArrowButton(IconData icon, {VoidCallback? onPressed}) {
+    final isDisabled = onPressed == null;
+    return Container(
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFFE9ECEF)),
+      ),
+      child: IconButton(
+        onPressed: onPressed,
+        icon: Icon(icon),
+        color: isDisabled ? Colors.black26 : context.colors.textDark,
+        padding: const EdgeInsets.all(12),
+      ),
+    );
+  }
+}
+
+// ==========================================
+// USER MANAGEMENT TAB
+// ==========================================
+class _UsersTab extends StatefulWidget {
+  const _UsersTab();
+
+  @override
+  State<_UsersTab> createState() => _UsersTabState();
+}
+
+class _UsersTabState extends State<_UsersTab> {
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
+  late List<Map<String, dynamic>> _users;
+  late List<Map<String, dynamic>> _filteredUsers;
+
+  @override
+  void initState() {
+    super.initState();
+    _users = [
+      {
+        'id': '1',
+        'name': 'Admin',
+        'email': 'admin@findit.com',
+        'joined': '5/24/2026',
+        'status': 'ACTIVE',
+        'avatar': 'AD',
+        'isImage': false,
+      },
+      {
+        'id': '2',
+        'name': 'Alishba Asif',
+        'email': 'alishbaasif1266@gmail.com',
+        'joined': '4/3/2026',
+        'status': 'ACTIVE',
+        'avatar': 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=100',
+        'isImage': true,
+      },
+      {
+        'id': '3',
+        'name': 'Rajab Ali',
+        'email': 'rajab10312@gmail.com',
+        'joined': '2/16/2026',
+        'status': 'ACTIVE',
+        'avatar': 'RA',
+        'isImage': false,
+      },
+      {
+        'id': '4',
+        'name': 'zuhran',
+        'email': 'zuhrayousaf1234@gmail.com',
+        'joined': '2/12/2026',
+        'status': 'ACTIVE',
+        'avatar': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=100',
+        'isImage': true,
+      },
+    ];
+    _applyFilter();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  void _applyFilter() {
+    setState(() {
+      if (_searchQuery.isEmpty) {
+        _filteredUsers = List.from(_users);
+      } else {
+        _filteredUsers = _users.where((user) {
+          final name = user['name'].toString().toLowerCase();
+          final email = user['email'].toString().toLowerCase();
+          return name.contains(_searchQuery) || email.contains(_searchQuery);
+        }).toList();
+      }
+    });
+  }
+
+  void _toggleBan(String id, String name) {
+    setState(() {
+      final index = _users.indexWhere((u) => u['id'] == id);
+      if (index != -1) {
+        final currentStatus = _users[index]['status'];
+        _users[index]['status'] = currentStatus == 'BANNED' ? 'ACTIVE' : 'BANNED';
+      }
+      _applyFilter();
+    });
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Updated ban status for $name.')),
+    );
+  }
+
+  void _deleteUser(String id, String name) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: context.colors.surfaceWhite,
+        title: Text('Delete User', style: TextStyle(color: context.colors.textDark, fontWeight: FontWeight.bold)),
+        content: Text('Are you sure you want to permanently delete user "$name"?', style: TextStyle(color: context.colors.textLight)),
+        actions: [
+          TextButton(
+            child: Text('Cancel', style: TextStyle(color: context.colors.textLight)),
+            onPressed: () => Navigator.of(ctx).pop(),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: context.colors.tagLostRed),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+            onPressed: () {
+              Navigator.of(ctx).pop();
+              setState(() {
+                _users.removeWhere((u) => u['id'] == id);
+                _applyFilter();
+              });
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('User $name deleted.')),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.all(24.0),
+      children: [
+        Row(
+          children: [
+            Icon(Icons.group_rounded, color: context.colors.primaryTeal, size: 28),
+            const SizedBox(width: 8),
+            Text(
+              'User Management',
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: context.colors.textDark,
+                letterSpacing: -0.5,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'View and moderate registered users within the Meridian ecosystem.',
+          style: TextStyle(
+            fontSize: 14,
+            color: context.colors.textLight,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        Row(
+          children: [
+            Expanded(
+              child: _buildSimpleStatCard(
+                context,
+                'TOTAL ACTIVE',
+                '1,284',
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildSimpleStatCard(
+                context,
+                'NEW THIS WEEK',
+                '+12',
+                accentColor: context.colors.tagFoundGreen,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 24),
+
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F3F5),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.menu_open_rounded, color: context.colors.textLight),
+              const SizedBox(width: 10),
+              Expanded(
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (val) {
+                    setState(() {
+                      _searchQuery = val.trim().toLowerCase();
+                    });
+                    _applyFilter();
+                  },
+                  style: TextStyle(color: context.colors.textDark),
+                  decoration: InputDecoration(
+                    hintText: 'Search registered users...',
+                    hintStyle: TextStyle(color: context.colors.textLight, fontSize: 14),
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        if (_filteredUsers.isEmpty)
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Text(
+                'No users match query.',
+                style: TextStyle(color: context.colors.textLight, fontWeight: FontWeight.bold),
+              ),
+            ),
+          )
+        else
+          ..._filteredUsers.map((user) => _buildUserCard(user)),
+
+        const SizedBox(height: 16),
+        Center(
+          child: TextButton.icon(
+            onPressed: () {},
+            icon: const Text(
+              'Load More Users',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            label: const Icon(Icons.keyboard_arrow_down_rounded),
+            style: TextButton.styleFrom(
+              foregroundColor: context.colors.primaryTeal,
+            ),
+          ),
+        ),
+        const SizedBox(height: 60),
+      ],
+    );
+  }
+
+  Widget _buildSimpleStatCard(
+    BuildContext context,
+    String title,
+    String value, {
+    Color? accentColor,
+  }) {
+    final activeColor = accentColor ?? context.colors.primaryTeal;
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.dividerColor),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border(
+              left: BorderSide(color: activeColor, width: 5),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  color: context.colors.textLight,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 0.8,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                style: TextStyle(
+                  color: activeColor,
+                  fontSize: 26,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUserCard(Map<String, dynamic> user) {
+    final statusColor = user['status'] == 'ACTIVE' ? context.colors.tagFoundGreen : context.colors.tagLostRed;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.dividerColor),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 22,
+                backgroundColor: const Color(0xFFFFE0B2),
+                backgroundImage: user['isImage'] ? NetworkImage(user['avatar']) : null,
+                child: !user['isImage']
+                    ? Text(
+                        user['avatar'],
+                        style: const TextStyle(
+                          color: Color(0xFFE65100),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      user['name'],
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: context.colors.textDark,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      user['email'],
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: context.colors.textLight,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: statusColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  user['status'],
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.bold,
+                    color: statusColor,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'JOINED',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: context.colors.textLight,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    user['joined'],
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: context.colors.textDark,
+                    ),
+                  ),
+                ],
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () => _toggleBan(user['id'], user['name']),
+                    icon: Icon(
+                      user['status'] == 'BANNED' ? Icons.check_circle_outline_rounded : Icons.block_flipped,
+                      color: context.colors.textLight,
+                      size: 20,
+                    ),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFF1F3F5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.all(10),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () => _deleteUser(user['id'], user['name']),
+                    icon: Icon(
+                      Icons.delete_outline_rounded,
+                      color: context.colors.tagLostRed,
+                      size: 20,
+                    ),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color(0xFFF1F3F5),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      padding: const EdgeInsets.all(10),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ],
       ),
