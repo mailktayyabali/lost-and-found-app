@@ -5,7 +5,7 @@ import '../saved_items_screen.dart';
 import '../../../alerts/presentation/create_alert_screen.dart';
 import '../../../auth/domain/auth_service.dart';
 import '../../../auth/presentation/login_screen.dart';
-import '../../../admin/presentation/screens/admin_dashboard_screen.dart';
+import '../../../admin/presentation/screens/item_management.dart';
 import '../../../profile/presentation/settings_screen.dart';
 
 import '../../../../core/theme/theme_manager.dart';
