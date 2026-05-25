@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../../shared/models/item_model.dart';
 import '../../../shared/services/saved_items_service.dart';
 import 'widgets/home_bottom_nav_bar.dart';
@@ -12,6 +13,8 @@ class ItemDetailsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final reporterName = item.reporterName ?? 'Marcus Chen';
+
     return Scaffold(
       backgroundColor: context.colors.background,
       appBar: AppBar(
@@ -268,10 +271,10 @@ class ItemDetailsScreen extends StatelessWidget {
 
                         // Profile Card
                         Container(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(AppDimensions.paddingMedium),
                           decoration: BoxDecoration(
                             color: context.colors.background, // Light grey
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: AppDimensions.borderMedium,
                           ),
                           child: Row(
                             children: [
@@ -287,7 +290,7 @@ class ItemDetailsScreen extends StatelessWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Marcus Chen',
+                                      reporterName,
                                       style: TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 16,
@@ -345,7 +348,7 @@ class ItemDetailsScreen extends StatelessWidget {
                               backgroundColor: context.colors.primaryTeal,
                               foregroundColor: Colors.white,
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: AppDimensions.borderMedium,
                               ),
                               elevation: 0,
                             ),
@@ -362,8 +365,8 @@ class ItemDetailsScreen extends StatelessWidget {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const LeaveReviewScreen(
-                                    userName: 'Marcus Chen',
+                                  builder: (_) => LeaveReviewScreen(
+                                    userName: reporterName,
                                     userAvatarUrl:
                                         'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
                                   ),
@@ -388,7 +391,7 @@ class ItemDetailsScreen extends StatelessWidget {
                                 width: 1.5,
                               ),
                               shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
+                                borderRadius: AppDimensions.borderMedium,
                               ),
                             ),
                           ),
@@ -396,7 +399,7 @@ class ItemDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         Center(
                           child: Text(
-                            'Let others know about your interaction with Marcus',
+                            'Let others know about your interaction with $reporterName',
                             style: TextStyle(
                               fontSize: 11,
                               color: context.colors.textLight,
@@ -432,7 +435,7 @@ class ItemDetailsScreen extends StatelessWidget {
                         color: context.colors.dividerColor,
                         width: 1.5,
                       ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: AppDimensions.borderMedium,
                     ),
                     child: IconButton(
                       icon: Icon(
@@ -451,8 +454,8 @@ class ItemDetailsScreen extends StatelessWidget {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (_) => const ChatScreen(
-                                userName: 'Marcus Chen',
+                              builder: (_) => ChatScreen(
+                                userName: reporterName,
                                 avatarUrl:
                                     'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
                                 isOnline: true,
@@ -465,9 +468,9 @@ class ItemDetailsScreen extends StatelessWidget {
                           color: Colors.white,
                           size: 18,
                         ),
-                        label: const Text(
-                          'Contact Marcus',
-                          style: TextStyle(
+                        label: Text(
+                          'Contact $reporterName',
+                          style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
                           ),
@@ -476,7 +479,7 @@ class ItemDetailsScreen extends StatelessWidget {
                           backgroundColor: context.colors.primaryTeal,
                           foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: AppDimensions.borderMedium,
                           ),
                           elevation: 0,
                         ),

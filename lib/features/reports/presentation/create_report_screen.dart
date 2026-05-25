@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../shared/presentation/widgets/mock_map_widget.dart';
 import '../../../shared/models/item_model.dart';
+import '../../auth/domain/auth_service.dart';
 import '../data/repositories/mock_reports_repository.dart';
 import 'report_success_screen.dart';
 
@@ -146,6 +147,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   void _submitReport() async {
+    final currentUser = AuthService().currentUser;
     final newItem = Item(
       id: 'report_${DateTime.now().millisecondsSinceEpoch}',
       title: _itemNameController.text.trim().isEmpty ? 'Unnamed Item' : _itemNameController.text.trim(),
@@ -158,6 +160,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       timeAgo: 'Just now',
       category: _selectedCategory,
       status: _isLost ? 'LOST' : 'FOUND',
+      createdBy: currentUser?.uid ?? 'anonymous',
+      reporterName: _nameController.text.trim().isEmpty ? (currentUser?.displayName ?? 'Anonymous') : _nameController.text.trim(),
+      reporterEmail: _emailController.text.trim().isEmpty ? (currentUser?.email ?? '') : _emailController.text.trim(),
+      reporterPhone: _phoneController.text.trim().isEmpty ? '' : _phoneController.text.trim(),
     );
 
     await MockReportsRepository().addReport(newItem);

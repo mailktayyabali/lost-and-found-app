@@ -1,12 +1,14 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/app_dimensions.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../home/presentation/item_details_screen.dart';
 import '../../../shared/models/item_model.dart';
 import '../../auth/domain/auth_service.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../../home/presentation/widgets/home_drawer.dart';
+import '../../reports/data/repositories/mock_reports_repository.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -20,6 +22,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final AuthService _authService = AuthService();
   User? _currentUser;
   Map<String, dynamic>? _userData;
+  List<Item> _userItems = [];
   bool _isLoading = true;
 
   @override
@@ -33,6 +36,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _currentUser = _authService.currentUser;
     if (_currentUser != null) {
       _userData = await _authService.getUserData(_currentUser!.uid);
+      final allItems = await MockReportsRepository().getItems();
+      _userItems = allItems.where((item) =>
+        item.createdBy == _currentUser!.uid ||
+        (item.reporterEmail != null &&
+            item.reporterEmail!.toLowerCase() == _currentUser!.email?.toLowerCase())
+      ).toList();
     }
     if (mounted) {
       setState(() => _isLoading = false);
@@ -159,13 +168,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const SizedBox(height: 24),
                       // Stats
                       Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        padding: const EdgeInsets.symmetric(horizontal: AppDimensions.paddingExtraLarge),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            _buildStatColumn(context, '0', 'TOTAL REPORTS'),
-                            _buildStatColumn(context, '0', 'POSTS'),
-                            _buildStatColumn(context, '0', 'TOTAL CLAIMS'),
+                            _buildStatColumn(context, _userItems.length.toString(), 'TOTAL REPORTS'),
+                            _buildStatColumn(context, _userItems.where((item) => item.status != 'RESOLVED').length.toString(), 'POSTS'),
+                            _buildStatColumn(context, _userItems.where((item) => item.status == 'RESOLVED').length.toString(), 'TOTAL CLAIMS'),
                           ],
                         ),
                       ),
@@ -322,8 +331,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Widget _buildActivityGrid(BuildContext context) {
-    // Currently using empty list as we don't have user's specific items logic yet
-    final List<Item> items = [];
+    final items = _userItems;
 
     if (items.isEmpty) {
       return Center(

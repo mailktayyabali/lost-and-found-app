@@ -7,6 +7,7 @@ import 'widgets/home_bottom_nav_bar.dart';
 import 'widgets/search_category_chips.dart';
 import 'widgets/search_location_range.dart';
 import 'widgets/search_result_item.dart';
+import 'home_screen.dart';
 
 class SearchScreen extends StatefulWidget {
   const SearchScreen({super.key});
@@ -76,7 +77,20 @@ class _SearchScreenState extends State<SearchScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(Icons.arrow_back_ios_new, color: context.colors.textDark, size: 20),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (context, animation1, animation2) => const HomeScreen(),
+                  transitionDuration: Duration.zero,
+                  reverseTransitionDuration: Duration.zero,
+                ),
+              );
+            }
+          },
         ),
         title: Text(
           'Find Items',

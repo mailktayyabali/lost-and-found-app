@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/theme/app_dimensions.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../home/presentation/widgets/home_drawer.dart';
 
@@ -13,6 +14,8 @@ class CreateAlertScreen extends StatefulWidget {
 class _CreateAlertScreenState extends State<CreateAlertScreen> {
   bool _isLostAlert = true;
   double _radius = 5.2;
+  String? _selectedCategory;
+  final List<String> _categories = ['Electronics', 'Wallets', 'Keys', 'Pets', 'Bags', 'Other'];
 
   @override
   Widget build(BuildContext context) {
@@ -43,7 +46,7 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
       ),
       drawer: const HomeDrawer(),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(24.0),
+        padding: const EdgeInsets.all(AppDimensions.paddingExtraLarge),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -56,7 +59,7 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                 letterSpacing: -0.5,
               ),
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Text(
               'Define specific parameters to be notified immediately when a matching item is posted in your vicinity.',
               style: TextStyle(
@@ -65,15 +68,15 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                 height: 1.5,
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
             // Toggle Switch
             Container(
               decoration: BoxDecoration(
                 color: context.colors.background,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: AppDimensions.borderMedium,
               ),
-              padding: EdgeInsets.all(4),
+              padding: const EdgeInsets.all(4),
               child: Row(
                 children: [
                   Expanded(
@@ -351,20 +354,30 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
 
   Widget _buildDropdownField(String hint) {
     return Padding(
-      padding: EdgeInsets.only(top: 12.0),
+      padding: const EdgeInsets.only(top: 12.0),
       child: Container(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         decoration: BoxDecoration(
           color: context.colors.dividerColor.withValues(alpha: 0.6),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: AppDimensions.borderMedium,
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
+            value: _selectedCategory,
             hint: Text(hint, style: TextStyle(color: context.colors.textLight, fontSize: 15)),
             isExpanded: true,
             icon: Icon(Icons.keyboard_arrow_down, color: context.colors.textLight),
-            items: [],
-            onChanged: (v) {},
+            items: _categories.map((category) {
+              return DropdownMenuItem<String>(
+                value: category,
+                child: Text(category, style: TextStyle(color: context.colors.textDark, fontSize: 15)),
+              );
+            }).toList(),
+            onChanged: (v) {
+              setState(() {
+                _selectedCategory = v;
+              });
+            },
           ),
         ),
       ),

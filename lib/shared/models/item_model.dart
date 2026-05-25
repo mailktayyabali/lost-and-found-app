@@ -8,6 +8,10 @@ class Item {
   final String timeAgo;
   final String category;
   final String status; // 'LOST', 'FOUND', 'RESOLVED', 'ACTIVE'
+  final String? createdBy;
+  final String? reporterName;
+  final String? reporterEmail;
+  final String? reporterPhone;
 
   const Item({
     required this.id,
@@ -19,6 +23,10 @@ class Item {
     required this.timeAgo,
     this.category = 'Other',
     this.status = 'ACTIVE',
+    this.createdBy,
+    this.reporterName,
+    this.reporterEmail,
+    this.reporterPhone,
   });
 
   factory Item.fromJson(Map<String, dynamic> json, String docId) {
@@ -32,6 +40,10 @@ class Item {
       timeAgo: json['timeAgo'] ?? 'some time ago',
       category: json['category'] ?? 'Other',
       status: json['status'] ?? ((json['isLost'] ?? true) ? 'LOST' : 'FOUND'),
+      createdBy: json['createdBy'],
+      reporterName: json['reporterName'],
+      reporterEmail: json['reporterEmail'],
+      reporterPhone: json['reporterPhone'],
     );
   }
 
@@ -47,6 +59,10 @@ class Item {
       'timeAgo': timeAgo,
       'category': category,
       'status': status,
+      'createdBy': createdBy,
+      'reporterName': reporterName,
+      'reporterEmail': reporterEmail,
+      'reporterPhone': reporterPhone,
     };
   }
 
@@ -60,6 +76,10 @@ class Item {
     String? timeAgo,
     String? category,
     String? status,
+    String? createdBy,
+    String? reporterName,
+    String? reporterEmail,
+    String? reporterPhone,
   }) {
     return Item(
       id: id ?? this.id,
@@ -71,6 +91,10 @@ class Item {
       timeAgo: timeAgo ?? this.timeAgo,
       category: category ?? this.category,
       status: status ?? this.status,
+      createdBy: createdBy ?? this.createdBy,
+      reporterName: reporterName ?? this.reporterName,
+      reporterEmail: reporterEmail ?? this.reporterEmail,
+      reporterPhone: reporterPhone ?? this.reporterPhone,
     );
   }
 
@@ -82,4 +106,3 @@ class Item {
   @override
   int get hashCode => id.hashCode;
 }
-
