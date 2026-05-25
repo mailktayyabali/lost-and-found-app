@@ -4,6 +4,8 @@ import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../shared/presentation/widgets/mock_map_widget.dart';
+import '../../../shared/models/item_model.dart';
+import '../data/repositories/mock_reports_repository.dart';
 import 'report_success_screen.dart';
 
 class CreateReportScreen extends StatefulWidget {
@@ -143,7 +145,24 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
-  void _submitReport() {
+  void _submitReport() async {
+    final newItem = Item(
+      id: 'report_${DateTime.now().millisecondsSinceEpoch}',
+      title: _itemNameController.text.trim().isEmpty ? 'Unnamed Item' : _itemNameController.text.trim(),
+      location: _locationController.text.trim().isEmpty ? 'Unknown Location' : _locationController.text.trim(),
+      description: _descriptionController.text.trim(),
+      isLost: _isLost,
+      imageUrl: _selectedImages.isNotEmpty 
+          ? _selectedImages.first.path 
+          : 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200',
+      timeAgo: 'Just now',
+      category: _selectedCategory,
+      status: _isLost ? 'LOST' : 'FOUND',
+    );
+
+    await MockReportsRepository().addReport(newItem);
+
+    if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
         builder: (context) => const ReportSuccessScreen(),

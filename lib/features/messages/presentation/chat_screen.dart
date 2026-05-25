@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
+import '../data/repositories/mock_chat_repository.dart';
 
-class ChatScreen extends StatelessWidget {
+class ChatScreen extends StatefulWidget {
   final String userName;
   final String avatarUrl;
   final bool isOnline;
@@ -12,6 +13,44 @@ class ChatScreen extends StatelessWidget {
     required this.avatarUrl,
     this.isOnline = true,
   });
+
+  @override
+  State<ChatScreen> createState() => _ChatScreenState();
+}
+
+class _ChatScreenState extends State<ChatScreen> {
+  final MockChatRepository _chatRepository = MockChatRepository();
+  final TextEditingController _messageController = TextEditingController();
+  List<Map<String, dynamic>> _messages = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadMessages();
+  }
+
+  @override
+  void dispose() {
+    _messageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadMessages() async {
+    final list = await _chatRepository.getMessages(widget.userName);
+    setState(() {
+      _messages = list;
+      _isLoading = false;
+    });
+  }
+
+  Future<void> _handleSendMessage() async {
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+    _messageController.clear();
+    await _chatRepository.sendMessage(widget.userName, text);
+    _loadMessages();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -32,22 +71,22 @@ class ChatScreen extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: NetworkImage(avatarUrl),
+                backgroundImage: NetworkImage(widget.avatarUrl),
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   Text(
-                    userName,
+                  Text(
+                    widget.userName,
                     style: TextStyle(
                       color: context.colors.textDark,
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (isOnline)
+                  if (widget.isOnline)
                     const Text(
                       'Online',
                       style: TextStyle(
@@ -127,60 +166,58 @@ class ChatScreen extends StatelessWidget {
           ),
           
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-              children: [
-                // Date separator
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: context.colors.dividerColor.withValues(alpha: 0.5),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Text(
-                      'TODAY',
-                      style: TextStyle(
-                        color: context.colors.textLight,
-                        fontSize: 11,
-                        fontWeight: FontWeight.w600,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+                    itemCount: _messages.length + 1, // +1 for the today separator
+                    itemBuilder: (context, index) {
+                      if (index == 0) {
+                        return Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: context.colors.dividerColor.withValues(alpha: 0.5),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: Text(
+                              'TODAY',
+                              style: TextStyle(
+                                color: context.colors.textLight,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        );
+                      }
+                      
+                      final msg = _messages[index - 1];
+                      final isMe = msg['isMe'] ?? false;
+                      
+                      if (isMe) {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 16.0),
+                          child: _buildOutgoingMessage(
+                            context,
+                            text: msg['text'] ?? '',
+                            time: msg['time'] ?? 'Just now',
+                          ),
+                        );
+                      } else {
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 16.0),
+                          child: _buildIncomingMessage(
+                            context,
+                            text: msg['text'] ?? '',
+                            time: msg['time'] ?? 'Just now',
+                            avatarUrl: widget.avatarUrl,
+                          ),
+                        );
+                      }
+                    },
                   ),
-                ),
-                const SizedBox(height: 24),
-
-                // Incoming Message
-                _buildIncomingMessage(context,
-                  text: 'Hi there! I think I found your wallet at the Central Park bench near the fountain.',
-                  time: '10:24 AM',
-                  avatarUrl: avatarUrl,
-                ),
-                const SizedBox(height: 24),
-
-                // Outgoing Message
-                _buildOutgoingMessage(context,
-                  text: 'Oh thank goodness! Does it have a library card with the name "Alex" inside?',
-                  time: '10:25 AM',
-                ),
-                const SizedBox(height: 24),
-
-                // Incoming Message without Image
-                _buildIncomingMessage(context,
-                  text: 'Yes, it does. I checked inside and found a library card with your name.',
-                  time: '10:27 AM',
-                  avatarUrl: avatarUrl,
-                ),
-                const SizedBox(height: 24),
-
-                // Outgoing Message
-                _buildOutgoingMessage(context,
-                  text: "That's definitely mine! Where can we meet for the handover? I'm happy to...",
-                  time: '10:28 AM',
-                ),
-              ],
-            ),
           ),
           
           // Input Area
@@ -211,7 +248,9 @@ class ChatScreen extends StatelessWidget {
                         borderRadius: BorderRadius.circular(24),
                       ),
                       child: TextField(
+                        controller: _messageController,
                         style: TextStyle(color: context.colors.textDark),
+                        onSubmitted: (_) => _handleSendMessage(),
                         decoration: InputDecoration(
                           hintText: 'Type a message...',
                           hintStyle: TextStyle(color: context.colors.textLight, fontSize: 15),
@@ -222,14 +261,17 @@ class ChatScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 12),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryTeal,
-                      shape: BoxShape.circle,
+                  GestureDetector(
+                    onTap: _handleSendMessage,
+                    child: Container(
+                      width: 40,
+                      height: 40,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primaryTeal,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.send, color: Colors.white, size: 18),
                     ),
-                    child: const Icon(Icons.send, color: Colors.white, size: 18),
                   ),
                 ],
               ),
@@ -307,7 +349,7 @@ class ChatScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(width: 40), // Pad right side so it doesn't stretch to the edge
+        const SizedBox(width: 40),
       ],
     );
   }
@@ -320,7 +362,7 @@ class ChatScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       mainAxisAlignment: MainAxisAlignment.end,
       children: [
-        const SizedBox(width: 40), // Pad left side
+        const SizedBox(width: 40),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.end,
@@ -386,3 +428,4 @@ class ChatScreen extends StatelessWidget {
     );
   }
 }
+

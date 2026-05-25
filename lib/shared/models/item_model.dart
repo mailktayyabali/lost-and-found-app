@@ -7,6 +7,7 @@ class Item {
   final String imageUrl;
   final String timeAgo;
   final String category;
+  final String status; // 'LOST', 'FOUND', 'RESOLVED', 'ACTIVE'
 
   const Item({
     required this.id,
@@ -17,7 +18,61 @@ class Item {
     required this.imageUrl,
     required this.timeAgo,
     this.category = 'Other',
+    this.status = 'ACTIVE',
   });
+
+  factory Item.fromJson(Map<String, dynamic> json, String docId) {
+    return Item(
+      id: docId,
+      title: json['title'] ?? json['itemName'] ?? '',
+      location: json['location'] ?? '',
+      description: json['description'] ?? '',
+      isLost: json['isLost'] ?? true,
+      imageUrl: json['imageUrl'] ?? '',
+      timeAgo: json['timeAgo'] ?? 'some time ago',
+      category: json['category'] ?? 'Other',
+      status: json['status'] ?? ((json['isLost'] ?? true) ? 'LOST' : 'FOUND'),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'itemName': title,
+      'location': location,
+      'description': description,
+      'isLost': isLost,
+      'imageUrl': imageUrl,
+      'timeAgo': timeAgo,
+      'category': category,
+      'status': status,
+    };
+  }
+
+  Item copyWith({
+    String? id,
+    String? title,
+    String? location,
+    String? description,
+    bool? isLost,
+    String? imageUrl,
+    String? timeAgo,
+    String? category,
+    String? status,
+  }) {
+    return Item(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      location: location ?? this.location,
+      description: description ?? this.description,
+      isLost: isLost ?? this.isLost,
+      imageUrl: imageUrl ?? this.imageUrl,
+      timeAgo: timeAgo ?? this.timeAgo,
+      category: category ?? this.category,
+      status: status ?? this.status,
+    );
+  }
 
   @override
   bool operator ==(Object other) =>
@@ -27,3 +82,4 @@ class Item {
   @override
   int get hashCode => id.hashCode;
 }
+

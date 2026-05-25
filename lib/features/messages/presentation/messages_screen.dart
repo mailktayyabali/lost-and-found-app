@@ -2,10 +2,44 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../home/presentation/home_screen.dart';
+import '../data/repositories/mock_chat_repository.dart';
 import 'chat_screen.dart';
 
-class MessagesScreen extends StatelessWidget {
+class MessagesScreen extends StatefulWidget {
   const MessagesScreen({super.key});
+
+  @override
+  State<MessagesScreen> createState() => _MessagesScreenState();
+}
+
+class _MessagesScreenState extends State<MessagesScreen> {
+  final MockChatRepository _chatRepository = MockChatRepository();
+  List<Map<String, dynamic>> _conversations = [];
+  String _searchQuery = '';
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadConversations();
+  }
+
+  Future<void> _loadConversations() async {
+    final list = await _chatRepository.getConversations();
+    setState(() {
+      _conversations = list;
+      _isLoading = false;
+    });
+  }
+
+  List<Map<String, dynamic>> get _filteredConversations {
+    if (_searchQuery.isEmpty) return _conversations;
+    return _conversations.where((c) {
+      final name = c['name'].toString().toLowerCase();
+      final msg = c['message'].toString().toLowerCase();
+      return name.contains(_searchQuery.toLowerCase()) || msg.contains(_searchQuery.toLowerCase());
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,27 +75,32 @@ class MessagesScreen extends StatelessWidget {
             icon: Icon(Icons.search, color: context.colors.textDark),
             onPressed: () {},
           ),
-          SizedBox(width: 8),
+          const SizedBox(width: 8),
         ],
       ),
       body: Column(
         children: [
           // Search Bar
           Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Container(
               height: 40,
               decoration: BoxDecoration(
-                color: context.colors.background, // Light grey matching image
+                color: context.colors.background,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: TextField(
+                onChanged: (value) {
+                  setState(() {
+                    _searchQuery = value;
+                  });
+                },
                 decoration: InputDecoration(
                   hintText: 'Search conversations...',
                   hintStyle: TextStyle(color: context.colors.textLight, fontSize: 14),
                   prefixIcon: Icon(Icons.search, color: context.colors.textLight, size: 18),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(vertical: 10), // centers text with 40 height
+                  contentPadding: const EdgeInsets.symmetric(vertical: 10),
                 ),
               ),
             ),
@@ -69,41 +108,35 @@ class MessagesScreen extends StatelessWidget {
           Divider(height: 1, color: context.colors.background),
           
           Expanded(
-            child: ListView(
-              children: [
-                _buildMessageTile(context,
-                  name: 'Sarah Miller',
-                  message: 'Is this the brown wallet you lo...',
-                  time: '2:45 PM',
-                  isUnread: true,
-                  isOnline: true,
-                  avatarUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
-                  itemImageUrl: 'https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-                ),
-                _buildMessageTile(context,
-                  name: 'Alex Johnson',
-                  message: 'I found your keys near the park e...',
-                  time: 'Yesterday',
-                  isUnread: false,
-                  isOnline: false,
-                  avatarUrl: 'https://randomuser.me/api/portraits/men/32.jpg',
-                  itemImageUrl: 'https://images.unsplash.com/photo-1584447128309-8d76ae5cb3f7?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-                ),
-                _buildMessageTile(context,
-                  name: 'Jordan Smith',
-                  message: 'Thanks for returning my dog! He...',
-                  time: 'Monday',
-                  isUnread: false,
-                  isOnline: false,
-                  avatarUrl: 'https://randomuser.me/api/portraits/men/22.jpg',
-                  itemImageUrl: 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-                ),
-              ],
-            ),
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : _filteredConversations.isEmpty
+                    ? Center(
+                        child: Text(
+                          'No conversations found',
+                          style: TextStyle(color: context.colors.textLight),
+                        ),
+                      )
+                    : ListView.builder(
+                        itemCount: _filteredConversations.length,
+                        itemBuilder: (context, index) {
+                          final conv = _filteredConversations[index];
+                          return _buildMessageTile(
+                            context,
+                            name: conv['name'],
+                            message: conv['message'],
+                            time: conv['time'],
+                            isUnread: conv['isUnread'],
+                            isOnline: conv['isOnline'],
+                            avatarUrl: conv['avatarUrl'],
+                            itemImageUrl: conv['itemImageUrl'],
+                          );
+                        },
+                      ),
           ),
         ],
       ),
-      bottomNavigationBar: const HomeBottomNavBar(currentIndex: 3), // Pass index 3 for Messages tab
+      bottomNavigationBar: const HomeBottomNavBar(currentIndex: 3),
     );
   }
 
@@ -120,8 +153,8 @@ class MessagesScreen extends StatelessWidget {
     return Column(
       children: [
         ListTile(
-          onTap: () {
-            Navigator.push(
+          onTap: () async {
+            await Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (_) => ChatScreen(
@@ -131,8 +164,9 @@ class MessagesScreen extends StatelessWidget {
                 ),
               ),
             );
+            _loadConversations(); // Reload conversation list when returning
           },
-          contentPadding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
           leading: Stack(
             children: [
               CircleAvatar(
@@ -147,7 +181,7 @@ class MessagesScreen extends StatelessWidget {
                     width: 14,
                     height: 14,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF10B981), // Green status dot
+                      color: const Color(0xFF10B981),
                       shape: BoxShape.circle,
                       border: Border.all(color: context.colors.surfaceWhite, width: 2),
                     ),
@@ -175,7 +209,7 @@ class MessagesScreen extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: isUnread ? FontWeight.w600 : FontWeight.normal,
-                  color: isUnread ? context.colors.textLight : context.colors.textLight, // Sameish color, mostly font weight differs
+                  color: context.colors.textLight,
                 ),
               ),
             ],
@@ -195,18 +229,17 @@ class MessagesScreen extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              SizedBox(width: 8),
+              const SizedBox(width: 8),
               if (isUnread)
                 Container(
                   width: 8,
                   height: 8,
-                  margin: EdgeInsets.only(right: 8),
+                  margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
                     color: context.colors.primaryTeal,
                     shape: BoxShape.circle,
                   ),
                 ),
-              // Item Image
               Container(
                 width: 48,
                 height: 48,
@@ -227,3 +260,4 @@ class MessagesScreen extends StatelessWidget {
     );
   }
 }
+
