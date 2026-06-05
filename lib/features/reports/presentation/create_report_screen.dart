@@ -1,12 +1,14 @@
+import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:http/http.dart' as http;
 import '../../../../core/theme/app_colors.dart';
 import '../../shared/presentation/widgets/mock_map_widget.dart';
 import '../../../shared/models/item_model.dart';
 import '../../auth/domain/auth_service.dart';
-import '../data/repositories/mock_reports_repository.dart';
+import '../data/repositories/firebase_reports_repository.dart';
 import 'report_success_screen.dart';
 
 class CreateReportScreen extends StatefulWidget {
@@ -19,6 +21,7 @@ class CreateReportScreen extends StatefulWidget {
 class _CreateReportScreenState extends State<CreateReportScreen> {
   int _currentStep = 0;
   bool _isLost = true;
+  bool _isSubmitting = false;
 
   // Form Controllers - Phase 1
   final _itemNameController = TextEditingController();
@@ -127,10 +130,12 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   void _onStepTapped(int step) {
+    if (_isSubmitting) return;
     setState(() => _currentStep = step);
   }
 
   void _onStepContinue() {
+    if (_isSubmitting) return;
     if (_currentStep < 2) {
       setState(() => _currentStep += 1);
     } else {
@@ -139,6 +144,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   void _onStepCancel() {
+    if (_isSubmitting) return;
     if (_currentStep > 0) {
       setState(() => _currentStep -= 1);
     } else {
@@ -146,34 +152,77 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
+  Future<String> _uploadImageToCloudinary(String filePath) async {
+    const cloudName = 'dnrpmihgg';
+    const uploadPreset = 'ml_default';
+    
+    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
+    final request = http.MultipartRequest('POST', url)
+      ..fields['upload_preset'] = uploadPreset
+      ..files.add(await http.MultipartFile.fromPath('file', filePath));
+      
+    final response = await request.send();
+    if (response.statusCode == 200 || response.statusCode == 201) {
+      final responseData = await response.stream.bytesToString();
+      final jsonResponse = jsonDecode(responseData);
+      return jsonResponse['secure_url'] as String;
+    } else {
+      throw Exception('Cloudinary upload failed with status code: ${response.statusCode}');
+    }
+  }
+
   void _submitReport() async {
+    if (_isSubmitting) return;
+    setState(() {
+      _isSubmitting = true;
+    });
+
     final currentUser = AuthService().currentUser;
-    final newItem = Item(
-      id: 'report_${DateTime.now().millisecondsSinceEpoch}',
-      title: _itemNameController.text.trim().isEmpty ? 'Unnamed Item' : _itemNameController.text.trim(),
-      location: _locationController.text.trim().isEmpty ? 'Unknown Location' : _locationController.text.trim(),
-      description: _descriptionController.text.trim(),
-      isLost: _isLost,
-      imageUrl: _selectedImages.isNotEmpty 
-          ? _selectedImages.first.path 
-          : 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200',
-      timeAgo: 'Just now',
-      category: _selectedCategory,
-      status: _isLost ? 'LOST' : 'FOUND',
-      createdBy: currentUser?.uid ?? 'anonymous',
-      reporterName: _nameController.text.trim().isEmpty ? (currentUser?.displayName ?? 'Anonymous') : _nameController.text.trim(),
-      reporterEmail: _emailController.text.trim().isEmpty ? (currentUser?.email ?? '') : _emailController.text.trim(),
-      reporterPhone: _phoneController.text.trim().isEmpty ? '' : _phoneController.text.trim(),
-    );
+    final reportId = 'report_${DateTime.now().millisecondsSinceEpoch}';
 
-    await MockReportsRepository().addReport(newItem);
+    try {
+      String uploadedImageUrl = 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200';
+      
+      if (_selectedImages.isNotEmpty) {
+        uploadedImageUrl = await _uploadImageToCloudinary(_selectedImages.first.path);
+      }
 
-    if (!mounted) return;
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const ReportSuccessScreen(),
-      ),
-    );
+      final newItem = Item(
+        id: reportId,
+        title: _itemNameController.text.trim().isEmpty ? 'Unnamed Item' : _itemNameController.text.trim(),
+        location: _locationController.text.trim().isEmpty ? 'Unknown Location' : _locationController.text.trim(),
+        description: _descriptionController.text.trim(),
+        isLost: _isLost,
+        imageUrl: uploadedImageUrl,
+        timeAgo: 'Just now',
+        category: _selectedCategory,
+        status: _isLost ? 'LOST' : 'FOUND',
+        createdBy: currentUser?.uid ?? 'anonymous',
+        reporterName: _nameController.text.trim().isEmpty ? (currentUser?.displayName ?? 'Anonymous') : _nameController.text.trim(),
+        reporterEmail: _emailController.text.trim().isEmpty ? (currentUser?.email ?? '') : _emailController.text.trim(),
+        reporterPhone: _phoneController.text.trim().isEmpty ? '' : _phoneController.text.trim(),
+      );
+
+      await FirebaseReportsRepository().addReport(newItem);
+
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => const ReportSuccessScreen(),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit report: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   Widget _buildToggle() {
@@ -670,7 +719,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                       children: [
                         if (_currentStep > 0)
                           TextButton(
-                            onPressed: details.onStepCancel,
+                            onPressed: _isSubmitting ? null : details.onStepCancel,
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                               shape: RoundedRectangleBorder(
@@ -682,7 +731,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                           ),
                         if (_currentStep == 0)
                           TextButton(
-                            onPressed: details.onStepCancel,
+                            onPressed: _isSubmitting ? null : details.onStepCancel,
                             style: TextButton.styleFrom(
                               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                               shape: RoundedRectangleBorder(
@@ -694,7 +743,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                           ),
                         const SizedBox(width: 12),
                         ElevatedButton(
-                          onPressed: details.onStepContinue,
+                          onPressed: _isSubmitting ? null : details.onStepContinue,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: context.colors.primaryTeal,
                             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
@@ -703,10 +752,19 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
                             ),
                             elevation: 0,
                           ),
-                          child: Text(
-                            _currentStep == 2 ? 'Submit Report' : 'Continue',
-                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
+                          child: _isSubmitting
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  ),
+                                )
+                              : Text(
+                                  _currentStep == 2 ? 'Submit Report' : 'Continue',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                                ),
                         ),
                       ],
                     ),

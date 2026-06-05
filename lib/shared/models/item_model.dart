@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class Item {
   final String id;
   final String title;
@@ -29,6 +31,37 @@ class Item {
     this.reporterPhone,
   });
 
+  static String _calculateTimeAgo(dynamic timestamp) {
+    if (timestamp == null) return 'some time ago';
+    DateTime dateTime;
+    if (timestamp is Timestamp) {
+      dateTime = timestamp.toDate();
+    } else if (timestamp is String) {
+      dateTime = DateTime.tryParse(timestamp) ?? DateTime.now();
+    } else if (timestamp is int) {
+      dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    } else {
+      return 'some time ago';
+    }
+    
+    final difference = DateTime.now().difference(dateTime);
+    if (difference.inDays >= 365) {
+      return '${(difference.inDays / 365).floor()}y ago';
+    } else if (difference.inDays >= 30) {
+      return '${(difference.inDays / 30).floor()}mo ago';
+    } else if (difference.inDays >= 7) {
+      return '${(difference.inDays / 7).floor()}w ago';
+    } else if (difference.inDays >= 1) {
+      return '${difference.inDays}d ago';
+    } else if (difference.inHours >= 1) {
+      return '${difference.inHours}h ago';
+    } else if (difference.inMinutes >= 1) {
+      return '${difference.inMinutes}m ago';
+    } else {
+      return 'Just now';
+    }
+  }
+
   factory Item.fromJson(Map<String, dynamic> json, String docId) {
     return Item(
       id: docId,
@@ -37,7 +70,7 @@ class Item {
       description: json['description'] ?? '',
       isLost: json['isLost'] ?? true,
       imageUrl: json['imageUrl'] ?? '',
-      timeAgo: json['timeAgo'] ?? 'some time ago',
+      timeAgo: json['timeAgo'] ?? _calculateTimeAgo(json['createdAt'] ?? json['dateReported']),
       category: json['category'] ?? 'Other',
       status: json['status'] ?? ((json['isLost'] ?? true) ? 'LOST' : 'FOUND'),
       createdBy: json['createdBy'],

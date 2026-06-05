@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../home/presentation/home_screen.dart';
+import 'my_posts_screen.dart';
 
 class ReportSuccessScreen extends StatelessWidget {
   const ReportSuccessScreen({super.key});
@@ -105,8 +106,10 @@ class ReportSuccessScreen extends StatelessWidget {
                 height: 56,
                 child: TextButton(
                   onPressed: () {
-                    // Just pop the success screen (and maybe previous screens if handled by router)
-                    Navigator.of(context).pop();
+                    // Replace the stack with MyPostsScreen so popping goes back to Home
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(builder: (context) => const MyPostsScreen()),
+                    );
                   },
                   style: TextButton.styleFrom(
                     foregroundColor: context.colors.textDark,

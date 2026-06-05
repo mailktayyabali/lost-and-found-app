@@ -1,8 +1,9 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../home/presentation/home_screen.dart';
-import '../data/repositories/mock_chat_repository.dart';
+import '../data/repositories/firebase_chat_repository.dart';
 import 'chat_screen.dart';
 
 class MessagesScreen extends StatefulWidget {
@@ -13,23 +14,49 @@ class MessagesScreen extends StatefulWidget {
 }
 
 class _MessagesScreenState extends State<MessagesScreen> {
-  final MockChatRepository _chatRepository = MockChatRepository();
+  final FirebaseChatRepository _chatRepository = FirebaseChatRepository();
   List<Map<String, dynamic>> _conversations = [];
   String _searchQuery = '';
   bool _isLoading = true;
+  StreamSubscription? _conversationsSub;
 
   @override
   void initState() {
     super.initState();
-    _loadConversations();
+    _subscribeConversations();
+  }
+
+  @override
+  void dispose() {
+    _conversationsSub?.cancel();
+    super.dispose();
+  }
+
+  void _subscribeConversations() {
+    _conversationsSub = _chatRepository.getConversationsStream().listen((snapshot) async {
+      final list = await _chatRepository.getConversations();
+      if (mounted) {
+        setState(() {
+          _conversations = list;
+          _isLoading = false;
+        });
+      }
+    }, onError: (err) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    });
   }
 
   Future<void> _loadConversations() async {
     final list = await _chatRepository.getConversations();
-    setState(() {
-      _conversations = list;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _conversations = list;
+      });
+    }
   }
 
   List<Map<String, dynamic>> get _filteredConversations {

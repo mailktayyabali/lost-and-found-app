@@ -1,6 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../data/repositories/mock_chat_repository.dart';
+import '../data/repositories/firebase_chat_repository.dart';
 
 class ChatScreen extends StatefulWidget {
   final String userName;
@@ -19,29 +20,47 @@ class ChatScreen extends StatefulWidget {
 }
 
 class _ChatScreenState extends State<ChatScreen> {
-  final MockChatRepository _chatRepository = MockChatRepository();
+  final FirebaseChatRepository _chatRepository = FirebaseChatRepository();
   final TextEditingController _messageController = TextEditingController();
   List<Map<String, dynamic>> _messages = [];
   bool _isLoading = true;
+  StreamSubscription? _messagesSub;
 
   @override
   void initState() {
     super.initState();
-    _loadMessages();
+    _subscribeMessages();
   }
 
   @override
   void dispose() {
     _messageController.dispose();
+    _messagesSub?.cancel();
     super.dispose();
+  }
+
+  void _subscribeMessages() {
+    // Set up local loader first
+    _loadMessages();
+
+    // Listen to real-time message events from Firestore
+    _messagesSub = _chatRepository.getMessagesStream(widget.userName).listen((snapshot) {
+      _loadMessages();
+    }, onError: (err) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    });
   }
 
   Future<void> _loadMessages() async {
     final list = await _chatRepository.getMessages(widget.userName);
-    setState(() {
-      _messages = list;
-      _isLoading = false;
-    });
+    if (mounted) {
+      setState(() {
+        _messages = list;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _handleSendMessage() async {
@@ -49,7 +68,6 @@ class _ChatScreenState extends State<ChatScreen> {
     if (text.isEmpty) return;
     _messageController.clear();
     await _chatRepository.sendMessage(widget.userName, text);
-    _loadMessages();
   }
 
   @override

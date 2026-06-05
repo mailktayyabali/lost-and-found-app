@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/models/item_model.dart';
-import '../../../reports/data/repositories/mock_reports_repository.dart';
+import '../../../reports/data/repositories/firebase_reports_repository.dart';
 
 class ItemsTab extends StatefulWidget {
   const ItemsTab({super.key});
@@ -11,7 +11,7 @@ class ItemsTab extends StatefulWidget {
 }
 
 class _ItemsTabState extends State<ItemsTab> {
-  final MockReportsRepository _reportsRepository = MockReportsRepository();
+  final FirebaseReportsRepository _reportsRepository = FirebaseReportsRepository();
   String _activeFilter = 'ALL';
   List<Item> _allItems = [];
   bool _isLoading = true;

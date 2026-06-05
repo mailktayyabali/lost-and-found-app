@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../shared/models/item_model.dart';
 import '../../../shared/services/saved_items_service.dart';
-import '../../reports/data/repositories/mock_reports_repository.dart';
+import '../../reports/data/repositories/firebase_reports_repository.dart';
 import 'widgets/home_bottom_nav_bar.dart';
 import 'widgets/search_category_chips.dart';
 import 'widgets/search_location_range.dart';
@@ -17,7 +17,7 @@ class SearchScreen extends StatefulWidget {
 }
 
 class _SearchScreenState extends State<SearchScreen> {
-  final MockReportsRepository _reportsRepository = MockReportsRepository();
+  final FirebaseReportsRepository _reportsRepository = FirebaseReportsRepository();
   final TextEditingController _searchController = TextEditingController();
   
   double _locationSliderValue = 15.0;
@@ -42,11 +42,22 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Future<void> _loadItems() async {
-    final list = await _reportsRepository.getItems();
-    setState(() {
-      _allItems = list;
-      _isLoading = false;
-    });
+    try {
+      final list = await _reportsRepository.getItems();
+      if (mounted) {
+        setState(() {
+          _allItems = list;
+        });
+      }
+    } catch (e) {
+      debugPrint('SearchScreen: Error loading items: $e');
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   List<Item> get _filteredItems {

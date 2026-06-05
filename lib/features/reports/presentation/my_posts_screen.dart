@@ -4,7 +4,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/item_model.dart';
 import '../../auth/domain/auth_service.dart';
 import '../../home/presentation/item_details_screen.dart';
-import '../../reports/data/repositories/mock_reports_repository.dart';
+import '../../reports/data/repositories/firebase_reports_repository.dart';
 import 'widgets/post_item_card.dart';
 
 class MyPostsScreen extends StatefulWidget {
@@ -27,25 +27,40 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
   }
 
   Future<void> _loadUserPosts() async {
+    if (!mounted) return;
     setState(() => _isLoading = true);
     _currentUser = _authService.currentUser;
-    if (_currentUser != null) {
-      final allItems = await MockReportsRepository().getItems();
-      _userItems = allItems.where((item) =>
-        item.createdBy == _currentUser!.uid ||
-        (item.reporterEmail != null &&
-            item.reporterEmail!.toLowerCase() == _currentUser!.email?.toLowerCase())
-      ).toList();
-    }
-    if (mounted) {
-      setState(() => _isLoading = false);
+    try {
+      if (_currentUser != null) {
+        final allItems = await FirebaseReportsRepository().getItems();
+        _userItems = allItems.where((item) =>
+          item.createdBy == _currentUser!.uid ||
+          (item.reporterEmail != null &&
+              item.reporterEmail!.toLowerCase() == _currentUser!.email?.toLowerCase())
+        ).toList();
+      }
+    } catch (e) {
+      debugPrint('MyPostsScreen: Error loading posts: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load reports: $e'),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   Future<void> _deletePost(String id) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final themeColors = context.colors;
-    await MockReportsRepository().deleteReport(id);
+    await FirebaseReportsRepository().deleteReport(id);
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: const Text('Post deleted successfully'),
@@ -59,7 +74,7 @@ class _MyPostsScreenState extends State<MyPostsScreen> {
   Future<void> _markRecovered(String id) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final themeColors = context.colors;
-    await MockReportsRepository().updateItemStatus(id, 'RESOLVED');
+    await FirebaseReportsRepository().updateItemStatus(id, 'RESOLVED');
     scaffoldMessenger.showSnackBar(
       SnackBar(
         content: const Text('Item marked as recovered!'),

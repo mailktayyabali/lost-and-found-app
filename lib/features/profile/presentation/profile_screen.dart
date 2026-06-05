@@ -8,7 +8,7 @@ import '../../../shared/models/item_model.dart';
 import '../../auth/domain/auth_service.dart';
 import '../../auth/presentation/login_screen.dart';
 import '../../home/presentation/widgets/home_drawer.dart';
-import '../../reports/data/repositories/mock_reports_repository.dart';
+import '../../reports/data/repositories/firebase_reports_repository.dart';
 import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
@@ -36,7 +36,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _currentUser = _authService.currentUser;
     if (_currentUser != null) {
       _userData = await _authService.getUserData(_currentUser!.uid);
-      final allItems = await MockReportsRepository().getItems();
+      final allItems = await FirebaseReportsRepository().getItems();
       _userItems = allItems.where((item) =>
         item.createdBy == _currentUser!.uid ||
         (item.reporterEmail != null &&
