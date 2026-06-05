@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 import '../../domain/repositories/chat_repository.dart';
 
 class FirebaseChatRepository implements ChatRepository {
@@ -41,22 +42,20 @@ class FirebaseChatRepository implements ChatRepository {
     }
   }
 
-  // Find partner's UID by name
-  Future<String> _resolvePartnerUid(String name) async {
-    final query = await _firestore
-        .collection('users')
-        .where('name', isEqualTo: name)
-        .limit(1)
-        .get();
-    if (query.docs.isNotEmpty) {
-      return query.docs.first.id;
+  // Validate the existence of partner UID via a direct Firestore query
+  Future<String> _resolvePartnerUid(String uid) async {
+    if (uid.trim().isEmpty) {
+      throw ArgumentError('Partner UID cannot be null or empty');
     }
-    // Fallback deterministic ID for mock users
-    return 'mock_user_${name.replaceAll(' ', '_').toLowerCase()}';
+    final userDoc = await _firestore.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      throw StateError('Partner user with UID $uid does not exist in the database');
+    }
+    return uid;
   }
 
-  // Find chat document by partner's name
-  Future<DocumentSnapshot?> _findChatDocByPartnerName(String partnerName) async {
+  // Find chat document by partner's UID
+  Future<DocumentSnapshot?> _findChatDocByPartnerUid(String partnerUid) async {
     final userId = _currentUserId;
     if (userId == 'anonymous') return null;
 
@@ -66,13 +65,9 @@ class FirebaseChatRepository implements ChatRepository {
         .get();
 
     for (var doc in query.docs) {
-      final info = doc.data()['participantsInfo'] as Map<String, dynamic>?;
-      if (info != null) {
-        for (var entry in info.entries) {
-          if (entry.key != userId && entry.value['name'] == partnerName) {
-            return doc;
-          }
-        }
+      final participantIds = List<String>.from(doc.data()['participantIds'] ?? []);
+      if (participantIds.contains(partnerUid)) {
+        return doc;
       }
     }
     return null;
@@ -104,6 +99,7 @@ class FirebaseChatRepository implements ChatRepository {
         final unreadCount = (data['unreadCounts'] as Map<String, dynamic>?)?[userId] ?? 0;
 
         conversations.add({
+          'partnerUid': partnerId,
           'name': partnerInfo?['name'] ?? 'Unknown User',
           'message': data['lastMessageText'] ?? '',
           'time': _formatTimestamp(data['lastMessageTimestamp']),
@@ -121,8 +117,8 @@ class FirebaseChatRepository implements ChatRepository {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getMessages(String chatPartnerName) async {
-    final chatDoc = await _findChatDocByPartnerName(chatPartnerName);
+  Future<List<Map<String, dynamic>>> getMessages(String chatPartnerUid) async {
+    final chatDoc = await _findChatDocByPartnerUid(chatPartnerUid);
     if (chatDoc == null) return [];
 
     // Mark messages as read
@@ -150,14 +146,18 @@ class FirebaseChatRepository implements ChatRepository {
   }
 
   // Stream version for real-time listener inside ChatScreen
-  Stream<QuerySnapshot> getMessagesStream(String chatPartnerName) async* {
-    final chatDoc = await _findChatDocByPartnerName(chatPartnerName);
+  Stream<QuerySnapshot> getMessagesStream(String chatPartnerUid) async* {
+    final chatDoc = await _findChatDocByPartnerUid(chatPartnerUid);
     if (chatDoc != null) {
       // Clear unread count for current user
       final userId = _currentUserId;
-      _firestore.collection('chats').doc(chatDoc.id).update({
-        'unreadCounts.$userId': 0,
-      });
+      try {
+        await _firestore.collection('chats').doc(chatDoc.id).update({
+          'unreadCounts.$userId': 0,
+        });
+      } catch (e) {
+        debugPrint('FirebaseChatRepository: Failed to clear unread counts: $e');
+      }
 
       yield* _firestore
           .collection('chats')
@@ -182,11 +182,11 @@ class FirebaseChatRepository implements ChatRepository {
   }
 
   @override
-  Future<void> sendMessage(String chatPartnerName, String text) async {
+  Future<void> sendMessage(String chatPartnerUid, String text) async {
     final userId = _currentUserId;
     if (userId == 'anonymous') return;
 
-    final partnerUid = await _resolvePartnerUid(chatPartnerName);
+    final partnerUid = await _resolvePartnerUid(chatPartnerUid);
     
     // Determine chatId deterministically
     final participantUids = [userId, partnerUid];
@@ -209,7 +209,7 @@ class FirebaseChatRepository implements ChatRepository {
     }
 
     // Resolve partner info from database if available
-    String partnerName = chatPartnerName;
+    String partnerName = 'Unknown User';
     String partnerAvatar = 'https://randomuser.me/api/portraits/men/32.jpg';
     final partnerProfile = await _firestore.collection('users').doc(partnerUid).get();
     if (partnerProfile.exists) {

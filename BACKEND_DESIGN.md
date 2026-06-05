@@ -189,10 +189,7 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
-        (request.auth.token.email == 'admin@admin.com' || 
-         request.auth.token.email == 'admin@lostandfound.com' ||
-         getUserData().role == 'admin');
+      return isAuthenticated() && getUserData().role == 'admin';
     }
 
     function isNotBanned() {
@@ -292,8 +289,8 @@ service firebase.storage {
     // Report images rules
     match /reports/{reportId}/{allPaths=**} {
       allow read: if isAuthenticated();
-      // Allow upload only if authenticated and file size <= 10MB
-      allow write: if isAuthenticated() && request.resource.contentType.matches('image/.*') && request.resource.size < 10 * 1024 * 1024;
+      // Allow upload only if authenticated, creator of the report, and file size <= 10MB
+      allow write: if isAuthenticated() && request.resource.contentType.matches('image/.*') && request.resource.size < 10 * 1024 * 1024 && firestore.get(/databases/$(database)/documents/reports/$(reportId)).data.createdBy == request.auth.uid;
     }
 
     // Chat images rules

@@ -5,12 +5,14 @@ import '../data/repositories/firebase_chat_repository.dart';
 
 class ChatScreen extends StatefulWidget {
   final String userName;
+  final String partnerUid;
   final String avatarUrl;
   final bool isOnline;
 
   const ChatScreen({
     super.key,
     required this.userName,
+    required this.partnerUid,
     required this.avatarUrl,
     this.isOnline = true,
   });
@@ -44,7 +46,7 @@ class _ChatScreenState extends State<ChatScreen> {
     _loadMessages();
 
     // Listen to real-time message events from Firestore
-    _messagesSub = _chatRepository.getMessagesStream(widget.userName).listen((snapshot) {
+    _messagesSub = _chatRepository.getMessagesStream(widget.partnerUid).listen((snapshot) {
       _loadMessages();
     }, onError: (err) {
       if (mounted) {
@@ -54,7 +56,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> _loadMessages() async {
-    final list = await _chatRepository.getMessages(widget.userName);
+    final list = await _chatRepository.getMessages(widget.partnerUid);
     if (mounted) {
       setState(() {
         _messages = list;
@@ -67,7 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
     _messageController.clear();
-    await _chatRepository.sendMessage(widget.userName, text);
+    await _chatRepository.sendMessage(widget.partnerUid, text);
   }
 
   @override

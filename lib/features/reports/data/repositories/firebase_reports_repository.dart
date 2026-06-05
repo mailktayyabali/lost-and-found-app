@@ -46,6 +46,9 @@ class FirebaseReportsRepository implements ReportsRepository {
 
   @override
   Future<void> addReport(Item item) async {
+    if (item.id.trim().isEmpty) {
+      throw ArgumentError('Item ID cannot be empty');
+    }
     try {
       final data = item.toJson();
       data['createdAt'] = FieldValue.serverTimestamp();
@@ -70,7 +73,6 @@ class FirebaseReportsRepository implements ReportsRepository {
     try {
       await _firestore.collection('reports').doc(id).update({
         'status': status,
-        'isLost': status == 'LOST',
         'updatedAt': FieldValue.serverTimestamp(),
       });
     } catch (e) {

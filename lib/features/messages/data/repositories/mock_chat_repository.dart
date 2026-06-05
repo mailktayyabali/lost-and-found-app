@@ -6,7 +6,7 @@ class MockChatRepository implements ChatRepository {
   MockChatRepository._internal();
 
   final Map<String, List<Map<String, dynamic>>> _messagesDb = {
-    'Sarah Miller': [
+    'test_user_4': [
       {
         'text': 'Hi there! I think I found your wallet at the Central Park bench near the fountain.',
         'time': '10:24 AM',
@@ -28,7 +28,7 @@ class MockChatRepository implements ChatRepository {
         'isMe': true,
       },
     ],
-    'Marcus Chen': [
+    'test_user_3': [
       {
         'text': "Hi, I have a match for your item.",
         'time': 'Yesterday',
@@ -39,6 +39,7 @@ class MockChatRepository implements ChatRepository {
 
   final List<Map<String, dynamic>> _conversations = [
     {
+      'partnerUid': 'test_user_4',
       'name': 'Sarah Miller',
       'message': 'Is this the brown wallet you lo...',
       'time': '2:45 PM',
@@ -48,6 +49,7 @@ class MockChatRepository implements ChatRepository {
       'itemImageUrl': 'https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
     },
     {
+      'partnerUid': 'test_user_5',
       'name': 'Alex Johnson',
       'message': 'I found your keys near the park e...',
       'time': 'Yesterday',
@@ -57,6 +59,7 @@ class MockChatRepository implements ChatRepository {
       'itemImageUrl': 'https://images.unsplash.com/photo-1584447128309-8d76ae5cb3f7?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
     },
     {
+      'partnerUid': 'test_user_6',
       'name': 'Jordan Smith',
       'message': 'Thanks for returning my dog! He...',
       'time': 'Monday',
@@ -66,6 +69,7 @@ class MockChatRepository implements ChatRepository {
       'itemImageUrl': 'https://images.unsplash.com/photo-1543466835-00a7907e9de1?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
     },
     {
+      'partnerUid': 'test_user_3',
       'name': 'Marcus Chen',
       'message': 'Hi, I have a match for your item.',
       'time': 'Yesterday',
@@ -82,29 +86,30 @@ class MockChatRepository implements ChatRepository {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> getMessages(String chatPartnerName) async {
-    return List.from(_messagesDb[chatPartnerName] ?? []);
+  Future<List<Map<String, dynamic>>> getMessages(String chatPartnerUid) async {
+    return List.from(_messagesDb[chatPartnerUid] ?? []);
   }
 
   @override
-  Future<void> sendMessage(String chatPartnerName, String text) async {
-    if (!_messagesDb.containsKey(chatPartnerName)) {
-      _messagesDb[chatPartnerName] = [];
+  Future<void> sendMessage(String chatPartnerUid, String text) async {
+    if (!_messagesDb.containsKey(chatPartnerUid)) {
+      _messagesDb[chatPartnerUid] = [];
     }
-    _messagesDb[chatPartnerName]!.add({
+    _messagesDb[chatPartnerUid]!.add({
       'text': text,
       'time': 'Just now',
       'isMe': true,
     });
 
-    final index = _conversations.indexWhere((c) => c['name'] == chatPartnerName);
+    final index = _conversations.indexWhere((c) => c['partnerUid'] == chatPartnerUid);
     if (index != -1) {
       _conversations[index]['message'] = text;
       _conversations[index]['time'] = 'Just now';
       _conversations[index]['isUnread'] = false;
     } else {
       _conversations.insert(0, {
-        'name': chatPartnerName,
+        'partnerUid': chatPartnerUid,
+        'name': 'User $chatPartnerUid',
         'message': text,
         'time': 'Just now',
         'isUnread': false,

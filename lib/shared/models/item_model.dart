@@ -37,7 +37,9 @@ class Item {
     if (timestamp is Timestamp) {
       dateTime = timestamp.toDate();
     } else if (timestamp is String) {
-      dateTime = DateTime.tryParse(timestamp) ?? DateTime.now();
+      final parsed = DateTime.tryParse(timestamp);
+      if (parsed == null) return 'some time ago';
+      dateTime = parsed;
     } else if (timestamp is int) {
       dateTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
     } else {

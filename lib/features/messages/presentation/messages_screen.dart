@@ -19,6 +19,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
   String _searchQuery = '';
   bool _isLoading = true;
   StreamSubscription? _conversationsSub;
+  int _fetchGeneration = 0;
 
   @override
   void initState() {
@@ -34,8 +35,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   void _subscribeConversations() {
     _conversationsSub = _chatRepository.getConversationsStream().listen((snapshot) async {
+      final generation = ++_fetchGeneration;
       final list = await _chatRepository.getConversations();
-      if (mounted) {
+      if (mounted && generation == _fetchGeneration) {
         setState(() {
           _conversations = list;
           _isLoading = false;
@@ -157,6 +159,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             isOnline: conv['isOnline'],
                             avatarUrl: conv['avatarUrl'],
                             itemImageUrl: conv['itemImageUrl'],
+                            partnerUid: conv['partnerUid'] ?? '',
                           );
                         },
                       ),
@@ -176,6 +179,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     required bool isOnline,
     required String avatarUrl,
     required String itemImageUrl,
+    required String partnerUid,
   }) {
     return Column(
       children: [
@@ -186,6 +190,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
               MaterialPageRoute(
                 builder: (_) => ChatScreen(
                   userName: name,
+                  partnerUid: partnerUid,
                   avatarUrl: avatarUrl,
                   isOnline: isOnline,
                 ),

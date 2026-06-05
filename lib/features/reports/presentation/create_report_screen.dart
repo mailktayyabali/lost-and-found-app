@@ -1,9 +1,12 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
 import 'package:http/http.dart' as http;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../../../core/config/cloudinary_config.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../shared/presentation/widgets/mock_map_widget.dart';
 import '../../../shared/models/item_model.dart';
@@ -153,21 +156,24 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   }
 
   Future<String> _uploadImageToCloudinary(String filePath) async {
-    const cloudName = 'dnrpmihgg';
-    const uploadPreset = 'ml_default';
-    
-    final url = Uri.parse('https://api.cloudinary.com/v1_1/$cloudName/image/upload');
-    final request = http.MultipartRequest('POST', url)
-      ..fields['upload_preset'] = uploadPreset
-      ..files.add(await http.MultipartFile.fromPath('file', filePath));
-      
-    final response = await request.send();
-    if (response.statusCode == 200 || response.statusCode == 201) {
-      final responseData = await response.stream.bytesToString();
-      final jsonResponse = jsonDecode(responseData);
-      return jsonResponse['secure_url'] as String;
-    } else {
-      throw Exception('Cloudinary upload failed with status code: ${response.statusCode}');
+    try {
+      final url = Uri.parse('https://api.cloudinary.com/v1_1/${CloudinaryConfig.cloudName}/image/upload');
+      final request = http.MultipartRequest('POST', url)
+        ..fields['upload_preset'] = CloudinaryConfig.uploadPreset
+        ..files.add(await http.MultipartFile.fromPath('file', filePath));
+        
+      final response = await request.send().timeout(const Duration(seconds: 30));
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = await response.stream.bytesToString();
+        final jsonResponse = jsonDecode(responseData);
+        return jsonResponse['secure_url'] as String;
+      } else {
+        throw Exception('Cloudinary upload failed with status code: ${response.statusCode}');
+      }
+    } on TimeoutException {
+      throw Exception('Cloudinary upload timed out. Please check your internet connection.');
+    } catch (e) {
+      rethrow;
     }
   }
 
@@ -178,7 +184,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     });
 
     final currentUser = AuthService().currentUser;
-    final reportId = 'report_${DateTime.now().millisecondsSinceEpoch}';
+    final reportId = FirebaseFirestore.instance.collection('reports').doc().id;
 
     try {
       String uploadedImageUrl = 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200';

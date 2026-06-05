@@ -65,17 +65,54 @@ class NotificationsScreen extends StatelessWidget {
             icon: Icon(Icons.done_all, color: context.colors.buttonBlue),
             onPressed: () async {
               if (currentUser == null) return;
-              // Mark all as read
-              final batch = FirebaseFirestore.instance.batch();
-              final unread = await FirebaseFirestore.instance
-                  .collection('notifications')
-                  .where('recipientId', isEqualTo: currentUser.uid)
-                  .where('isRead', isEqualTo: false)
-                  .get();
-              for (var doc in unread.docs) {
-                batch.update(doc.reference, {'isRead': true});
+              final scaffoldMessenger = ScaffoldMessenger.of(context);
+              final primaryTealColor = context.colors.primaryTeal;
+              try {
+                final unread = await FirebaseFirestore.instance
+                    .collection('notifications')
+                    .where('recipientId', isEqualTo: currentUser.uid)
+                    .where('isRead', isEqualTo: false)
+                    .get();
+                
+                if (unread.docs.isEmpty) {
+                  scaffoldMessenger.showSnackBar(
+                    const SnackBar(
+                      content: Text('No unread notifications to mark.'),
+                      behavior: SnackBarBehavior.floating,
+                    ),
+                  );
+                  return;
+                }
+
+                // Chunk into sizes of 500
+                final docs = unread.docs;
+                const chunkSize = 500;
+                for (var i = 0; i < docs.length; i += chunkSize) {
+                  final chunk = docs.sublist(i, i + chunkSize > docs.length ? docs.length : i + chunkSize);
+                  final batch = FirebaseFirestore.instance.batch();
+                  for (var doc in chunk) {
+                    batch.update(doc.reference, {'isRead': true});
+                  }
+                  await batch.commit();
+                }
+
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: const Text('All notifications marked as read.'),
+                    backgroundColor: primaryTealColor,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
+              } catch (e) {
+                debugPrint('NotificationsScreen: Error marking all read: $e');
+                scaffoldMessenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Failed to mark notifications: $e'),
+                    backgroundColor: Colors.red,
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
               }
-              await batch.commit();
             },
           ),
         ],
