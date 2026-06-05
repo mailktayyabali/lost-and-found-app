@@ -6,6 +6,7 @@ import '../../../shared/services/saved_items_service.dart';
 import 'widgets/home_bottom_nav_bar.dart';
 import 'leave_review_screen.dart';
 import '../../messages/presentation/chat_screen.dart';
+import '../../auth/domain/auth_service.dart';
 
 class ItemDetailsScreen extends StatelessWidget {
   final Item item;
@@ -14,6 +15,8 @@ class ItemDetailsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final reporterName = item.reporterName ?? 'Marcus Chen';
+    final currentUserId = AuthService().currentUser?.uid;
+    final isOwnItem = currentUserId != null && item.createdBy == currentUserId;
 
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -332,21 +335,38 @@ class ItemDetailsScreen extends StatelessWidget {
                           width: double.infinity,
                           height: 52,
                           child: ElevatedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(
-                              Icons.verified,
-                              color: Colors.white,
+                            onPressed: () {
+                              if (isOwnItem) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('You cannot claim an item that you posted yourself.'),
+                                    backgroundColor: Colors.orange,
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Claim request for "${item.title}" submitted successfully!'),
+                                    backgroundColor: context.colors.primaryTeal,
+                                  ),
+                                );
+                              }
+                            },
+                            icon: Icon(
+                              isOwnItem ? Icons.info_outline : Icons.verified,
+                              color: isOwnItem ? context.colors.textLight : Colors.white,
                             ),
-                            label: const Text(
-                              'Claim This Item',
+                            label: Text(
+                              isOwnItem ? 'You Posted This Item' : 'Claim This Item',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
+                                color: isOwnItem ? context.colors.textLight : Colors.white,
                               ),
                             ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: context.colors.primaryTeal,
-                              foregroundColor: Colors.white,
+                              backgroundColor: isOwnItem ? context.colors.dividerColor : context.colors.primaryTeal,
+                              foregroundColor: isOwnItem ? context.colors.textLight : Colors.white,
                               shape: RoundedRectangleBorder(
                                 borderRadius: AppDimensions.borderMedium,
                               ),
@@ -362,32 +382,41 @@ class ItemDetailsScreen extends StatelessWidget {
                           height: 52,
                           child: OutlinedButton.icon(
                             onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => LeaveReviewScreen(
-                                    userName: reporterName,
-                                    userAvatarUrl:
-                                        'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
+                              if (isOwnItem) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text('You cannot rate yourself or leave a review on your own post.'),
+                                    backgroundColor: Colors.orange,
                                   ),
-                                ),
-                              );
+                                );
+                              } else {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => LeaveReviewScreen(
+                                      userName: reporterName,
+                                      userAvatarUrl:
+                                          'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
+                                    ),
+                                  ),
+                                );
+                              }
                             },
                             icon: Icon(
                               Icons.star,
-                              color: context.colors.primaryTeal,
+                              color: isOwnItem ? context.colors.textLight : context.colors.primaryTeal,
                             ),
                             label: Text(
-                              'Rate Experience',
+                              isOwnItem ? 'Cannot Rate Yourself' : 'Rate Experience',
                               style: TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
-                                color: context.colors.primaryTeal,
+                                color: isOwnItem ? context.colors.textLight : context.colors.primaryTeal,
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
                               side: BorderSide(
-                                color: context.colors.primaryTeal,
+                                color: isOwnItem ? context.colors.dividerColor : context.colors.primaryTeal,
                                 width: 1.5,
                               ),
                               shape: RoundedRectangleBorder(
@@ -451,34 +480,44 @@ class ItemDetailsScreen extends StatelessWidget {
                       height: 48,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => ChatScreen(
-                                userName: reporterName,
-                                partnerUid: item.createdBy ?? '',
-                                avatarUrl:
-                                    'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
-                                isOnline: true,
+                          if (isOwnItem) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('You cannot message yourself.'),
+                                backgroundColor: Colors.orange,
                               ),
-                            ),
-                          );
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ChatScreen(
+                                  userName: reporterName,
+                                  partnerUid: item.createdBy ?? '',
+                                  avatarUrl:
+                                      'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
+                                  isOnline: true,
+                                ),
+                              ),
+                            );
+                          }
                         },
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.chat_bubble_outline,
-                          color: Colors.white,
+                          color: isOwnItem ? context.colors.textLight : Colors.white,
                           size: 18,
                         ),
                         label: Text(
-                          'Contact $reporterName',
-                          style: const TextStyle(
+                          isOwnItem ? 'Your Listing (Cannot Chat)' : 'Contact $reporterName',
+                          style: TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
+                            color: isOwnItem ? context.colors.textLight : Colors.white,
                           ),
                         ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: context.colors.primaryTeal,
-                          foregroundColor: Colors.white,
+                          backgroundColor: isOwnItem ? context.colors.dividerColor : context.colors.primaryTeal,
+                          foregroundColor: isOwnItem ? context.colors.textLight : Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: AppDimensions.borderMedium,
                           ),

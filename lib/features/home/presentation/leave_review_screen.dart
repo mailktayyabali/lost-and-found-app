@@ -18,6 +18,13 @@ class LeaveReviewScreen extends StatefulWidget {
 
 class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
   int _selectedStars = 4;
+  final TextEditingController _commentController = TextEditingController();
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -250,6 +257,7 @@ borderRadius: BorderRadius.circular(16),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: TextField(
+                      controller: _commentController,
                       maxLines: null,
                       decoration: InputDecoration(
                         hintText: 'Describe your experience: Was the handover smooth? Was communication clear?',
@@ -270,6 +278,28 @@ borderRadius: BorderRadius.circular(16),
               height: 54,
               child: ElevatedButton.icon(
                 onPressed: () {
+                  final comment = _commentController.text.trim();
+                  if (comment.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please add a comment for your review.'),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+                  if (comment.length < 5) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Your review comment must be at least 5 characters long.'),
+                        backgroundColor: Colors.red,
+                        behavior: SnackBarBehavior.floating,
+                      ),
+                    );
+                    return;
+                  }
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Review submitted successfully!'),

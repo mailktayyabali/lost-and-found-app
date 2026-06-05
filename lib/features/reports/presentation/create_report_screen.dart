@@ -132,13 +132,77 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
+  bool _validateStep(int step) {
+    if (step == 0) {
+      if (_itemNameController.text.trim().isEmpty) {
+        _showValidationError('Please enter the item name.');
+        return false;
+      }
+      if (_descriptionController.text.trim().isEmpty) {
+        _showValidationError('Please enter a detailed description.');
+        return false;
+      }
+      if (_selectedImages.isEmpty) {
+        _showValidationError('Please upload at least one photo.');
+        return false;
+      }
+    } else if (step == 1) {
+      if (_locationController.text.trim().isEmpty) {
+        _showValidationError('Please select or enter a location.');
+        return false;
+      }
+      if (_dateController.text.trim().isEmpty) {
+        _showValidationError('Please select the date.');
+        return false;
+      }
+      if (_timeController.text.trim().isEmpty) {
+        _showValidationError('Please select the approximate time.');
+        return false;
+      }
+    } else if (step == 2) {
+      if (_nameController.text.trim().isEmpty) {
+        _showValidationError('Please enter your name.');
+        return false;
+      }
+      final email = _emailController.text.trim();
+      if (email.isEmpty) {
+        _showValidationError('Please enter your email.');
+        return false;
+      }
+      final emailRegex = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+      if (!emailRegex.hasMatch(email)) {
+        _showValidationError('Please enter a valid email address.');
+        return false;
+      }
+      if (_phoneController.text.trim().isEmpty) {
+        _showValidationError('Please enter your phone number.');
+        return false;
+      }
+    }
+    return true;
+  }
+
+  void _showValidationError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   void _onStepTapped(int step) {
     if (_isSubmitting) return;
+    for (int i = 0; i < step; i++) {
+      if (!_validateStep(i)) return;
+    }
     setState(() => _currentStep = step);
   }
 
   void _onStepContinue() {
     if (_isSubmitting) return;
+    if (!_validateStep(_currentStep)) return;
     if (_currentStep < 2) {
       setState(() => _currentStep += 1);
     } else {
