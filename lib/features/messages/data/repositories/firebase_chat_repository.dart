@@ -1,6 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:flutter/foundation.dart';
 import '../../domain/repositories/chat_repository.dart';
 
 class FirebaseChatRepository implements ChatRepository {
@@ -73,6 +72,11 @@ class FirebaseChatRepository implements ChatRepository {
     return null;
   }
 
+  // Public exposure to look up chat room document snapshot
+  Future<DocumentSnapshot?> getChatRoomByPartnerUid(String partnerUid) async {
+    return _findChatDocByPartnerUid(partnerUid);
+  }
+
   @override
   Future<List<Map<String, dynamic>>> getConversations() async {
     final userId = _currentUserId;
@@ -85,35 +89,59 @@ class FirebaseChatRepository implements ChatRepository {
           .orderBy('lastMessageTimestamp', descending: true)
           .get();
 
-      List<Map<String, dynamic>> conversations = [];
-
-      for (var doc in querySnapshot.docs) {
-        final data = doc.data();
-        final participantIds = List<String>.from(data['participantIds'] ?? []);
-        final partnerId = participantIds.firstWhere((id) => id != userId, orElse: () => '');
-        if (partnerId.isEmpty) continue;
-
-        final info = data['participantsInfo'] as Map<String, dynamic>?;
-        final partnerInfo = info?[partnerId] as Map<String, dynamic>?;
-
-        final unreadCount = (data['unreadCounts'] as Map<String, dynamic>?)?[userId] ?? 0;
-
-        conversations.add({
-          'partnerUid': partnerId,
-          'name': partnerInfo?['name'] ?? 'Unknown User',
-          'message': data['lastMessageText'] ?? '',
-          'time': _formatTimestamp(data['lastMessageTimestamp']),
-          'isUnread': unreadCount > 0,
-          'isOnline': partnerInfo?['isOnline'] ?? false,
-          'avatarUrl': partnerInfo?['avatarUrl'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
-          'itemImageUrl': data['relatedItemImageUrl'] ?? 'https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
-        });
-      }
-      return conversations;
+      return _parseConversations(querySnapshot.docs, userId);
     } catch (e) {
-      // Return empty or fallback if index is not ready yet
-      return [];
+      // Fallback if index is not ready yet
+      try {
+        final querySnapshot = await _firestore
+            .collection('chats')
+            .where('participantIds', arrayContains: userId)
+            .get();
+        final conversations = _parseConversations(querySnapshot.docs, userId);
+        conversations.sort((a, b) {
+          final aTime = a['rawTimestamp'] as Timestamp?;
+          final bTime = b['rawTimestamp'] as Timestamp?;
+          if (aTime == null && bTime == null) return 0;
+          if (aTime == null) return 1;
+          if (bTime == null) return -1;
+          return bTime.compareTo(aTime);
+        });
+        return conversations;
+      } catch (err) {
+        return [];
+      }
     }
+  }
+
+  List<Map<String, dynamic>> _parseConversations(List<QueryDocumentSnapshot<Map<String, dynamic>>> docs, String userId) {
+    List<Map<String, dynamic>> conversations = [];
+
+    for (var doc in docs) {
+      final data = doc.data();
+      final participantIds = List<String>.from(data['participantIds'] ?? []);
+      final partnerId = participantIds.firstWhere((id) => id != userId, orElse: () => '');
+      if (partnerId.isEmpty) continue;
+
+      final info = data['participantsInfo'] as Map<String, dynamic>?;
+      final partnerInfo = info?[partnerId] as Map<String, dynamic>?;
+
+      final unreadCount = (data['unreadCounts'] as Map<String, dynamic>?)?[userId] ?? 0;
+
+      conversations.add({
+        'partnerUid': partnerId,
+        'name': partnerInfo?['name'] ?? 'Unknown User',
+        'message': data['lastMessageText'] ?? '',
+        'time': _formatTimestamp(data['lastMessageTimestamp']),
+        'rawTimestamp': data['lastMessageTimestamp'],
+        'isUnread': unreadCount > 0,
+        'isOnline': partnerInfo?['isOnline'] ?? false,
+        'avatarUrl': partnerInfo?['avatarUrl'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
+        'itemImageUrl': data['relatedItemImageUrl'] ?? 'https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
+        'relatedItemId': data['relatedItemId'] ?? 'default',
+        'relatedItemTitle': data['relatedItemTitle'] ?? 'Item Inquiry',
+      });
+    }
+    return conversations;
   }
 
   @override
@@ -146,29 +174,39 @@ class FirebaseChatRepository implements ChatRepository {
   }
 
   // Stream version for real-time listener inside ChatScreen
-  Stream<QuerySnapshot> getMessagesStream(String chatPartnerUid) async* {
-    final chatDoc = await _findChatDocByPartnerUid(chatPartnerUid);
-    if (chatDoc != null) {
-      // Clear unread count for current user
-      final userId = _currentUserId;
-      try {
-        await _firestore.collection('chats').doc(chatDoc.id).update({
-          'unreadCounts.$userId': 0,
-        });
-      } catch (e) {
-        debugPrint('FirebaseChatRepository: Failed to clear unread counts: $e');
-      }
+  @override
+  Stream<List<Map<String, dynamic>>> getMessagesStream(String chatPartnerUid) {
+    final userId = _currentUserId;
+    if (userId == 'anonymous') return const Stream.empty();
 
-      yield* _firestore
-          .collection('chats')
-          .doc(chatDoc.id)
-          .collection('messages')
-          .orderBy('timestamp', descending: false)
-          .snapshots();
-    } else {
-      // Yield empty stream
-      yield* const Stream.empty();
-    }
+    final participantUids = [userId, chatPartnerUid];
+    participantUids.sort();
+    final chatId = 'chat_${participantUids[0]}_${participantUids[1]}';
+
+    // Clear unread count for current user asynchronously
+    _firestore.collection('chats').doc(chatId).update({
+      'unreadCounts.$userId': 0,
+    }).catchError((e) {
+      // Ignore if chat room document doesn't exist in database yet
+    });
+
+    return _firestore
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: false)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+            final senderId = data['senderId'] ?? '';
+            return {
+              'text': data['text'] ?? '',
+              'time': _formatTimestamp(data['timestamp']),
+              'isMe': senderId == userId,
+            };
+          }).toList();
+        });
   }
 
   // Stream version of conversations list for real-time list updates
@@ -181,8 +219,23 @@ class FirebaseChatRepository implements ChatRepository {
         .snapshots();
   }
 
+  // Fallback stream without orderBy for handling missing index error scenarios
+  Stream<QuerySnapshot> getConversationsStreamFallback() {
+    final userId = _currentUserId;
+    return _firestore
+        .collection('chats')
+        .where('participantIds', arrayContains: userId)
+        .snapshots();
+  }
+
   @override
-  Future<void> sendMessage(String chatPartnerUid, String text) async {
+  Future<void> sendMessage(
+    String chatPartnerUid,
+    String text, {
+    String? itemId,
+    String? itemTitle,
+    String? itemImageUrl,
+  }) async {
     final userId = _currentUserId;
     if (userId == 'anonymous') return;
 
@@ -251,14 +304,14 @@ class FirebaseChatRepository implements ChatRepository {
           partnerUid: 1,
           userId: 0,
         },
-        'relatedItemId': 'default',
-        'relatedItemTitle': 'Item Inquiry',
-        'relatedItemImageUrl': 'https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
+        'relatedItemId': itemId ?? 'default',
+        'relatedItemTitle': itemTitle ?? 'Item Inquiry',
+        'relatedItemImageUrl': itemImageUrl ?? 'https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
       });
     } else {
       // Update existing chat room details
       final currentUnread = (chatDoc.data()?['unreadCounts'] as Map<String, dynamic>?)?[partnerUid] ?? 0;
-      batch.update(chatRef, {
+      final Map<String, dynamic> updates = {
         'lastMessageText': text,
         'lastMessageSenderId': userId,
         'lastMessageTimestamp': FieldValue.serverTimestamp(),
@@ -266,7 +319,13 @@ class FirebaseChatRepository implements ChatRepository {
         // Sync user details in case they changed
         'participantsInfo.$userId.name': resolvedMyName,
         'participantsInfo.$userId.avatarUrl': resolvedMyAvatar,
-      });
+      };
+
+      if (itemId != null) updates['relatedItemId'] = itemId;
+      if (itemTitle != null) updates['relatedItemTitle'] = itemTitle;
+      if (itemImageUrl != null) updates['relatedItemImageUrl'] = itemImageUrl;
+
+      batch.update(chatRef, updates);
     }
 
     // Write message document to subcollection

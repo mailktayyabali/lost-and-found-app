@@ -35,21 +35,32 @@ class _MessagesScreenState extends State<MessagesScreen> {
 
   void _subscribeConversations() {
     _conversationsSub = _chatRepository.getConversationsStream().listen((snapshot) async {
-      final generation = ++_fetchGeneration;
-      final list = await _chatRepository.getConversations();
-      if (mounted && generation == _fetchGeneration) {
-        setState(() {
-          _conversations = list;
-          _isLoading = false;
-        });
-      }
+      _loadConversationsList();
     }, onError: (err) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
+      debugPrint('MessagesScreen: Primary stream failed (indexing error likely): $err');
+      _conversationsSub?.cancel();
+      // Subscribe to fallback stream without orderBy
+      _conversationsSub = _chatRepository.getConversationsStreamFallback().listen((snapshot) async {
+        _loadConversationsList();
+      }, onError: (fallbackErr) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      });
     });
+  }
+
+  Future<void> _loadConversationsList() async {
+    final generation = ++_fetchGeneration;
+    final list = await _chatRepository.getConversations();
+    if (mounted && generation == _fetchGeneration) {
+      setState(() {
+        _conversations = list;
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _loadConversations() async {
@@ -160,6 +171,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             avatarUrl: conv['avatarUrl'],
                             itemImageUrl: conv['itemImageUrl'],
                             partnerUid: conv['partnerUid'] ?? '',
+                            relatedItemId: conv['relatedItemId'] ?? 'default',
+                            relatedItemTitle: conv['relatedItemTitle'] ?? 'Item Inquiry',
                           );
                         },
                       ),
@@ -180,6 +193,8 @@ class _MessagesScreenState extends State<MessagesScreen> {
     required String avatarUrl,
     required String itemImageUrl,
     required String partnerUid,
+    required String relatedItemId,
+    required String relatedItemTitle,
   }) {
     return Column(
       children: [
@@ -193,6 +208,9 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   partnerUid: partnerUid,
                   avatarUrl: avatarUrl,
                   isOnline: isOnline,
+                  itemId: relatedItemId,
+                  itemTitle: relatedItemTitle,
+                  itemImageUrl: itemImageUrl,
                 ),
               ),
             );

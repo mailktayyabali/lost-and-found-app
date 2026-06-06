@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_colors.dart';
@@ -6,8 +7,18 @@ import 'widgets/notification_section_header.dart';
 import 'widgets/alert_notification_item.dart';
 import 'widgets/chat_notification_item.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
+
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  final List<QueryDocumentSnapshot> _docs = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+  StreamSubscription? _subscription;
 
   static String _calculateTimeAgo(dynamic timestamp) {
     if (timestamp == null) return 'Just now';
@@ -36,6 +47,87 @@ class NotificationsScreen extends StatelessWidget {
     } else {
       return 'Just now';
     }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _subscribeNotifications();
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
+  void _subscribeNotifications() {
+    final currentUser = AuthService().currentUser;
+    if (currentUser == null) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
+    final query = FirebaseFirestore.instance
+        .collection('notifications')
+        .where('recipientId', isEqualTo: currentUser.uid)
+        .orderBy('createdAt', descending: true);
+
+    _subscription = query.snapshots().listen((snapshot) {
+      if (mounted) {
+        setState(() {
+          _docs.clear();
+          _docs.addAll(snapshot.docs);
+          _isLoading = false;
+          _errorMessage = null;
+        });
+      }
+    }, onError: (err) {
+      debugPrint('NotificationsScreen: Primary stream failed (indexing error likely): $err');
+      _subscription?.cancel();
+
+      // Fallback stream without orderBy
+      final fallbackQuery = FirebaseFirestore.instance
+          .collection('notifications')
+          .where('recipientId', isEqualTo: currentUser.uid);
+
+      _subscription = fallbackQuery.snapshots().listen((snapshot) {
+        final sortedDocs = List<QueryDocumentSnapshot>.from(snapshot.docs);
+        sortedDocs.sort((a, b) {
+          final aTime = (a.data() as Map<String, dynamic>?)?['createdAt'];
+          final bTime = (b.data() as Map<String, dynamic>?)?['createdAt'];
+          if (aTime == null && bTime == null) return 0;
+          if (aTime == null) return 1;
+          if (bTime == null) return -1;
+
+          if (aTime is Timestamp && bTime is Timestamp) {
+            return bTime.compareTo(aTime);
+          } else {
+            return bTime.toString().compareTo(aTime.toString());
+          }
+        });
+
+        if (mounted) {
+          setState(() {
+            _docs.clear();
+            _docs.addAll(sortedDocs);
+            _isLoading = false;
+            _errorMessage = null;
+          });
+        }
+      }, onError: (fallbackErr) {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage = fallbackErr.toString();
+          });
+        }
+      });
+    });
   }
 
   @override
@@ -119,111 +211,121 @@ class NotificationsScreen extends StatelessWidget {
       ),
       body: currentUser == null
           ? const Center(child: Text('Please sign in to view notifications.'))
-          : StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('notifications')
-                  .where('recipientId', isEqualTo: currentUser.uid)
-                  .orderBy('createdAt', descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error loading notifications: ${snapshot.error}'));
-                }
-
-                final docs = snapshot.data?.docs ?? [];
-
-                final alerts = docs.where((d) => (d.data() as Map<String, dynamic>)['type'] == 'alert').toList();
-                final chats = docs.where((d) => (d.data() as Map<String, dynamic>)['type'] == 'chat').toList();
-                final systems = docs.where((d) => (d.data() as Map<String, dynamic>)['type'] == 'system').toList();
-
-                if (docs.isEmpty) {
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.notifications_off_outlined, size: 64, color: context.colors.textLight),
-                        const SizedBox(height: 16),
-                        Text(
-                          'All caught up!',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: context.colors.textLight,
-                            fontWeight: FontWeight.bold,
+          : _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _errorMessage != null
+                  ? Center(child: Text('Error loading notifications: $_errorMessage'))
+                  : _docs.isEmpty
+                      ? Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(Icons.notifications_off_outlined, size: 64, color: context.colors.textLight),
+                              const SizedBox(height: 16),
+                              Text(
+                                'All caught up!',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: context.colors.textLight,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
                           ),
+                        )
+                      : ListView(
+                          children: [
+                            // MATCHING ALERTS
+                            _buildAlertsSection(),
+
+                            // CHAT ALERTS
+                            _buildChatsSection(),
+
+                            // SYSTEM ALERTS
+                            _buildSystemsSection(),
+                            const SizedBox(height: 32),
+                          ],
                         ),
-                      ],
-                    ),
-                  );
-                }
+    );
+  }
 
-                return ListView(
-                  children: [
-                    // MATCHING ALERTS
-                    if (alerts.isNotEmpty) ...[
-                      NotificationSectionHeader(
-                        title: 'Matching Alerts',
-                        icon: Icons.stars,
-                        iconColor: context.colors.buttonBlue,
-                      ),
-                      ...alerts.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        return AlertNotificationItem(
-                          icon: Icons.search,
-                          iconColor: context.colors.buttonBlue,
-                          iconBackgroundColor: const Color(0xFFE8F2FF),
-                          title: data['title'] ?? 'Alert',
-                          subtitle: data['description'] ?? '',
-                          timeAgo: _calculateTimeAgo(data['createdAt']),
-                        );
-                      }),
-                    ],
+  Widget _buildAlertsSection() {
+    final alerts = _docs.where((d) => (d.data() as Map<String, dynamic>)['type'] == 'alert').toList();
+    if (alerts.isEmpty) return const SizedBox.shrink();
 
-                    // CHAT ALERTS
-                    if (chats.isNotEmpty) ...[
-                      NotificationSectionHeader(
-                        title: 'Chat Alerts',
-                        icon: Icons.chat_bubble,
-                        iconColor: context.colors.textLight,
-                      ),
-                      ...chats.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        return ChatNotificationItem(
-                          avatarUrl: data['avatarUrl'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
-                          title: data['title'] ?? 'New Message',
-                          subtitle: data['description'] ?? '',
-                          timeAgo: _calculateTimeAgo(data['createdAt']),
-                          isUnread: !(data['isRead'] ?? false),
-                        );
-                      }),
-                    ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        NotificationSectionHeader(
+          title: 'Matching Alerts',
+          icon: Icons.stars,
+          iconColor: context.colors.buttonBlue,
+        ),
+        ...alerts.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return AlertNotificationItem(
+            icon: Icons.search,
+            iconColor: context.colors.buttonBlue,
+            iconBackgroundColor: const Color(0xFFE8F2FF),
+            title: data['title'] ?? 'Alert',
+            subtitle: data['description'] ?? '',
+            timeAgo: _calculateTimeAgo(data['createdAt']),
+          );
+        }),
+      ],
+    );
+  }
 
-                    // SYSTEM ALERTS
-                    if (systems.isNotEmpty) ...[
-                      NotificationSectionHeader(
-                        title: 'System Alerts',
-                        icon: Icons.settings,
-                        iconColor: context.colors.textLight,
-                      ),
-                      ...systems.map((doc) {
-                        final data = doc.data() as Map<String, dynamic>;
-                        return AlertNotificationItem(
-                          icon: Icons.security,
-                          iconColor: context.colors.textLight,
-                          iconBackgroundColor: context.colors.background,
-                          title: data['title'] ?? 'Security Alert',
-                          subtitle: data['description'] ?? '',
-                          timeAgo: _calculateTimeAgo(data['createdAt']),
-                        );
-                      }),
-                    ],
-                    const SizedBox(height: 32),
-                  ],
-                );
-              },
-            ),
+  Widget _buildChatsSection() {
+    final chats = _docs.where((d) => (d.data() as Map<String, dynamic>)['type'] == 'chat').toList();
+    if (chats.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        NotificationSectionHeader(
+          title: 'Chat Alerts',
+          icon: Icons.chat_bubble,
+          iconColor: context.colors.textLight,
+        ),
+        ...chats.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return ChatNotificationItem(
+            avatarUrl: data['avatarUrl'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
+            title: data['title'] ?? 'New Message',
+            subtitle: data['description'] ?? '',
+            timeAgo: _calculateTimeAgo(data['createdAt']),
+            isUnread: !(data['isRead'] ?? false),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildSystemsSection() {
+    final systems = _docs.where((d) => (d.data() as Map<String, dynamic>)['type'] == 'system').toList();
+    if (systems.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        NotificationSectionHeader(
+          title: 'System Alerts',
+          icon: Icons.settings,
+          iconColor: context.colors.textLight,
+        ),
+        ...systems.map((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          return AlertNotificationItem(
+            icon: Icons.security,
+            iconColor: context.colors.textLight,
+            iconBackgroundColor: context.colors.background,
+            title: data['title'] ?? 'Security Alert',
+            subtitle: data['description'] ?? '',
+            timeAgo: _calculateTimeAgo(data['createdAt']),
+          );
+        }),
+      ],
     );
   }
 }

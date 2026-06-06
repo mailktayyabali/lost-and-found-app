@@ -8,6 +8,9 @@ class ChatScreen extends StatefulWidget {
   final String partnerUid;
   final String avatarUrl;
   final bool isOnline;
+  final String? itemId;
+  final String? itemTitle;
+  final String? itemImageUrl;
 
   const ChatScreen({
     super.key,
@@ -15,6 +18,9 @@ class ChatScreen extends StatefulWidget {
     required this.partnerUid,
     required this.avatarUrl,
     this.isOnline = true,
+    this.itemId,
+    this.itemTitle,
+    this.itemImageUrl,
   });
 
   @override
@@ -28,9 +34,17 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isLoading = true;
   StreamSubscription? _messagesSub;
 
+  String? _itemId;
+  String? _itemTitle;
+  String? _itemImageUrl;
+
   @override
   void initState() {
     super.initState();
+    _itemId = widget.itemId;
+    _itemTitle = widget.itemTitle;
+    _itemImageUrl = widget.itemImageUrl;
+    _loadChatRoomMetadata();
     _subscribeMessages();
   }
 
@@ -41,13 +55,30 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
-  void _subscribeMessages() {
-    // Set up local loader first
-    _loadMessages();
+  Future<void> _loadChatRoomMetadata() async {
+    if (_itemTitle == null) {
+      final chatDoc = await _chatRepository.getChatRoomByPartnerUid(widget.partnerUid);
+      if (chatDoc != null && chatDoc.exists) {
+        final data = chatDoc.data() as Map<String, dynamic>?;
+        if (mounted) {
+          setState(() {
+            _itemId = data?['relatedItemId'];
+            _itemTitle = data?['relatedItemTitle'];
+            _itemImageUrl = data?['relatedItemImageUrl'];
+          });
+        }
+      }
+    }
+  }
 
-    // Listen to real-time message events from Firestore
-    _messagesSub = _chatRepository.getMessagesStream(widget.partnerUid).listen((snapshot) {
-      _loadMessages();
+  void _subscribeMessages() {
+    _messagesSub = _chatRepository.getMessagesStream(widget.partnerUid).listen((list) {
+      if (mounted) {
+        setState(() {
+          _messages = list;
+          _isLoading = false;
+        });
+      }
     }, onError: (err) {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -55,21 +86,17 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  Future<void> _loadMessages() async {
-    final list = await _chatRepository.getMessages(widget.partnerUid);
-    if (mounted) {
-      setState(() {
-        _messages = list;
-        _isLoading = false;
-      });
-    }
-  }
-
   Future<void> _handleSendMessage() async {
     final text = _messageController.text.trim();
     if (text.isEmpty) return;
     _messageController.clear();
-    await _chatRepository.sendMessage(widget.partnerUid, text);
+    await _chatRepository.sendMessage(
+      widget.partnerUid,
+      text,
+      itemId: _itemId,
+      itemTitle: _itemTitle,
+      itemImageUrl: _itemImageUrl,
+    );
   }
 
   @override
@@ -91,7 +118,19 @@ class _ChatScreenState extends State<ChatScreen> {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: NetworkImage(widget.avatarUrl),
+                backgroundImage: widget.avatarUrl.isNotEmpty
+                    ? NetworkImage(widget.avatarUrl)
+                    : null,
+                backgroundColor: context.colors.primaryTeal.withValues(alpha: 0.1),
+                child: widget.avatarUrl.isEmpty
+                    ? Text(
+                        widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : 'U',
+                        style: const TextStyle(
+                          color: AppColors.primaryTeal,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      )
+                    : null,
               ),
               const SizedBox(width: 12),
               Column(
@@ -130,60 +169,61 @@ class _ChatScreenState extends State<ChatScreen> {
       body: Column(
         children: [
           // Post reference banner
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: context.colors.background,
-              border: Border(
-                top: BorderSide(color: context.colors.dividerColor),
-                bottom: BorderSide(color: context.colors.dividerColor),
+          if (_itemTitle != null && _itemTitle!.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: context.colors.background,
+                border: Border(
+                  top: BorderSide(color: context.colors.dividerColor),
+                  bottom: BorderSide(color: context.colors.dividerColor),
+                ),
               ),
-            ),
-            child: Row(
-              children: [
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: BoxDecoration(
-                    color: context.colors.surfaceWhite,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: context.colors.dividerColor),
-                    image: const DecorationImage(
-                      image: NetworkImage('https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'),
-                      fit: BoxFit.cover,
+              child: Row(
+                children: [
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: context.colors.surfaceWhite,
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(color: context.colors.dividerColor),
+                      image: DecorationImage(
+                        image: NetworkImage(_itemImageUrl ?? 'https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80'),
+                        fit: BoxFit.cover,
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text(
-                        'REGARDING YOUR POST',
-                        style: TextStyle(
-                          color: AppColors.primaryTeal,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          letterSpacing: 0.5,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'REGARDING LISTING',
+                          style: TextStyle(
+                            color: AppColors.primaryTeal,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Lost: Brown Leather Wallet',
-                        style: TextStyle(
-                          color: context.colors.textDark,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                        const SizedBox(height: 2),
+                        Text(
+                          _itemTitle!,
+                          style: TextStyle(
+                            color: context.colors.textDark,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const Icon(Icons.info, color: AppColors.primaryTeal, size: 20),
-              ],
+                  const Icon(Icons.info, color: AppColors.primaryTeal, size: 20),
+                ],
+              ),
             ),
-          ),
           
           Expanded(
             child: _isLoading
@@ -219,7 +259,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       if (isMe) {
                         return Padding(
                           padding: const EdgeInsets.only(top: 16.0),
-                          child: _buildOutgoingMessage(
+                           child: _buildOutgoingMessage(
                             context,
                             text: msg['text'] ?? '',
                             time: msg['time'] ?? 'Just now',
@@ -313,7 +353,18 @@ class _ChatScreenState extends State<ChatScreen> {
       children: [
         CircleAvatar(
           radius: 16,
-          backgroundImage: NetworkImage(avatarUrl),
+          backgroundImage: avatarUrl.isNotEmpty ? NetworkImage(avatarUrl) : null,
+          backgroundColor: context.colors.primaryTeal.withValues(alpha: 0.1),
+          child: avatarUrl.isEmpty
+              ? Text(
+                  widget.userName.isNotEmpty ? widget.userName[0].toUpperCase() : 'U',
+                  style: const TextStyle(
+                    color: AppColors.primaryTeal,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 10,
+                  ),
+                )
+              : null,
         ),
         const SizedBox(width: 8),
         Expanded(
@@ -448,4 +499,3 @@ class _ChatScreenState extends State<ChatScreen> {
     );
   }
 }
-
