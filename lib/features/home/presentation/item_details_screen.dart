@@ -235,7 +235,10 @@ class ItemDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         // Profile Card
-                        ReporterProfileCard(reporterName: reporterName),
+                        ReporterProfileCard(
+                          reporterUid: item.createdBy ?? 'anonymous',
+                          reporterName: reporterName,
+                        ),
                         const SizedBox(height: 24),
 
                         // Claim Button
@@ -302,6 +305,7 @@ class ItemDetailsScreen extends StatelessWidget {
                                   context,
                                   MaterialPageRoute(
                                     builder: (_) => LeaveReviewScreen(
+                                      revieweeUid: item.createdBy ?? 'anonymous',
                                       userName: reporterName,
                                       userAvatarUrl:
                                           'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',

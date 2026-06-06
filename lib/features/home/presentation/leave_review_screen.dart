@@ -1,13 +1,18 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../auth/domain/auth_service.dart';
+import '../../profile/data/models/review_model.dart';
+import '../../profile/data/repositories/firebase_reviews_repository.dart';
 import 'widgets/home_bottom_nav_bar.dart';
 
 class LeaveReviewScreen extends StatefulWidget {
+  final String revieweeUid;
   final String userName;
   final String userAvatarUrl;
 
   const LeaveReviewScreen({
     super.key,
+    required this.revieweeUid,
     required this.userName,
     required this.userAvatarUrl,
   });
@@ -19,11 +24,89 @@ class LeaveReviewScreen extends StatefulWidget {
 class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
   int _selectedStars = 4;
   final TextEditingController _commentController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
     _commentController.dispose();
     super.dispose();
+  }
+
+  Future<void> _submitReview() async {
+    final comment = _commentController.text.trim();
+    if (comment.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please add a comment for your review.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+    if (comment.length < 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Your review comment must be at least 5 characters long.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    final currentUser = AuthService().currentUser;
+    if (currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You must be logged in to leave a review.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      final review = Review(
+        id: '',
+        revieweeUid: widget.revieweeUid,
+        reviewerUid: currentUser.uid,
+        reviewerName: currentUser.displayName ?? 'Anonymous User',
+        reviewerAvatarUrl: currentUser.photoURL ?? '',
+        rating: _selectedStars,
+        comment: comment,
+        createdAt: DateTime.now(),
+      );
+
+      await FirebaseReviewsRepository().addReview(review);
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Review submitted successfully!'),
+          backgroundColor: context.colors.primaryTeal,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isSubmitting = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to submit review: $e'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   @override
@@ -54,14 +137,14 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
             // Profile Card
             Container(
               decoration: BoxDecoration(
                 color: context.colors.surfaceWhite,
-borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
                     color: context.colors.textDark.withValues(alpha: 0.02),
@@ -81,13 +164,13 @@ borderRadius: BorderRadius.circular(16),
                       ),
                       Expanded(
                         child: Padding(
-                          padding: EdgeInsets.all(16.0),
+                          padding: const EdgeInsets.all(16.0),
                           child: Row(
                             children: [
                               Container(
                                 width: 80,
                                 height: 80,
-                                padding: EdgeInsets.all(4), // Inner outline spacing
+                                padding: const EdgeInsets.all(4), // Inner outline spacing
                                 decoration: BoxDecoration(
                                   border: Border.all(color: context.colors.dividerColor, width: 2),
                                   borderRadius: BorderRadius.circular(8),
@@ -99,10 +182,15 @@ borderRadius: BorderRadius.circular(16),
                                     width: double.infinity,
                                     height: double.infinity,
                                     fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Icon(
+                                      Icons.person,
+                                      size: 48,
+                                      color: context.colors.textLight,
+                                    ),
                                   ),
                                 ),
                               ),
-                              SizedBox(width: 16),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -115,7 +203,7 @@ borderRadius: BorderRadius.circular(16),
                                         color: context.colors.textLight,
                                       ),
                                     ),
-                                    SizedBox(height: 2),
+                                    const SizedBox(height: 2),
                                     Text(
                                       widget.userName,
                                       style: TextStyle(
@@ -124,13 +212,13 @@ borderRadius: BorderRadius.circular(16),
                                         color: context.colors.textDark,
                                       ),
                                     ),
-                                    SizedBox(height: 4),
+                                    const SizedBox(height: 4),
                                     Row(
                                       children: [
                                         Icon(Icons.star, color: context.colors.primaryTeal, size: 14),
-                                        SizedBox(width: 4),
+                                        const SizedBox(width: 4),
                                         Text(
-                                          '4.9 (124 reviews)',
+                                          'Community Member',
                                           style: TextStyle(
                                             fontSize: 12,
                                             color: context.colors.textDark,
@@ -150,15 +238,15 @@ borderRadius: BorderRadius.circular(16),
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Rating Card
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(24.0),
+              padding: const EdgeInsets.all(24.0),
               decoration: BoxDecoration(
                 color: context.colors.surfaceWhite,
-borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
                     color: context.colors.textDark.withValues(alpha: 0.02),
@@ -177,7 +265,7 @@ borderRadius: BorderRadius.circular(16),
                       color: context.colors.textDark,
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
                     'Tap a star to rate your interaction with ${widget.userName.split(' ')[0]}.',
                     textAlign: TextAlign.center,
@@ -186,18 +274,20 @@ borderRadius: BorderRadius.circular(16),
                       color: context.colors.textLight,
                     ),
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(5, (index) {
                       return GestureDetector(
-                        onTap: () {
-                          setState(() {
-                            _selectedStars = index + 1;
-                          });
-                        },
+                        onTap: _isSubmitting
+                            ? null
+                            : () {
+                                setState(() {
+                                  _selectedStars = index + 1;
+                                });
+                              },
                         child: Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 4.0),
+                          padding: const EdgeInsets.symmetric(horizontal: 4.0),
                           child: Icon(
                             Icons.star,
                             size: 40,
@@ -207,7 +297,7 @@ borderRadius: BorderRadius.circular(16),
                       );
                     }),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   Text(
                     _getRatingText(),
                     style: TextStyle(
@@ -219,15 +309,15 @@ borderRadius: BorderRadius.circular(16),
                 ],
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Comments Card
             Container(
               width: double.infinity,
-              padding: EdgeInsets.all(20.0),
+              padding: const EdgeInsets.all(20.0),
               decoration: BoxDecoration(
                 color: context.colors.surfaceWhite,
-borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
                     color: context.colors.textDark.withValues(alpha: 0.02),
@@ -248,10 +338,10 @@ borderRadius: BorderRadius.circular(16),
                       letterSpacing: 0.5,
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Container(
                     height: 120,
-                    padding: EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
                       color: context.colors.dividerColor.withValues(alpha: 0.6),
                       borderRadius: BorderRadius.circular(12),
@@ -259,9 +349,10 @@ borderRadius: BorderRadius.circular(16),
                     child: TextField(
                       controller: _commentController,
                       maxLines: null,
-                      decoration: InputDecoration(
+                      enabled: !_isSubmitting,
+                      decoration: const InputDecoration(
                         hintText: 'Describe your experience: Was the handover smooth? Was communication clear?',
-                        hintStyle: TextStyle(color: context.colors.textLight, fontSize: 15, height: 1.4),
+                        hintStyle: TextStyle(color: AppColors.textLight, fontSize: 15, height: 1.4),
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -270,52 +361,28 @@ borderRadius: BorderRadius.circular(16),
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // Submit Button
             SizedBox(
               width: double.infinity,
               height: 54,
               child: ElevatedButton.icon(
-                onPressed: () {
-                  final comment = _commentController.text.trim();
-                  if (comment.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please add a comment for your review.'),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
+                onPressed: _isSubmitting ? null : _submitReview,
+                icon: _isSubmitting
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : Text(
+                        'Submit Review',
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: _isSubmitting ? Colors.black26 : Colors.white),
                       ),
-                    );
-                    return;
-                  }
-                  if (comment.length < 5) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Your review comment must be at least 5 characters long.'),
-                        backgroundColor: Colors.red,
-                        behavior: SnackBarBehavior.floating,
-                      ),
-                    );
-                    return;
-                  }
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text('Review submitted successfully!'),
-                      backgroundColor: context.colors.primaryTeal,
-                      behavior: SnackBarBehavior.floating,
-                    ),
-                  );
-                  Future.delayed(const Duration(seconds: 1), () {
-                    if (context.mounted) Navigator.pop(context);
-                  });
-                },
-                icon: Text(
-                  'Submit Review',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                label: Icon(Icons.send, color: Colors.white, size: 20),
+                label: _isSubmitting ? const SizedBox.shrink() : const Icon(Icons.send, color: Colors.white, size: 20),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.colors.primaryTeal,
                   foregroundColor: Colors.white,
@@ -326,11 +393,11 @@ borderRadius: BorderRadius.circular(16),
                 ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
 
             // Disclaimer
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 24.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Text(
                 "Your review will be shared publicly on ${widget.userName.split(' ')[0]}'s profile to help other community members.",
                 textAlign: TextAlign.center,
@@ -341,7 +408,7 @@ borderRadius: BorderRadius.circular(16),
                 ),
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
           ],
         ),
       ),
