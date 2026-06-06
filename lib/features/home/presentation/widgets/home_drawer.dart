@@ -7,6 +7,7 @@ import '../../../auth/domain/auth_service.dart';
 import '../../../auth/presentation/login_screen.dart';
 import '../../../admin/presentation/screens/item_management.dart';
 import '../../../profile/presentation/settings_screen.dart';
+import '../claim_requests_screen.dart';
 
 import '../../../../core/theme/theme_manager.dart';
 
@@ -99,6 +100,11 @@ class HomeDrawer extends StatelessWidget {
               icon: Icons.assignment_outlined,
               label: 'My Reports',
               isSelected: true,
+            ),
+            _buildMenuItem(
+              context: context,
+              icon: Icons.pending_actions_outlined,
+              label: 'Claim Requests',
             ),
             _buildMenuItem(context: context, icon: Icons.bookmark_border, label: 'Saved Items'),
             _buildMenuItem(
@@ -215,6 +221,11 @@ class HomeDrawer extends StatelessWidget {
               Navigator.of(context).pop(); // Close drawer
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (context) => const MyPostsScreen()),
+              );
+            } else if (label == 'Claim Requests') {
+              Navigator.of(context).pop(); // Close drawer
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (context) => const ClaimRequestsScreen()),
               );
             } else if (label == 'Saved Items') {
               Navigator.of(context).pop(); // Close drawer

@@ -17,7 +17,8 @@ import 'widgets/steps/where_and_when_step.dart';
 import 'widgets/steps/contact_details_step.dart';
 
 class CreateReportScreen extends StatefulWidget {
-  const CreateReportScreen({super.key});
+  final Item? itemToEdit;
+  const CreateReportScreen({super.key, this.itemToEdit});
 
   @override
   State<CreateReportScreen> createState() => _CreateReportScreenState();
@@ -47,6 +48,24 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   final _nameController = TextEditingController();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.itemToEdit != null) {
+      final item = widget.itemToEdit!;
+      _itemNameController.text = item.title;
+      _selectedCategory = item.category;
+      _descriptionController.text = item.description;
+      _isLost = item.isLost;
+      _locationController.text = item.location;
+      _dateController.text = DateFormat('dd/MM/yyyy').format(DateTime.now());
+      _timeController.text = DateFormat('hh:mm a').format(DateTime.now());
+      _nameController.text = item.reporterName ?? '';
+      _emailController.text = item.reporterEmail ?? '';
+      _phoneController.text = item.reporterPhone ?? '';
+    }
+  }
 
   @override
   void dispose() {
@@ -144,7 +163,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         _showValidationError('Please enter a detailed description.');
         return false;
       }
-      if (_selectedImages.isEmpty) {
+      if (_selectedImages.isEmpty && (widget.itemToEdit == null || widget.itemToEdit!.imageUrl.isEmpty)) {
         _showValidationError('Please upload at least one photo.');
         return false;
       }
@@ -250,10 +269,11 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     });
 
     final currentUser = AuthService().currentUser;
-    final reportId = FirebaseFirestore.instance.collection('reports').doc().id;
+    final isEditing = widget.itemToEdit != null;
+    final reportId = isEditing ? widget.itemToEdit!.id : FirebaseFirestore.instance.collection('reports').doc().id;
 
     try {
-      String uploadedImageUrl = 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200';
+      String uploadedImageUrl = isEditing ? widget.itemToEdit!.imageUrl : 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200';
       
       if (_selectedImages.isNotEmpty) {
         uploadedImageUrl = await _uploadImageToCloudinary(_selectedImages.first.path);
@@ -266,23 +286,28 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         description: _descriptionController.text.trim(),
         isLost: _isLost,
         imageUrl: uploadedImageUrl,
-        timeAgo: 'Just now',
+        timeAgo: isEditing ? widget.itemToEdit!.timeAgo : 'Just now',
         category: _selectedCategory,
-        status: _isLost ? 'LOST' : 'FOUND',
-        createdBy: currentUser?.uid ?? 'anonymous',
+        status: isEditing ? widget.itemToEdit!.status : (_isLost ? 'LOST' : 'FOUND'),
+        createdBy: isEditing ? widget.itemToEdit!.createdBy : (currentUser?.uid ?? 'anonymous'),
         reporterName: _nameController.text.trim().isEmpty ? (currentUser?.displayName ?? 'Anonymous') : _nameController.text.trim(),
         reporterEmail: _emailController.text.trim().isEmpty ? (currentUser?.email ?? '') : _emailController.text.trim(),
         reporterPhone: _phoneController.text.trim().isEmpty ? '' : _phoneController.text.trim(),
       );
 
-      await FirebaseReportsRepository().addReport(newItem);
-
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => const ReportSuccessScreen(),
-        ),
-      );
+      if (isEditing) {
+        await FirebaseReportsRepository().updateReport(newItem);
+        if (!mounted) return;
+        Navigator.of(context).pop(newItem);
+      } else {
+        await FirebaseReportsRepository().addReport(newItem);
+        if (!mounted) return;
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const ReportSuccessScreen(),
+          ),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -364,7 +389,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          'Report an Item',
+          widget.itemToEdit != null ? 'Edit Report' : 'Report an Item',
           style: TextStyle(
             color: context.colors.textDark,
             fontSize: 22,

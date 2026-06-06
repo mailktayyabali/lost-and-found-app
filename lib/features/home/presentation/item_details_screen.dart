@@ -1,25 +1,61 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../../core/theme/app_dimensions.dart';
 import '../../../shared/models/item_model.dart';
 import '../../../shared/services/saved_items_service.dart';
 import 'widgets/home_bottom_nav_bar.dart';
-import 'leave_review_screen.dart';
-import '../../messages/presentation/chat_screen.dart';
-import '../../auth/domain/auth_service.dart';
 import 'widgets/info_card.dart';
 import 'widgets/reporter_profile_card.dart';
 import 'widgets/item_image_gallery.dart';
+import 'widgets/item_details_action_buttons.dart';
+import 'widgets/item_details_bottom_bar.dart';
+import '../../auth/domain/auth_service.dart';
+import '../../../shared/models/claim_request_model.dart';
+import '../../reports/data/repositories/firebase_claim_repository.dart';
 
-class ItemDetailsScreen extends StatelessWidget {
+class ItemDetailsScreen extends StatefulWidget {
   final Item item;
   const ItemDetailsScreen({super.key, required this.item});
 
   @override
+  State<ItemDetailsScreen> createState() => _ItemDetailsScreenState();
+}
+
+class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
+  late Item _currentItem;
+  ClaimRequest? _pendingClaimRequest;
+  bool _isLoadingClaim = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentItem = widget.item;
+    _loadPendingClaim();
+  }
+
+  Future<void> _loadPendingClaim() async {
+    try {
+      final request = await FirebaseClaimRepository().getPendingRequestForItem(_currentItem.id);
+      if (mounted) {
+        setState(() {
+          _pendingClaimRequest = request;
+          _isLoadingClaim = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('ItemDetailsScreen: Error loading pending claim: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingClaim = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final reporterName = item.reporterName ?? 'Marcus Chen';
+    final reporterName = _currentItem.reporterName ?? 'Marcus Chen';
     final currentUserId = AuthService().currentUser?.uid;
-    final isOwnItem = currentUserId != null && item.createdBy == currentUserId;
+    final isOwnItem = currentUserId != null && _currentItem.createdBy == currentUserId;
 
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -47,14 +83,14 @@ class ItemDetailsScreen extends StatelessWidget {
           ListenableBuilder(
             listenable: SavedItemsService(),
             builder: (context, _) {
-              final isSaved = SavedItemsService().isSaved(item.id);
+              final isSaved = SavedItemsService().isSaved(_currentItem.id);
               return IconButton(
                 icon: Icon(
                   isSaved ? Icons.bookmark : Icons.bookmark_border,
                   color: isSaved ? context.colors.primaryTeal : context.colors.textDark,
                 ),
                 onPressed: () {
-                  SavedItemsService().toggleSave(item);
+                  SavedItemsService().toggleSave(_currentItem);
                 },
               );
             },
@@ -72,7 +108,7 @@ class ItemDetailsScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ItemImageGallery(imageUrl: item.imageUrl),
+                  ItemImageGallery(imageUrl: _currentItem.imageUrl),
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(
@@ -116,7 +152,7 @@ class ItemDetailsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 12),
                             Text(
-                              'Reported ${item.timeAgo}',
+                              'Reported ${_currentItem.timeAgo}',
                               style: TextStyle(
                                 color: context.colors.textLight,
                                 fontSize: 12,
@@ -128,7 +164,7 @@ class ItemDetailsScreen extends StatelessWidget {
 
                         // Title
                         Text(
-                          item.title,
+                          _currentItem.title,
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.bold,
@@ -139,7 +175,7 @@ class ItemDetailsScreen extends StatelessWidget {
 
                         // Description
                         Text(
-                          item.description,
+                          _currentItem.description,
                           style: TextStyle(
                             fontSize: 14,
                             color: context.colors.textDark,
@@ -163,7 +199,7 @@ class ItemDetailsScreen extends StatelessWidget {
                               child: InfoCard(
                                 icon: Icons.category,
                                 label: 'CATEGORY',
-                                value: item.category,
+                                value: _currentItem.category,
                               ),
                             ),
                           ],
@@ -224,7 +260,7 @@ class ItemDetailsScreen extends StatelessWidget {
                             ),
                             const SizedBox(width: 6),
                             Text(
-                              'Near ${item.location}',
+                              'Near ${_currentItem.location}',
                               style: TextStyle(
                                 color: context.colors.textLight,
                                 fontSize: 13,
@@ -235,122 +271,30 @@ class ItemDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         // Profile Card
-                        // Reference check for reporterUid validation (ReporterProfileCard, ChatScreen, item.createdBy, and review button handler)
                         ReporterProfileCard(
-                          reporterUid: item.createdBy,
+                          reporterUid: _currentItem.createdBy,
                           reporterName: reporterName,
                         ),
                         const SizedBox(height: 24),
 
-                        // Claim Button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton.icon(
-                            onPressed: () {
-                              if (isOwnItem) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('You cannot claim an item that you posted yourself.'),
-                                    backgroundColor: Colors.orange,
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Claim request for "${item.title}" submitted successfully!'),
-                                    backgroundColor: context.colors.primaryTeal,
-                                  ),
-                                );
-                              }
-                            },
-                            icon: Icon(
-                              isOwnItem ? Icons.info_outline : Icons.verified,
-                              color: isOwnItem ? context.colors.textLight : Colors.white,
-                            ),
-                            label: Text(
-                              isOwnItem ? 'You Posted This Item' : 'Claim This Item',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: isOwnItem ? context.colors.textLight : Colors.white,
+                        // Action Buttons (Edit/Delete or Claim/Rate)
+                        _isLoadingClaim
+                            ? const Padding(
+                                padding: EdgeInsets.symmetric(vertical: 20.0),
+                                child: Center(child: CircularProgressIndicator()),
+                              )
+                            : ItemDetailsActionButtons(
+                                item: _currentItem,
+                                isOwnItem: isOwnItem,
+                                reporterName: reporterName,
+                                pendingClaimRequest: _pendingClaimRequest,
+                                onClaimSubmitted: _loadPendingClaim,
+                                onUpdated: (updatedItem) {
+                                  setState(() {
+                                    _currentItem = updatedItem;
+                                  });
+                                },
                               ),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: isOwnItem ? context.colors.dividerColor : context.colors.primaryTeal,
-                              foregroundColor: isOwnItem ? context.colors.textLight : Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: AppDimensions.borderMedium,
-                              ),
-                              elevation: 0,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-
-                        // Rate Experience Button (references: ReporterProfileCard, ChatScreen, item.createdBy, and review button handler)
-                        if (item.createdBy != null && item.createdBy!.isNotEmpty) ...[
-                          SizedBox(
-                            width: double.infinity,
-                            height: 52,
-                            child: OutlinedButton.icon(
-                              onPressed: () {
-                                if (isOwnItem) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('You cannot rate yourself or leave a review on your own post.'),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                } else {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => LeaveReviewScreen(
-                                        revieweeUid: item.createdBy!,
-                                        userName: reporterName,
-                                        userAvatarUrl:
-                                            'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                              icon: Icon(
-                                Icons.star,
-                                color: isOwnItem ? context.colors.textLight : context.colors.primaryTeal,
-                              ),
-                              label: Text(
-                                isOwnItem ? 'Cannot Rate Yourself' : 'Rate Experience',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                  color: isOwnItem ? context.colors.textLight : context.colors.primaryTeal,
-                                ),
-                              ),
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(
-                                  color: isOwnItem ? context.colors.dividerColor : context.colors.primaryTeal,
-                                  width: 1.5,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: AppDimensions.borderMedium,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Center(
-                            child: Text(
-                              'Let others know about your interaction with $reporterName',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: context.colors.textLight,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                        ],
                       ],
                     ),
                   ),
@@ -359,97 +303,12 @@ class ItemDetailsScreen extends StatelessWidget {
             ),
           ),
 
-          // Bottom Pinned Action Bar
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            decoration: BoxDecoration(
-              color: context.colors.surfaceWhite,
-              border: Border(top: BorderSide(color: context.colors.dividerColor)),
+          // Pinned Bottom Bar (Contact & Flag) - Hidden for owner
+          if (!isOwnItem)
+            ItemDetailsBottomBar(
+              item: _currentItem,
+              reporterName: reporterName,
             ),
-            child: SafeArea(
-              top: false,
-              bottom: true,
-              child: Row(
-                children: [
-                  Container(
-                    height: 48,
-                    width: 48,
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: context.colors.dividerColor,
-                        width: 1.5,
-                      ),
-                      borderRadius: AppDimensions.borderMedium,
-                    ),
-                    child: IconButton(
-                      icon: Icon(
-                        Icons.outlined_flag,
-                        color: context.colors.textLight,
-                      ),
-                      onPressed: () {},
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: SizedBox(
-                      height: 48,
-                      child: ElevatedButton.icon(
-                        onPressed: (item.createdBy == null || item.createdBy!.isEmpty)
-                            ? null
-                            : () {
-                                if (isOwnItem) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('You cannot message yourself.'),
-                                      backgroundColor: Colors.orange,
-                                    ),
-                                  );
-                                } else {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ChatScreen(
-                                        userName: reporterName,
-                                        partnerUid: item.createdBy!,
-                                        avatarUrl:
-                                            'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
-                                        isOnline: true,
-                                        itemId: item.id,
-                                        itemTitle: item.title,
-                                        itemImageUrl: item.imageUrl,
-                                      ),
-                                    ),
-                                  );
-                                }
-                              },
-                        icon: Icon(
-                          Icons.chat_bubble_outline,
-                          color: isOwnItem ? context.colors.textLight : Colors.white,
-                          size: 18,
-                        ),
-                        label: Text(
-                          isOwnItem ? 'Your Listing (Cannot Chat)' : 'Contact $reporterName',
-                          style: TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: isOwnItem ? context.colors.textLight : Colors.white,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: isOwnItem ? context.colors.dividerColor : context.colors.primaryTeal,
-                          foregroundColor: isOwnItem ? context.colors.textLight : Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: AppDimensions.borderMedium,
-                          ),
-                          elevation: 0,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
       bottomNavigationBar: const HomeBottomNavBar(

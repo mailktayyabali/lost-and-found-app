@@ -69,6 +69,20 @@ class FirebaseReportsRepository implements ReportsRepository {
   }
 
   @override
+  Future<void> updateReport(Item item) async {
+    if (item.id.trim().isEmpty) {
+      throw ArgumentError('Item ID cannot be empty');
+    }
+    try {
+      final data = item.toJson();
+      data['updatedAt'] = FieldValue.serverTimestamp();
+      await _firestore.collection('reports').doc(item.id).update(data);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  @override
   Future<void> updateItemStatus(String id, String status) async {
     try {
       await _firestore.collection('reports').doc(id).update({
