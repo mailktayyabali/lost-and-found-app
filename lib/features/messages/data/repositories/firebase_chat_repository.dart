@@ -134,6 +134,7 @@ class FirebaseChatRepository implements ChatRepository {
         'time': _formatTimestamp(data['lastMessageTimestamp']),
         'rawTimestamp': data['lastMessageTimestamp'],
         'isUnread': unreadCount > 0,
+        'unreadCount': unreadCount,
         'isOnline': partnerInfo?['isOnline'] ?? false,
         'avatarUrl': partnerInfo?['avatarUrl'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
         'itemImageUrl': data['relatedItemImageUrl'] ?? 'https://images.unsplash.com/photo-1627123424574-724758594e9f?ixlib=rb-1.2.1&auto=format&fit=crop&w=100&q=80',
@@ -331,6 +332,18 @@ class FirebaseChatRepository implements ChatRepository {
     // Write message document to subcollection
     final messageRef = chatRef.collection('messages').doc();
     batch.set(messageRef, messageData);
+
+    // Write notification document for the recipient so it shows up in their notification feed
+    final notificationRef = _firestore.collection('notifications').doc();
+    batch.set(notificationRef, {
+      'recipientId': partnerUid,
+      'type': 'chat',
+      'avatarUrl': resolvedMyAvatar,
+      'title': resolvedMyName,
+      'description': text,
+      'createdAt': FieldValue.serverTimestamp(),
+      'isRead': false,
+    });
 
     await batch.commit();
   }

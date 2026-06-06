@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/domain/auth_service.dart';
-import 'widgets/notification_section_header.dart';
 import 'widgets/alert_notification_item.dart';
 import 'widgets/chat_notification_item.dart';
 
@@ -233,99 +232,43 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                             ],
                           ),
                         )
-                      : ListView(
-                          children: [
-                            // MATCHING ALERTS
-                            _buildAlertsSection(),
-
-                            // CHAT ALERTS
-                            _buildChatsSection(),
-
-                            // SYSTEM ALERTS
-                            _buildSystemsSection(),
-                            const SizedBox(height: 32),
-                          ],
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 32),
+                          itemCount: _docs.length,
+                          itemBuilder: (context, index) {
+                            final doc = _docs[index];
+                            final data = doc.data() as Map<String, dynamic>;
+                            final type = data['type'] ?? 'alert';
+                            
+                            if (type == 'chat') {
+                              return ChatNotificationItem(
+                                avatarUrl: data['avatarUrl'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
+                                title: data['title'] ?? 'New Message',
+                                subtitle: data['description'] ?? '',
+                                timeAgo: _calculateTimeAgo(data['createdAt']),
+                                isUnread: !(data['isRead'] ?? false),
+                              );
+                            } else if (type == 'system') {
+                              return AlertNotificationItem(
+                                icon: Icons.security,
+                                iconColor: context.colors.textLight,
+                                iconBackgroundColor: context.colors.background,
+                                title: data['title'] ?? 'Security Alert',
+                                subtitle: data['description'] ?? '',
+                                timeAgo: _calculateTimeAgo(data['createdAt']),
+                              );
+                            } else {
+                              return AlertNotificationItem(
+                                icon: Icons.search,
+                                iconColor: context.colors.buttonBlue,
+                                iconBackgroundColor: const Color(0xFFE8F2FF),
+                                title: data['title'] ?? 'Alert',
+                                subtitle: data['description'] ?? '',
+                                timeAgo: _calculateTimeAgo(data['createdAt']),
+                              );
+                            }
+                          },
                         ),
-    );
-  }
-
-  Widget _buildAlertsSection() {
-    final alerts = _docs.where((d) => (d.data() as Map<String, dynamic>)['type'] == 'alert').toList();
-    if (alerts.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        NotificationSectionHeader(
-          title: 'Matching Alerts',
-          icon: Icons.stars,
-          iconColor: context.colors.buttonBlue,
-        ),
-        ...alerts.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          return AlertNotificationItem(
-            icon: Icons.search,
-            iconColor: context.colors.buttonBlue,
-            iconBackgroundColor: const Color(0xFFE8F2FF),
-            title: data['title'] ?? 'Alert',
-            subtitle: data['description'] ?? '',
-            timeAgo: _calculateTimeAgo(data['createdAt']),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildChatsSection() {
-    final chats = _docs.where((d) => (d.data() as Map<String, dynamic>)['type'] == 'chat').toList();
-    if (chats.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        NotificationSectionHeader(
-          title: 'Chat Alerts',
-          icon: Icons.chat_bubble,
-          iconColor: context.colors.textLight,
-        ),
-        ...chats.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          return ChatNotificationItem(
-            avatarUrl: data['avatarUrl'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
-            title: data['title'] ?? 'New Message',
-            subtitle: data['description'] ?? '',
-            timeAgo: _calculateTimeAgo(data['createdAt']),
-            isUnread: !(data['isRead'] ?? false),
-          );
-        }),
-      ],
-    );
-  }
-
-  Widget _buildSystemsSection() {
-    final systems = _docs.where((d) => (d.data() as Map<String, dynamic>)['type'] == 'system').toList();
-    if (systems.isEmpty) return const SizedBox.shrink();
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        NotificationSectionHeader(
-          title: 'System Alerts',
-          icon: Icons.settings,
-          iconColor: context.colors.textLight,
-        ),
-        ...systems.map((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          return AlertNotificationItem(
-            icon: Icons.security,
-            iconColor: context.colors.textLight,
-            iconBackgroundColor: context.colors.background,
-            title: data['title'] ?? 'Security Alert',
-            subtitle: data['description'] ?? '',
-            timeAgo: _calculateTimeAgo(data['createdAt']),
-          );
-        }),
-      ],
     );
   }
 }

@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../messages/data/repositories/firebase_chat_repository.dart';
 import '../../../messages/presentation/messages_screen.dart';
 import '../home_screen.dart';
 import '../search_screen.dart';
@@ -110,10 +113,35 @@ class HomeBottomNavBar extends StatelessWidget {
               ),
               label: 'REPORT',
             ),
-            const BottomNavigationBarItem(
+            BottomNavigationBarItem(
               icon: Padding(
-                padding: EdgeInsets.only(bottom: 4.0),
-                child: Icon(Icons.chat_bubble_outline),
+                padding: const EdgeInsets.only(bottom: 4.0),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseChatRepository().getConversationsStreamFallback(),
+                  builder: (context, snapshot) {
+                    int totalUnread = 0;
+                    if (snapshot.hasData && snapshot.data != null) {
+                      final userId = FirebaseAuth.instance.currentUser?.uid;
+                      if (userId != null) {
+                        for (var doc in snapshot.data!.docs) {
+                          final data = doc.data() as Map<String, dynamic>?;
+                          final unreadCounts = data?['unreadCounts'] as Map<String, dynamic>?;
+                          totalUnread += (unreadCounts?[userId] as num?)?.toInt() ?? 0;
+                        }
+                      }
+                    }
+
+                    if (totalUnread > 0) {
+                      return Badge(
+                        label: Text(totalUnread > 99 ? '99+' : totalUnread.toString()),
+                        backgroundColor: context.colors.primaryTeal,
+                        child: const Icon(Icons.chat_bubble_outline),
+                      );
+                    }
+                    
+                    return const Icon(Icons.chat_bubble_outline);
+                  },
+                ),
               ),
               label: 'MESSAGES',
             ),

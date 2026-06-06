@@ -167,6 +167,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
                             message: conv['message'],
                             time: conv['time'],
                             isUnread: conv['isUnread'],
+                            unreadCount: conv['unreadCount'] ?? 0,
                             isOnline: conv['isOnline'],
                             avatarUrl: conv['avatarUrl'],
                             itemImageUrl: conv['itemImageUrl'],
@@ -189,6 +190,7 @@ class _MessagesScreenState extends State<MessagesScreen> {
     required String message,
     required String time,
     required bool isUnread,
+    required int unreadCount,
     required bool isOnline,
     required String avatarUrl,
     required String itemImageUrl,
@@ -280,14 +282,21 @@ class _MessagesScreenState extends State<MessagesScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              if (isUnread)
+              if (isUnread && unreadCount > 0)
                 Container(
-                  width: 8,
-                  height: 8,
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   margin: const EdgeInsets.only(right: 8),
                   decoration: BoxDecoration(
                     color: context.colors.primaryTeal,
-                    shape: BoxShape.circle,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    unreadCount.toString(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               Container(
