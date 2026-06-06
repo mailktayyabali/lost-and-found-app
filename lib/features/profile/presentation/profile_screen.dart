@@ -34,6 +34,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   List<Item> _userItems = [];
   List<Review> _reviews = [];
   bool _isLoading = true;
+  bool _loadError = false;
 
   @override
   void initState() {
@@ -42,13 +43,30 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadUserData() async {
-    setState(() => _isLoading = true);
+    if (mounted) {
+      setState(() {
+        _isLoading = true;
+        _loadError = false;
+      });
+    }
     _currentUser = _authService.currentUser;
     final currentUid = _currentUser?.uid;
     final targetUid = widget.userId ?? currentUid;
 
     if (targetUid != null) {
-      _userData = await _authService.getUserData(targetUid);
+      final userData = await _authService.getUserData(targetUid);
+      if (userData == null) {
+        if (mounted) {
+          setState(() {
+            _userData = null;
+            _loadError = true;
+            _isLoading = false;
+          });
+        }
+        return;
+      }
+
+      _userData = userData;
       final allItems = await FirebaseReportsRepository().getItems();
       
       // Filter items created by the target user
@@ -76,15 +94,64 @@ class _ProfileScreenState extends State<ProfileScreen> {
       );
     }
 
+    if (_loadError) {
+      return Scaffold(
+        backgroundColor: context.colors.surfaceWhite,
+        appBar: AppBar(
+          backgroundColor: context.colors.surfaceWhite,
+          elevation: 0,
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back, color: context.colors.textDark),
+            onPressed: () => Navigator.of(context).pop(),
+          ),
+          title: Text(
+            'Error',
+            style: TextStyle(
+              color: context.colors.textDark,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          centerTitle: true,
+        ),
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+              const SizedBox(height: 16),
+              Text(
+                'Failed to load user profile.',
+                style: TextStyle(color: context.colors.textLight, fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _loadUserData,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: context.colors.primaryTeal,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
     final currentUid = _authService.currentUser?.uid;
     final isOwnProfile = widget.userId == null || widget.userId == currentUid;
 
     final name = _userData?['name'] ?? _currentUser?.displayName ?? 'User';
     final email = _userData?['email'] ?? _currentUser?.email ?? '';
     final bio = _userData?['bio'] ?? "Helping the community find what's lost. Dedicated to returning precious belongings to their rightful owners.";
+    const fallbackUrl = 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200';
     final profileUrl = isOwnProfile
-        ? (_currentUser?.photoURL ?? 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200')
-        : 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=200';
+        ? (_currentUser?.photoURL ?? fallbackUrl)
+        : ((_userData?['photoURL'] as String?) ?? fallbackUrl);
 
     return DefaultTabController(
       length: 2,

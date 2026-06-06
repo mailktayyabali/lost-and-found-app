@@ -16,18 +16,38 @@ class FirebaseReviewsRepository {
           .where('revieweeUid', isEqualTo: revieweeUid)
           .orderBy('createdAt', descending: true)
           .get();
-      return snapshot.docs.map((doc) => Review.fromJson(doc.data(), doc.id)).toList();
-    } catch (e) {
-      // Fallback to client-side sorting in case of Firestore indexing delay
-      try {
-        final snapshot = await _firestore
-            .collection('reviews')
-            .where('revieweeUid', isEqualTo: revieweeUid)
-            .get();
-        final reviews = snapshot.docs.map((doc) => Review.fromJson(doc.data(), doc.id)).toList();
-        reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-        return reviews;
-      } catch (err) {
+      // Guard snapshot.docs mapping by filtering/checking doc.data() to ensure Review.fromJson is not called with null
+      return snapshot.docs
+          .map((doc) {
+            final data = doc.data() as Map<String, dynamic>?;
+            return data != null ? Review.fromJson(data, doc.id) : null;
+          })
+          .whereType<Review>()
+          .toList();
+    } on FirebaseException catch (e) {
+      final isIndexError = e.code == 'failed-precondition' ||
+          (e.message != null && e.message!.contains('requires an index'));
+      if (isIndexError) {
+        // Fallback to client-side sorting in case of Firestore indexing delay
+        try {
+          final snapshot = await _firestore
+              .collection('reviews')
+              .where('revieweeUid', isEqualTo: revieweeUid)
+              .get();
+          // Guard snapshot.docs mapping by filtering/checking doc.data() to ensure Review.fromJson is not called with null
+          final reviews = snapshot.docs
+              .map((doc) {
+                final data = doc.data() as Map<String, dynamic>?;
+                return data != null ? Review.fromJson(data, doc.id) : null;
+              })
+              .whereType<Review>()
+              .toList();
+          reviews.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+          return reviews;
+        } catch (err) {
+          rethrow;
+        }
+      } else {
         rethrow;
       }
     }

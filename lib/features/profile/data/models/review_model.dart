@@ -22,6 +22,29 @@ class Review {
   });
 
   factory Review.fromJson(Map<String, dynamic> json, String docId) {
+    final revieweeUid = json['revieweeUid'] as String?;
+    final reviewerUid = json['reviewerUid'] as String?;
+    
+    if (revieweeUid == null || revieweeUid.isEmpty) {
+      throw const FormatException('revieweeUid must not be null or empty');
+    }
+    if (reviewerUid == null || reviewerUid.isEmpty) {
+      throw const FormatException('reviewerUid must not be null or empty');
+    }
+
+    final ratingVal = json['rating'];
+    if (ratingVal == null) {
+      throw const FormatException('Review rating is missing');
+    }
+    
+    final int rawRating = (ratingVal as num).toInt();
+    int rating = rawRating;
+    if (rating < 1) {
+      rating = 1;
+    } else if (rating > 5) {
+      rating = 5;
+    }
+
     DateTime parsedDate;
     final timestamp = json['createdAt'];
     if (timestamp is Timestamp) {
@@ -34,11 +57,11 @@ class Review {
 
     return Review(
       id: docId,
-      revieweeUid: json['revieweeUid'] ?? '',
-      reviewerUid: json['reviewerUid'] ?? '',
+      revieweeUid: revieweeUid,
+      reviewerUid: reviewerUid,
       reviewerName: json['reviewerName'] ?? 'Anonymous',
       reviewerAvatarUrl: json['reviewerAvatarUrl'] ?? '',
-      rating: (json['rating'] as num?)?.toInt() ?? 5,
+      rating: rating,
       comment: json['comment'] ?? '',
       createdAt: parsedDate,
     );

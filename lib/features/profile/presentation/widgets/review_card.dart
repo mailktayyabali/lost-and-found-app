@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../data/models/review_model.dart';
 
-class ReviewCard extends StatelessWidget {
+class ReviewCard extends StatefulWidget {
   final Review review;
 
   const ReviewCard({
@@ -12,8 +12,17 @@ class ReviewCard extends StatelessWidget {
   });
 
   @override
+  State<ReviewCard> createState() => _ReviewCardState();
+}
+
+class _ReviewCardState extends State<ReviewCard> {
+  bool _imageLoadError = false;
+
+  @override
   Widget build(BuildContext context) {
+    final review = widget.review;
     final formattedDate = DateFormat('MMMM d, yyyy').format(review.createdAt);
+    final hasAvatar = review.reviewerAvatarUrl.isNotEmpty && !_imageLoadError;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16, left: 16, right: 16),
@@ -39,11 +48,21 @@ class ReviewCard extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 20,
-                backgroundImage: review.reviewerAvatarUrl.isNotEmpty
+                backgroundImage: hasAvatar
                     ? NetworkImage(review.reviewerAvatarUrl)
                     : null,
+                onBackgroundImageError: hasAvatar
+                    ? (exception, stackTrace) {
+                        debugPrint('ReviewCard: Error loading reviewer avatar: $exception');
+                        if (mounted) {
+                          setState(() {
+                            _imageLoadError = true;
+                          });
+                        }
+                      }
+                    : null,
                 backgroundColor: context.colors.primaryTeal.withValues(alpha: 0.1),
-                child: review.reviewerAvatarUrl.isEmpty
+                child: !hasAvatar
                     ? Text(
                         review.reviewerName.isNotEmpty ? review.reviewerName[0].toUpperCase() : 'A',
                         style: TextStyle(

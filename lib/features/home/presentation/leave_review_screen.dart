@@ -67,6 +67,17 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
       return;
     }
 
+    if (currentUser.uid == widget.revieweeUid) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('You cannot review your own item.'),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
     setState(() {
       _isSubmitting = true;
     });
@@ -95,13 +106,14 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
       );
       Navigator.pop(context);
     } catch (e) {
+      debugPrint('Failed to submit review: $e');
       if (!mounted) return;
       setState(() {
         _isSubmitting = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to submit review: $e'),
+        const SnackBar(
+          content: Text('Failed to submit review. Please try again.'),
           backgroundColor: Colors.red,
           behavior: SnackBarBehavior.floating,
         ),

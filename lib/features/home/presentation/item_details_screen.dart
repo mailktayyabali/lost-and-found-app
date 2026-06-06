@@ -235,8 +235,9 @@ class ItemDetailsScreen extends StatelessWidget {
                         const SizedBox(height: 24),
 
                         // Profile Card
+                        // Reference check for reporterUid validation (ReporterProfileCard, ChatScreen, item.createdBy, and review button handler)
                         ReporterProfileCard(
-                          reporterUid: item.createdBy ?? 'anonymous',
+                          reporterUid: item.createdBy,
                           reporterName: reporterName,
                         ),
                         const SizedBox(height: 24),
@@ -287,67 +288,69 @@ class ItemDetailsScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 16),
 
-                        // Rate Experience Button
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: OutlinedButton.icon(
-                            onPressed: () {
-                              if (isOwnItem) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('You cannot rate yourself or leave a review on your own post.'),
-                                    backgroundColor: Colors.orange,
-                                  ),
-                                );
-                              } else {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => LeaveReviewScreen(
-                                      revieweeUid: item.createdBy ?? 'anonymous',
-                                      userName: reporterName,
-                                      userAvatarUrl:
-                                          'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
+                        // Rate Experience Button (references: ReporterProfileCard, ChatScreen, item.createdBy, and review button handler)
+                        if (item.createdBy != null && item.createdBy!.isNotEmpty) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            height: 52,
+                            child: OutlinedButton.icon(
+                              onPressed: () {
+                                if (isOwnItem) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('You cannot rate yourself or leave a review on your own post.'),
+                                      backgroundColor: Colors.orange,
                                     ),
-                                  ),
-                                );
-                              }
-                            },
-                            icon: Icon(
-                              Icons.star,
-                              color: isOwnItem ? context.colors.textLight : context.colors.primaryTeal,
-                            ),
-                            label: Text(
-                              isOwnItem ? 'Cannot Rate Yourself' : 'Rate Experience',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                                  );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => LeaveReviewScreen(
+                                        revieweeUid: item.createdBy!,
+                                        userName: reporterName,
+                                        userAvatarUrl:
+                                            'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
+                              icon: Icon(
+                                Icons.star,
                                 color: isOwnItem ? context.colors.textLight : context.colors.primaryTeal,
                               ),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                color: isOwnItem ? context.colors.dividerColor : context.colors.primaryTeal,
-                                width: 1.5,
+                              label: Text(
+                                isOwnItem ? 'Cannot Rate Yourself' : 'Rate Experience',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                  color: isOwnItem ? context.colors.textLight : context.colors.primaryTeal,
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: AppDimensions.borderMedium,
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: isOwnItem ? context.colors.dividerColor : context.colors.primaryTeal,
+                                  width: 1.5,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: AppDimensions.borderMedium,
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Center(
-                          child: Text(
-                            'Let others know about your interaction with $reporterName',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: context.colors.textLight,
+                          const SizedBox(height: 12),
+                          Center(
+                            child: Text(
+                              'Let others know about your interaction with $reporterName',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: context.colors.textLight,
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(height: 20),
+                          const SizedBox(height: 20),
+                        ],
                       ],
                     ),
                   ),
@@ -391,29 +394,31 @@ class ItemDetailsScreen extends StatelessWidget {
                     child: SizedBox(
                       height: 48,
                       child: ElevatedButton.icon(
-                        onPressed: () {
-                          if (isOwnItem) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                content: Text('You cannot message yourself.'),
-                                backgroundColor: Colors.orange,
-                              ),
-                            );
-                          } else {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => ChatScreen(
-                                  userName: reporterName,
-                                  partnerUid: item.createdBy ?? '',
-                                  avatarUrl:
-                                      'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
-                                  isOnline: true,
-                                ),
-                              ),
-                            );
-                          }
-                        },
+                        onPressed: (item.createdBy == null || item.createdBy!.isEmpty)
+                            ? null
+                            : () {
+                                if (isOwnItem) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('You cannot message yourself.'),
+                                      backgroundColor: Colors.orange,
+                                    ),
+                                  );
+                                } else {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ChatScreen(
+                                        userName: reporterName,
+                                        partnerUid: item.createdBy!,
+                                        avatarUrl:
+                                            'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
+                                        isOnline: true,
+                                      ),
+                                    ),
+                                  );
+                                }
+                              },
                         icon: Icon(
                           Icons.chat_bubble_outline,
                           color: isOwnItem ? context.colors.textLight : Colors.white,
