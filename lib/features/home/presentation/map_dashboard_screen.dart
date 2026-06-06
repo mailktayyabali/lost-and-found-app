@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../shared/presentation/widgets/mock_map_widget.dart';
+import '../../../shared/widgets/mock_map_widget.dart';
 import 'widgets/item_card.dart';
 
 class MapDashboardScreen extends StatefulWidget {

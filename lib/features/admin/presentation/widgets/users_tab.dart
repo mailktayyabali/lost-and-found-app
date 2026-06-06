@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import 'admin_user_card.dart';
+import 'admin_user_stat_card.dart';
+import 'delete_user_dialog.dart';
 
 class UsersTab extends StatefulWidget {
   const UsersTab({super.key});
@@ -92,33 +95,20 @@ class _UsersTabState extends State<UsersTab> {
     );
   }
 
-  void _deleteUser(String id, String name) {
+  void _deleteUserConfirm(String id, String name) {
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: context.colors.surfaceWhite,
-        title: Text('Delete User', style: TextStyle(color: context.colors.textDark, fontWeight: FontWeight.bold)),
-        content: Text('Are you sure you want to permanently delete user "$name"?', style: TextStyle(color: context.colors.textLight)),
-        actions: [
-          TextButton(
-            child: Text('Cancel', style: TextStyle(color: context.colors.textLight)),
-            onPressed: () => Navigator.of(ctx).pop(),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: context.colors.tagLostRed),
-            child: const Text('Delete', style: TextStyle(color: Colors.white)),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-              setState(() {
-                _users.removeWhere((u) => u['id'] == id);
-                _applyFilter();
-              });
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(content: Text('User $name deleted.')),
-              );
-            },
-          ),
-        ],
+      builder: (ctx) => DeleteUserDialog(
+        userName: name,
+        onDeleteConfirm: () {
+          setState(() {
+            _users.removeWhere((u) => u['id'] == id);
+            _applyFilter();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('User $name deleted.')),
+          );
+        },
       ),
     );
   }
@@ -158,18 +148,16 @@ class _UsersTabState extends State<UsersTab> {
         Row(
           children: [
             Expanded(
-              child: _buildSimpleStatCard(
-                context,
-                'TOTAL ACTIVE',
-                '1,284',
+              child: AdminUserStatCard(
+                title: 'TOTAL ACTIVE',
+                value: '1,284',
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
-              child: _buildSimpleStatCard(
-                context,
-                'NEW THIS WEEK',
-                '+12',
+              child: AdminUserStatCard(
+                title: 'NEW THIS WEEK',
+                value: '+12',
                 accentColor: context.colors.tagFoundGreen,
               ),
             ),
@@ -198,242 +186,67 @@ class _UsersTabState extends State<UsersTab> {
                   },
                   style: TextStyle(color: context.colors.textDark),
                   decoration: InputDecoration(
-                    hintText: 'Search registered users...',
-                    hintStyle: TextStyle(color: context.colors.textLight, fontSize: 14),
+                    hintText: 'Search user by name or email...',
+                    hintStyle: TextStyle(
+                      fontSize: 14,
+                      color: context.colors.textLight,
+                      fontWeight: FontWeight.w500,
+                    ),
                     border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                 ),
               ),
+              if (_searchQuery.isNotEmpty)
+                IconButton(
+                  icon: Icon(Icons.clear_rounded, color: context.colors.textLight, size: 18),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                    _applyFilter();
+                  },
+                ),
             ],
           ),
         ),
         const SizedBox(height: 24),
 
         if (_filteredUsers.isEmpty)
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40),
-              child: Text(
-                'No users match query.',
-                style: TextStyle(color: context.colors.textLight, fontWeight: FontWeight.bold),
-              ),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 40),
+            alignment: Alignment.center,
+            child: Column(
+              children: [
+                Icon(Icons.person_off_rounded, size: 48, color: context.colors.textLight.withValues(alpha: 0.5)),
+                const SizedBox(height: 12),
+                Text(
+                  'No users match your query',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: context.colors.textLight,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           )
         else
-          ..._filteredUsers.map((user) => _buildUserCard(user)),
-
-        const SizedBox(height: 16),
-        Center(
-          child: TextButton.icon(
-            onPressed: () {},
-            icon: const Text(
-              'Load More Users',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            label: const Icon(Icons.keyboard_arrow_down_rounded),
-            style: TextButton.styleFrom(
-              foregroundColor: context.colors.primaryTeal,
-            ),
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: _filteredUsers.length,
+            itemBuilder: (context, index) {
+              final user = _filteredUsers[index];
+              return AdminUserCard(
+                user: user,
+                onToggleBan: () => _toggleBan(user['id'], user['name']),
+                onDelete: () => _deleteUserConfirm(user['id'], user['name']),
+              );
+            },
           ),
-        ),
-        const SizedBox(height: 60),
       ],
-    );
-  }
-
-  Widget _buildSimpleStatCard(
-    BuildContext context,
-    String title,
-    String value, {
-    Color? accentColor,
-  }) {
-    final activeColor = accentColor ?? context.colors.primaryTeal;
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.dividerColor),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Container(
-          decoration: BoxDecoration(
-            border: Border(
-              left: BorderSide(color: activeColor, width: 5),
-            ),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: context.colors.textLight,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                  letterSpacing: 0.8,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                value,
-                style: TextStyle(
-                  color: activeColor,
-                  fontSize: 26,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUserCard(Map<String, dynamic> user) {
-    final statusColor = user['status'] == 'ACTIVE' ? context.colors.tagFoundGreen : context.colors.tagLostRed;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: context.colors.dividerColor),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 22,
-                backgroundColor: const Color(0xFFFFE0B2),
-                backgroundImage: user['isImage'] ? NetworkImage(user['avatar']) : null,
-                child: !user['isImage']
-                    ? Text(
-                        user['avatar'],
-                        style: const TextStyle(
-                          color: Color(0xFFE65100),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                        ),
-                      )
-                    : null,
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user['name'],
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: context.colors.textDark,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      user['email'],
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: context.colors.textLight,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: statusColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  user['status'],
-                  style: TextStyle(
-                    fontSize: 9,
-                    fontWeight: FontWeight.bold,
-                    color: statusColor,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          const Divider(),
-          const SizedBox(height: 8),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'JOINED',
-                    style: TextStyle(
-                      fontSize: 8,
-                      fontWeight: FontWeight.bold,
-                      color: context.colors.textLight,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    user['joined'],
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                      color: context.colors.textDark,
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () => _toggleBan(user['id'], user['name']),
-                    icon: Icon(
-                      user['status'] == 'BANNED' ? Icons.check_circle_outline_rounded : Icons.block_flipped,
-                      color: context.colors.textLight,
-                      size: 20,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1F3F5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.all(10),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: () => _deleteUser(user['id'], user['name']),
-                    icon: Icon(
-                      Icons.delete_outline_rounded,
-                      color: context.colors.tagLostRed,
-                      size: 20,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1F3F5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.all(10),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      ),
     );
   }
 }

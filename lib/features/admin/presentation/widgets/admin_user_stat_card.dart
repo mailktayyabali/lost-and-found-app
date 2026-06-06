@@ -1,24 +1,26 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 
-class AdminStatCard extends StatelessWidget {
+class AdminUserStatCard extends StatelessWidget {
   final String title;
   final String value;
-  final Color accentColor;
+  final Color? accentColor;
 
-  const AdminStatCard({
+  const AdminUserStatCard({
     super.key,
     required this.title,
     required this.value,
-    required this.accentColor,
+    this.accentColor,
   });
 
   @override
   Widget build(BuildContext context) {
+    final activeColor = accentColor ?? context.colors.primaryTeal;
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: context.colors.dividerColor),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.02),
@@ -32,10 +34,10 @@ class AdminStatCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             border: Border(
-              left: BorderSide(color: accentColor, width: 5),
+              left: BorderSide(color: activeColor, width: 5),
             ),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -43,17 +45,17 @@ class AdminStatCard extends StatelessWidget {
                 title,
                 style: TextStyle(
                   color: context.colors.textLight,
-                  fontSize: 11,
+                  fontSize: 10,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 0.8,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 value,
                 style: TextStyle(
-                  color: context.colors.textDark,
-                  fontSize: 28,
+                  color: activeColor,
+                  fontSize: 26,
                   fontWeight: FontWeight.w900,
                 ),
               ),

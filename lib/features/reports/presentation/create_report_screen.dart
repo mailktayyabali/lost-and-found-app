@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
@@ -8,11 +7,14 @@ import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/config/cloudinary_config.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../shared/presentation/widgets/mock_map_widget.dart';
 import '../../../shared/models/item_model.dart';
 import '../../auth/domain/auth_service.dart';
 import '../data/repositories/firebase_reports_repository.dart';
 import 'report_success_screen.dart';
+import 'widgets/report_toggle.dart';
+import 'widgets/steps/about_item_step.dart';
+import 'widgets/steps/where_and_when_step.dart';
+import 'widgets/steps/contact_details_step.dart';
 
 class CreateReportScreen extends StatefulWidget {
   const CreateReportScreen({super.key});
@@ -295,441 +297,54 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     }
   }
 
-  Widget _buildToggle() {
-    return Container(
-      decoration: BoxDecoration(
-        color: context.colors.background,
-        borderRadius: BorderRadius.circular(24),
-      ),
-      padding: const EdgeInsets.all(4),
-      child: Row(
-        children: [
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isLost = true),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: _isLost ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: _isLost
-                      ? [
-                          BoxShadow(
-                            color: context.colors.textDark.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          )
-                        ]
-                      : null,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'I Lost Something',
-                  style: TextStyle(
-                    color: _isLost ? context.colors.textDark : context.colors.textLight,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _isLost = false),
-              child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                decoration: BoxDecoration(
-                  color: !_isLost ? Colors.white : Colors.transparent,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: !_isLost
-                      ? [
-                          BoxShadow(
-                            color: context.colors.textDark.withValues(alpha: 0.05),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          )
-                        ]
-                      : null,
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  'I Found Something',
-                  style: TextStyle(
-                    color: !_isLost ? context.colors.textDark : context.colors.textLight,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTextField(
-    String label, 
-    String hint, 
-    TextEditingController controller, {
-    int maxLines = 1,
-    bool readOnly = false,
-    VoidCallback? onTap,
-    IconData? suffixIcon,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: context.colors.textDark,
-          ),
-        ),
-        const SizedBox(height: 8),
-        TextField(
-          controller: controller,
-          maxLines: maxLines,
-          readOnly: readOnly,
-          onTap: onTap,
-          decoration: InputDecoration(
-            hintText: hint,
-            hintStyle: TextStyle(color: context.colors.textLight, fontSize: 14),
-            suffixIcon: suffixIcon != null ? Icon(suffixIcon, color: context.colors.primaryTeal, size: 20) : null,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-            border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: context.colors.dividerColor),
-            ),
-            enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: context.colors.dividerColor),
-            ),
-            focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(8),
-              borderSide: BorderSide(color: context.colors.primaryTeal),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDropdown(String label) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: context.colors.textDark,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: context.colors.dividerColor),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: _selectedCategory,
-              isExpanded: true,
-              icon: Icon(Icons.keyboard_arrow_down, color: context.colors.textLight),
-              items: ['Electronics', 'Wallets', 'Keys', 'Pets', 'Bags', 'Other']
-                  .map((category) => DropdownMenuItem(
-                        value: category,
-                        child: Text(category, style: const TextStyle(fontSize: 14)),
-                      ))
-                  .toList(),
-              onChanged: (value) {
-                if (value != null) {
-                  setState(() => _selectedCategory = value);
-                }
-              },
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPhotoUpload() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        RichText(
-          text: TextSpan(
-            text: 'Upload Photos ',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: context.colors.textDark,
-            ),
-            children: const [
-              TextSpan(
-                text: '*',
-                style: TextStyle(color: Colors.red),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 8),
-        if (_selectedImages.isNotEmpty)
-          Container(
-            height: 100,
-            margin: const EdgeInsets.only(bottom: 12),
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _selectedImages.length + 1,
-              itemBuilder: (context, index) {
-                if (index == _selectedImages.length) {
-                  return GestureDetector(
-                    onTap: _pickImages,
-                    child: Container(
-                      width: 100,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        color: context.colors.background,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: context.colors.dividerColor),
-                      ),
-                      child: Icon(Icons.add_a_photo, color: context.colors.primaryTeal),
-                    ),
-                  );
-                }
-                return Stack(
-                  children: [
-                    Container(
-                      width: 100,
-                      margin: const EdgeInsets.only(right: 8),
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(8),
-                        image: DecorationImage(
-                          image: FileImage(File(_selectedImages[index].path)),
-                          fit: BoxFit.cover,
-                        ),
-                      ),
-                    ),
-                    Positioned(
-                      top: 4,
-                      right: 12,
-                      child: GestureDetector(
-                        onTap: () => _removeImage(index),
-                        child: Container(
-                          padding: const EdgeInsets.all(2),
-                          decoration: const BoxDecoration(
-                            color: Colors.red,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(Icons.close, color: Colors.white, size: 14),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          )
-        else
-          GestureDetector(
-            onTap: _pickImages,
-            child: Container(
-              width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 24),
-              decoration: BoxDecoration(
-                color: context.colors.background,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(
-                  color: context.colors.dividerColor,
-                  style: BorderStyle.solid,
-                ),
-              ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: context.colors.textLight,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.cloud_upload, color: Colors.white, size: 24),
-                  ),
-                  const SizedBox(height: 12),
-                  RichText(
-                    text: TextSpan(
-                      text: 'Drag & drop files here or ',
-                      style: TextStyle(color: context.colors.textLight, fontSize: 12),
-                      children: [
-                        TextSpan(
-                          text: 'browse',
-                          style: TextStyle(color: context.colors.primaryTeal, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'PNG, JPG, GIF up to 10MB',
-                    style: TextStyle(color: context.colors.textLight, fontSize: 10),
-                  ),
-                ],
-              ),
-            ),
-          ),
-      ],
-    );
-  }
-
   List<Step> _buildSteps() {
     return [
       Step(
         title: const Text('About the Item', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          children: [
-            _buildTextField('Item Name', 'e.g., Black Leather Wallet', _itemNameController),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(child: _buildDropdown('Category')),
-                const SizedBox(width: 16),
-                Expanded(child: _buildTextField('Color', 'e.g., Red', _colorController)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildTextField(
-              'Detailed Description',
-              'Describe any distinctive features, brand, condition, or contents...',
-              _descriptionController,
-              maxLines: 4,
-            ),
-            const SizedBox(height: 16),
-            _buildPhotoUpload(),
-          ],
+        content: AboutItemStep(
+          itemNameController: _itemNameController,
+          colorController: _colorController,
+          descriptionController: _descriptionController,
+          selectedCategory: _selectedCategory,
+          onCategoryChanged: (value) {
+            if (value != null) {
+              setState(() => _selectedCategory = value);
+            }
+          },
+          selectedImages: _selectedImages,
+          onPickImages: _pickImages,
+          onRemoveImage: _removeImage,
         ),
         isActive: _currentStep >= 0,
         state: _currentStep > 0 ? StepState.complete : StepState.indexed,
       ),
       Step(
         title: const Text('Where & When', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Location',
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-                color: context.colors.textDark,
-              ),
-            ),
-            const SizedBox(height: 8),
-            MockMapWidget(
-              isPicker: true,
-              height: 150,
-              onTap: () {
-                // In a real app, this would open a full map screen to pick a location
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Mock Map Picker tapped')),
-                );
-                setState(() {
-                  _locationController.text = 'Mock Selected Location';
-                });
-              },
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _locationController,
-              decoration: InputDecoration(
-                hintText: 'Or enter address manually',
-                hintStyle: TextStyle(color: context.colors.textLight, fontSize: 14),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: context.colors.dividerColor),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: context.colors.dividerColor),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: BorderSide(color: context.colors.primaryTeal),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    'Date ${_isLost ? 'Lost' : 'Found'}', 
-                    'dd/mm/yyyy', 
-                    _dateController,
-                    readOnly: true,
-                    onTap: () => _selectDate(context),
-                    suffixIcon: Icons.calendar_today,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _buildTextField(
-                    'Approximate Time', 
-                    '--:-- --', 
-                    _timeController,
-                    readOnly: true,
-                    onTap: () => _selectTime(context),
-                    suffixIcon: Icons.access_time,
-                  ),
-                ),
-              ],
-            ),
-          ],
+        content: WhereAndWhenStep(
+          locationController: _locationController,
+          dateController: _dateController,
+          timeController: _timeController,
+          isLost: _isLost,
+          onSelectDate: () => _selectDate(context),
+          onSelectTime: () => _selectTime(context),
+          onTapMap: () {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Mock Map Picker tapped')),
+            );
+            setState(() {
+              _locationController.text = 'Mock Selected Location';
+            });
+          },
         ),
         isActive: _currentStep >= 1,
         state: _currentStep > 1 ? StepState.complete : StepState.indexed,
       ),
       Step(
         title: const Text('Your Contact Details', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Column(
-          children: [
-            Row(
-              children: [
-                Expanded(child: _buildTextField('Your Name', 'John Doe', _nameController)),
-                const SizedBox(width: 16),
-                Expanded(child: _buildTextField('Email Address', 'you@example.com', _emailController)),
-              ],
-            ),
-            const SizedBox(height: 16),
-            _buildTextField('Phone Number', 'e.g., +1 234 567 890', _phoneController),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: context.colors.surfaceWhite,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: context.colors.dividerColor),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.lock, color: Color(0xFFF59E0B), size: 16),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Your contact information will be kept private and shared only with a user who has a confirmed match for your item.',
-                      style: TextStyle(fontSize: 11, color: context.colors.textLight),
-                    ),
-                  ),
-                ],
-              ),
-            )
-          ],
+        content: ContactDetailsStep(
+          nameController: _nameController,
+          emailController: _emailController,
+          phoneController: _phoneController,
         ),
         isActive: _currentStep >= 2,
       ),
@@ -766,7 +381,10 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
           const SizedBox(height: 24),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: _buildToggle(),
+            child: ReportToggle(
+              isLost: _isLost,
+              onToggle: (value) => setState(() => _isLost = value),
+            ),
           ),
           const SizedBox(height: 16),
           Expanded(
