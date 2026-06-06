@@ -13,9 +13,24 @@ class FirebaseClaimRepository implements ClaimRepository {
   @override
   Future<void> submitClaimRequest(ClaimRequest request) async {
     try {
+      final batch = _firestore.batch();
+
       final docRef = _firestore.collection('claim_requests').doc();
       final data = request.toJson();
-      await docRef.set(data);
+      batch.set(docRef, data);
+
+      final notificationRef = _firestore.collection('notifications').doc();
+      batch.set(notificationRef, {
+        'recipientId': request.ownerUid,
+        'title': 'New Claim Request',
+        'description': '${request.requesterName} has submitted a claim request for your item "${request.itemTitle}".',
+        'type': 'claim',
+        'relatedItemId': request.itemId,
+        'isRead': false,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
     } catch (e) {
       rethrow;
     }
@@ -124,6 +139,10 @@ class FirebaseClaimRepository implements ClaimRepository {
           throw StateError('This item has already been resolved.');
         }
 
+        final requestData = requestDoc.data()!;
+        final requesterUid = requestData['requesterUid'] ?? '';
+        final itemTitle = requestData['itemTitle'] ?? '';
+
         // Perform updates atomically
         transaction.update(requestRef, {'status': 'APPROVED'});
         transaction.update(itemRef, {
@@ -135,6 +154,20 @@ class FirebaseClaimRepository implements ClaimRepository {
           if (doc.id != requestId) {
             transaction.update(doc.reference, {'status': 'REJECTED'});
           }
+        }
+
+        // Create approval notification for the claimant
+        if (requesterUid.isNotEmpty) {
+          final notificationRef = _firestore.collection('notifications').doc();
+          transaction.set(notificationRef, {
+            'recipientId': requesterUid,
+            'title': 'Claim Request Approved',
+            'description': 'Your claim request for "$itemTitle" has been approved!',
+            'type': 'claim',
+            'relatedItemId': itemId,
+            'isRead': false,
+            'createdAt': FieldValue.serverTimestamp(),
+          });
         }
       });
     } catch (e) {

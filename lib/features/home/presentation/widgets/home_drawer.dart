@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../reports/presentation/my_posts_screen.dart';
 import '../saved_items_screen.dart';
@@ -101,10 +102,21 @@ class HomeDrawer extends StatelessWidget {
               label: 'My Reports',
               isSelected: true,
             ),
-            _buildMenuItem(
-              context: context,
-              icon: Icons.pending_actions_outlined,
-              label: 'Claim Requests',
+            StreamBuilder<QuerySnapshot>(
+              stream: FirebaseFirestore.instance
+                  .collection('claim_requests')
+                  .where('ownerUid', isEqualTo: AuthService().currentUser?.uid ?? '')
+                  .where('status', isEqualTo: 'PENDING')
+                  .snapshots(),
+              builder: (context, snapshot) {
+                final count = snapshot.hasData ? snapshot.data!.docs.length : 0;
+                return _buildMenuItem(
+                  context: context,
+                  icon: Icons.pending_actions_outlined,
+                  label: 'Claim Requests',
+                  badgeCount: count,
+                );
+              },
             ),
             _buildMenuItem(context: context, icon: Icons.bookmark_border, label: 'Saved Items'),
             _buildMenuItem(
@@ -183,6 +195,7 @@ class HomeDrawer extends StatelessWidget {
     required IconData icon,
     required String label,
     bool isSelected = false,
+    int badgeCount = 0,
   }) {
     return Padding(
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -216,6 +229,23 @@ class HomeDrawer extends StatelessWidget {
               fontSize: 15,
             ),
           ),
+          trailing: badgeCount > 0
+              ? Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: context.colors.tagLostRed,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    '$badgeCount',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              : null,
           onTap: () {
             if (label == 'My Reports') {
               Navigator.of(context).pop(); // Close drawer

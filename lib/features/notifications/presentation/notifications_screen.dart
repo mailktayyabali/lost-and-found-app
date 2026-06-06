@@ -257,6 +257,15 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                 subtitle: data['description'] ?? '',
                                 timeAgo: _calculateTimeAgo(data['createdAt']),
                               );
+                            } else if (type == 'claim') {
+                              return AlertNotificationItem(
+                                icon: Icons.verified,
+                                iconColor: context.colors.primaryTeal,
+                                iconBackgroundColor: context.colors.primaryTeal.withValues(alpha: 0.1),
+                                title: data['title'] ?? 'Claim Request',
+                                subtitle: data['description'] ?? '',
+                                timeAgo: _calculateTimeAgo(data['createdAt']),
+                              );
                             } else {
                               return AlertNotificationItem(
                                 icon: Icons.search,
