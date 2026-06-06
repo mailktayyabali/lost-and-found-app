@@ -34,104 +34,147 @@ class ItemDetailsActionButtons extends StatelessWidget {
 
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (BuildContext context) {
-        return AlertDialog(
-          backgroundColor: themeColors.surfaceWhite,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: Text(
-            'Claim This Item',
-            style: TextStyle(color: themeColors.textDark, fontWeight: FontWeight.bold),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Please provide a detailed description to prove your ownership (e.g., specific markings, serial number, location lost detail).',
-                style: TextStyle(color: themeColors.textLight, fontSize: 13, height: 1.4),
+        bool isSubmitting = false;
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              backgroundColor: themeColors.surfaceWhite,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+              title: Text(
+                'Claim This Item',
+                style: TextStyle(color: themeColors.textDark, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 16),
-              TextField(
-                controller: descriptionController,
-                maxLines: 4,
-                decoration: InputDecoration(
-                  hintText: 'Enter description or proof here...',
-                  hintStyle: TextStyle(color: themeColors.textLight.withValues(alpha: 0.6), fontSize: 14),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: themeColors.dividerColor),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Please provide a detailed description to prove your ownership (e.g., specific markings, serial number, location lost detail).',
+                    style: TextStyle(color: themeColors.textLight, fontSize: 13, height: 1.4),
                   ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: themeColors.primaryTeal, width: 1.5),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: descriptionController,
+                    maxLines: 4,
+                    enabled: !isSubmitting,
+                    decoration: InputDecoration(
+                      hintText: 'Enter description or proof here...',
+                      hintStyle: TextStyle(color: themeColors.textLight.withValues(alpha: 0.6), fontSize: 14),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: themeColors.dividerColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: themeColors.primaryTeal, width: 1.5),
+                      ),
+                      contentPadding: const EdgeInsets.all(12),
+                    ),
+                    style: TextStyle(color: themeColors.textDark, fontSize: 14),
                   ),
-                  contentPadding: const EdgeInsets.all(12),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: isSubmitting ? null : () => Navigator.of(context).pop(),
+                  child: Text('Cancel', style: TextStyle(color: themeColors.textLight, fontWeight: FontWeight.bold)),
                 ),
-                style: TextStyle(color: themeColors.textDark, fontSize: 14),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: Text('Cancel', style: TextStyle(color: themeColors.textLight, fontWeight: FontWeight.bold)),
-            ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: themeColors.primaryTeal,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              onPressed: () async {
-                final text = descriptionController.text.trim();
-                if (text.isEmpty) {
-                  scaffoldMessenger.showSnackBar(
-                    const SnackBar(
-                      content: Text('Please enter a description for your claim.'),
-                      backgroundColor: Colors.orange,
-                    ),
-                  );
-                  return;
-                }
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: themeColors.primaryTeal,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                  onPressed: isSubmitting
+                      ? null
+                      : () async {
+                          final text = descriptionController.text.trim();
+                          if (text.isEmpty) {
+                            scaffoldMessenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('Please enter a description for your claim.'),
+                                backgroundColor: Colors.orange,
+                              ),
+                            );
+                            return;
+                          }
 
-                Navigator.of(context).pop(); // Close dialog
+                          setState(() {
+                            isSubmitting = true;
+                          });
 
-                final currentUser = AuthService().currentUser;
-                final requesterName = currentUser?.displayName ?? currentUser?.email?.split('@').first ?? 'Anonymous';
+                          final currentUser = AuthService().currentUser;
+                          if (currentUser == null) {
+                            scaffoldMessenger.showSnackBar(
+                              const SnackBar(
+                                content: Text('User session expired. Please sign in again.'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            setState(() {
+                              isSubmitting = false;
+                            });
+                            return;
+                          }
 
-                final request = ClaimRequest(
-                  id: '',
-                  itemId: item.id,
-                  itemTitle: item.title,
-                  itemImageUrl: item.imageUrl,
-                  requesterUid: currentUser?.uid ?? 'anonymous',
-                  requesterName: requesterName,
-                  ownerUid: item.createdBy ?? 'anonymous',
-                  description: text,
-                  status: 'PENDING',
-                  createdAt: DateTime.now(),
-                );
+                          final requesterName = currentUser.displayName ??
+                              currentUser.email?.split('@').first ??
+                              'User';
 
-                try {
-                  await FirebaseClaimRepository().submitClaimRequest(request);
-                  onClaimSubmitted();
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: const Text('Claim request submitted successfully!'),
-                      backgroundColor: themeColors.primaryTeal,
-                    ),
-                  );
-                } catch (e) {
-                  scaffoldMessenger.showSnackBar(
-                    SnackBar(
-                      content: Text('Failed to submit claim request: $e'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-              child: const Text('Submit Request', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ),
-          ],
+                          final request = ClaimRequest(
+                            id: '',
+                            itemId: item.id,
+                            itemTitle: item.title,
+                            itemImageUrl: item.imageUrl,
+                            requesterUid: currentUser.uid,
+                            requesterName: requesterName,
+                            ownerUid: item.createdBy ?? '',
+                            description: text,
+                            status: 'PENDING',
+                            createdAt: DateTime.now(),
+                          );
+
+                          try {
+                            await FirebaseClaimRepository().submitClaimRequest(request);
+                            onClaimSubmitted();
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: const Text('Claim request submitted successfully!'),
+                                backgroundColor: themeColors.primaryTeal,
+                              ),
+                            );
+                            if (context.mounted) {
+                              Navigator.of(context).pop();
+                            }
+                          } catch (e) {
+                            scaffoldMessenger.showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to submit claim request: $e'),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                            if (context.mounted) {
+                              setState(() {
+                                isSubmitting = false;
+                              });
+                            }
+                          }
+                        },
+                  child: isSubmitting
+                      ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text('Submit Request', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -328,7 +371,18 @@ class ItemDetailsActionButtons extends StatelessWidget {
                     ),
                   )
                 : ElevatedButton.icon(
-                    onPressed: () => _showClaimDialog(context),
+                    onPressed: () {
+                      if (AuthService().currentUser == null) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Please sign in to claim this item.'),
+                            backgroundColor: context.colors.tagLostRed,
+                          ),
+                        );
+                        return;
+                      }
+                      _showClaimDialog(context);
+                    },
                     icon: const Icon(
                       Icons.verified,
                       color: Colors.white,

@@ -62,38 +62,81 @@ class FirebaseClaimRepository implements ClaimRepository {
       if (snapshot.docs.isEmpty) return null;
       return ClaimRequest.fromJson(snapshot.docs.first.data(), snapshot.docs.first.id);
     } catch (e) {
-      rethrow;
+      // Fallback: query strictly by itemId and filter in-memory
+      try {
+        final fallbackSnapshot = await _firestore
+            .collection('claim_requests')
+            .where('itemId', isEqualTo: itemId)
+            .get();
+        final pendingDocs = fallbackSnapshot.docs.where((doc) => doc.data()['status'] == 'PENDING');
+        if (pendingDocs.isEmpty) return null;
+        return ClaimRequest.fromJson(pendingDocs.first.data(), pendingDocs.first.id);
+      } catch (_) {
+        rethrow;
+      }
     }
   }
 
   @override
   Future<void> approveClaimRequest(String requestId, String itemId) async {
     try {
-      final batch = _firestore.batch();
-
-      final requestRef = _firestore.collection('claim_requests').doc(requestId);
-      batch.update(requestRef, {'status': 'APPROVED'});
-
-      final itemRef = _firestore.collection('reports').doc(itemId);
-      batch.update(itemRef, {
-        'status': 'RESOLVED',
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-
-      // Also reject all other pending requests for the same item (if any exist)
-      final otherPending = await _firestore
-          .collection('claim_requests')
-          .where('itemId', isEqualTo: itemId)
-          .where('status', isEqualTo: 'PENDING')
-          .get();
-
-      for (var doc in otherPending.docs) {
-        if (doc.id != requestId) {
-          batch.update(doc.reference, {'status': 'REJECTED'});
-        }
+      // Get other pending requests first (with fallback)
+      List<DocumentSnapshot> otherPendingDocs = [];
+      try {
+        final otherPending = await _firestore
+            .collection('claim_requests')
+            .where('itemId', isEqualTo: itemId)
+            .where('status', isEqualTo: 'PENDING')
+            .get();
+        otherPendingDocs = otherPending.docs;
+      } catch (_) {
+        final fallbackPending = await _firestore
+            .collection('claim_requests')
+            .where('itemId', isEqualTo: itemId)
+            .get();
+        otherPendingDocs = fallbackPending.docs
+            .where((doc) => doc.data()['status'] == 'PENDING')
+            .toList();
       }
 
-      await batch.commit();
+      await _firestore.runTransaction((transaction) async {
+        final requestRef = _firestore.collection('claim_requests').doc(requestId);
+        final itemRef = _firestore.collection('reports').doc(itemId);
+
+        final requestDoc = await transaction.get(requestRef);
+        final itemDoc = await transaction.get(itemRef);
+
+        if (!itemDoc.exists) {
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            message: 'Report item does not exist.',
+          );
+        }
+        if (!requestDoc.exists) {
+          throw FirebaseException(
+            plugin: 'cloud_firestore',
+            message: 'Claim request does not exist.',
+          );
+        }
+
+        final itemData = itemDoc.data()!;
+        if (itemData['status'] == 'RESOLVED') {
+          throw StateError('This item has already been resolved.');
+        }
+
+        // Perform updates atomically
+        transaction.update(requestRef, {'status': 'APPROVED'});
+        transaction.update(itemRef, {
+          'status': 'RESOLVED',
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        for (var doc in otherPendingDocs) {
+          if (doc.id != requestId) {
+            transaction.update(doc.reference, {'status': 'REJECTED'});
+          }
+        }
+      });
     } catch (e) {
       rethrow;
     }

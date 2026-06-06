@@ -288,7 +288,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         imageUrl: uploadedImageUrl,
         timeAgo: isEditing ? widget.itemToEdit!.timeAgo : 'Just now',
         category: _selectedCategory,
-        status: isEditing ? widget.itemToEdit!.status : (_isLost ? 'LOST' : 'FOUND'),
+        status: _isLost ? 'LOST' : 'FOUND',
         createdBy: isEditing ? widget.itemToEdit!.createdBy : (currentUser?.uid ?? 'anonymous'),
         reporterName: _nameController.text.trim().isEmpty ? (currentUser?.displayName ?? 'Anonymous') : _nameController.text.trim(),
         reporterEmail: _emailController.text.trim().isEmpty ? (currentUser?.email ?? '') : _emailController.text.trim(),

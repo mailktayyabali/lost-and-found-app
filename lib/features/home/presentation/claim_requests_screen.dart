@@ -15,6 +15,7 @@ class _ClaimRequestsScreenState extends State<ClaimRequestsScreen> {
   final FirebaseClaimRepository _claimRepository = FirebaseClaimRepository();
   List<ClaimRequest> _allRequests = [];
   bool _isLoading = true;
+  String? _processingRequestId;
 
   @override
   void initState() {
@@ -39,8 +40,8 @@ class _ClaimRequestsScreenState extends State<ClaimRequestsScreen> {
         debugPrint('ClaimRequestsScreen: Error loading requests: $e');
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to load claim requests: $e'),
+            const SnackBar(
+              content: Text('Failed to load claim requests. Please try again.'),
               backgroundColor: Colors.red,
             ),
           );
@@ -90,22 +91,33 @@ class _ClaimRequestsScreenState extends State<ClaimRequestsScreen> {
     );
 
     if (confirm == true) {
+      if (!mounted) return;
+      setState(() => _processingRequestId = 'approve_${request.id}');
       try {
         await _claimRepository.approveClaimRequest(request.id, request.itemId);
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text('Claim approved successfully for "${request.itemTitle}"!'),
-            backgroundColor: themeColors.primaryTeal,
-          ),
-        );
-        _loadRequests();
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: Text('Claim approved successfully for "${request.itemTitle}"!'),
+              backgroundColor: themeColors.primaryTeal,
+            ),
+          );
+        }
+        await _loadRequests();
       } catch (e) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text('Failed to approve claim request: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        debugPrint('ClaimRequestsScreen: Failed to approve request: $e');
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Failed to approve claim request. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _processingRequestId = null);
+        }
       }
     }
   }
@@ -147,22 +159,33 @@ class _ClaimRequestsScreenState extends State<ClaimRequestsScreen> {
     );
 
     if (confirm == true) {
+      if (!mounted) return;
+      setState(() => _processingRequestId = 'reject_${request.id}');
       try {
         await _claimRepository.rejectClaimRequest(request.id);
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text('Claim request rejected.'),
-            backgroundColor: themeColors.tagLostRed,
-          ),
-        );
-        _loadRequests();
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            SnackBar(
+              content: const Text('Claim request rejected.'),
+              backgroundColor: themeColors.tagLostRed,
+            ),
+          );
+        }
+        await _loadRequests();
       } catch (e) {
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
-            content: Text('Failed to reject claim request: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        debugPrint('ClaimRequestsScreen: Failed to reject request: $e');
+        if (mounted) {
+          scaffoldMessenger.showSnackBar(
+            const SnackBar(
+              content: Text('Failed to reject claim request. Please try again.'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _processingRequestId = null);
+        }
       }
     }
   }
@@ -327,8 +350,19 @@ class _ClaimRequestsScreenState extends State<ClaimRequestsScreen> {
                         side: BorderSide(color: context.colors.tagLostRed),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                       ),
-                      onPressed: () => _rejectRequest(request),
-                      child: const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: _processingRequestId != null
+                          ? null
+                          : () => _rejectRequest(request),
+                      child: _processingRequestId == 'reject_${request.id}'
+                          ? SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(context.colors.tagLostRed),
+                              ),
+                            )
+                          : const Text('Reject', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(width: 12),
                     ElevatedButton(
@@ -338,8 +372,19 @@ class _ClaimRequestsScreenState extends State<ClaimRequestsScreen> {
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                         elevation: 0,
                       ),
-                      onPressed: () => _approveRequest(request),
-                      child: const Text('Approve', style: TextStyle(fontWeight: FontWeight.bold)),
+                      onPressed: _processingRequestId != null
+                          ? null
+                          : () => _approveRequest(request),
+                      child: _processingRequestId == 'approve_${request.id}'
+                          ? const SizedBox(
+                              width: 16,
+                              height: 16,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              ),
+                            )
+                          : const Text('Approve', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                   ],
                 ),

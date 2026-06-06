@@ -209,7 +209,6 @@ class _MessagesScreenState extends State<MessagesScreen> {
                   userName: name,
                   partnerUid: partnerUid,
                   avatarUrl: avatarUrl,
-                  isOnline: isOnline,
                   itemId: relatedItemId,
                   itemTitle: relatedItemTitle,
                   itemImageUrl: itemImageUrl,

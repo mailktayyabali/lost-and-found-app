@@ -36,9 +36,20 @@ class ClaimRequest {
       ownerUid: json['ownerUid'] ?? '',
       description: json['description'] ?? '',
       status: json['status'] ?? 'PENDING',
-      createdAt: json['createdAt'] is Timestamp 
-          ? (json['createdAt'] as Timestamp).toDate() 
-          : DateTime.tryParse(json['createdAt'] ?? '') ?? DateTime.now(),
+      createdAt: () {
+        final raw = json['createdAt'];
+        if (raw == null) {
+          throw FormatException('Missing required field "createdAt" in ClaimRequest JSON');
+        }
+        if (raw is Timestamp) {
+          return raw.toDate();
+        }
+        if (raw is String) {
+          final parsed = DateTime.tryParse(raw);
+          if (parsed != null) return parsed;
+        }
+        throw FormatException('Invalid or unparsable "createdAt" field in ClaimRequest JSON: $raw');
+      }(),
     );
   }
 

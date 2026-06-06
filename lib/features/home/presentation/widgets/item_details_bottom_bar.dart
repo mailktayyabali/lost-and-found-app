@@ -42,7 +42,8 @@ class ItemDetailsBottomBar extends StatelessWidget {
                   Icons.outlined_flag,
                   color: context.colors.textLight,
                 ),
-                onPressed: () {},
+                // TODO: Implement reporting/flagging flow
+                onPressed: null,
               ),
             ),
             const SizedBox(width: 12),
@@ -61,7 +62,6 @@ class ItemDetailsBottomBar extends StatelessWidget {
                                 partnerUid: item.createdBy!,
                                 avatarUrl:
                                     'https://img.freepik.com/free-psd/3d-illustration-person-with-sunglasses_23-2149436188.jpg',
-                                isOnline: true,
                                 itemId: item.id,
                                 itemTitle: item.title,
                                 itemImageUrl: item.imageUrl,

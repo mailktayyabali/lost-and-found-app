@@ -7,7 +7,6 @@ class ChatScreen extends StatefulWidget {
   final String userName;
   final String partnerUid;
   final String avatarUrl;
-  final bool isOnline;
   final String? itemId;
   final String? itemTitle;
   final String? itemImageUrl;
@@ -17,7 +16,6 @@ class ChatScreen extends StatefulWidget {
     required this.userName,
     required this.partnerUid,
     required this.avatarUrl,
-    this.isOnline = true,
     this.itemId,
     this.itemTitle,
     this.itemImageUrl,
@@ -145,15 +143,6 @@ class _ChatScreenState extends State<ChatScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  if (widget.isOnline)
-                    const Text(
-                      'Online',
-                      style: TextStyle(
-                        color: Color(0xFF10B981),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
                 ],
               ),
             ],

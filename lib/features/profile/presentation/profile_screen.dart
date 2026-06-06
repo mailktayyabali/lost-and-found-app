@@ -359,7 +359,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           userName: name,
                                           partnerUid: widget.userId!,
                                           avatarUrl: profileUrl,
-                                          isOnline: true,
                                         ),
                                       ),
                                     );

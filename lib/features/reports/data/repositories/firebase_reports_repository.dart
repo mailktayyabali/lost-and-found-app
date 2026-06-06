@@ -75,6 +75,11 @@ class FirebaseReportsRepository implements ReportsRepository {
     }
     try {
       final data = item.toJson();
+      data.remove('createdAt');
+      data.remove('dateReported');
+      data.remove('createdBy');
+      data.remove('userId');
+      
       data['updatedAt'] = FieldValue.serverTimestamp();
       await _firestore.collection('reports').doc(item.id).update(data);
     } catch (e) {
