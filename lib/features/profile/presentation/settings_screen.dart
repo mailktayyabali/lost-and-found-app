@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/theme_manager.dart';
+import '../../auth/domain/auth_service.dart';
+import '../../auth/presentation/login_screen.dart';
 import 'support_screens.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -11,7 +14,7 @@ class SettingsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: context.colors.background,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: context.colors.surfaceWhite,
         elevation: 0,
         centerTitle: true,
         leading: IconButton(
@@ -70,7 +73,7 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.delete_outline_rounded,
             title: 'Delete Account',
             titleColor: Colors.red,
-            onTap: () {},
+            onTap: () => _confirmDeleteAccount(context),
           ),
         ],
       ),
@@ -151,6 +154,219 @@ class SettingsScreen extends StatelessWidget {
           onChanged: (value) => ThemeManager.toggleTheme(),
           activeThumbColor: context.colors.primaryTeal,
         ),
+      ),
+    );
+  }
+
+  void _confirmDeleteAccount(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: Row(
+            children: const [
+              Icon(Icons.warning_amber_rounded, color: Colors.red, size: 28),
+              SizedBox(width: 8),
+              Text(
+                'Delete Account?',
+                style: TextStyle(fontWeight: FontWeight.bold),
+              ),
+            ],
+          ),
+          content: const Text(
+            'This action is permanent and cannot be undone. All your posts, reviews, messages, and claims will be permanently deleted.',
+            style: TextStyle(fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: context.colors.textDark),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+                _reauthenticateAndDelete(context);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _reauthenticateAndDelete(BuildContext context) async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      _showErrorSnackBar(context, 'No active user session found.');
+      return;
+    }
+
+    final providers = user.providerData.map((info) => info.providerId).toList();
+    final isGoogleUser = providers.contains('google.com');
+
+    if (isGoogleUser) {
+      _showLoadingDialog(context, 'Re-authenticating with Google...');
+      try {
+        await AuthService().reauthenticateWithGoogle();
+        if (!context.mounted) return;
+        Navigator.pop(context); // Close loading dialog
+        
+        await _performAccountDeletion(context);
+      } catch (e) {
+        if (!context.mounted) return;
+        Navigator.pop(context); // Close loading dialog
+        _showErrorSnackBar(context, 'Google re-authentication failed: $e');
+      }
+    } else {
+      _promptForPasswordAndDelete(context);
+    }
+  }
+
+  void _promptForPasswordAndDelete(BuildContext context) {
+    final passwordController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          title: const Text(
+            'Confirm Password',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Please enter your password to confirm account deletion.',
+                style: TextStyle(fontSize: 14),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  labelText: 'Password',
+                  hintText: 'Enter your password',
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(color: context.colors.primaryTeal),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: context.colors.textDark),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                final password = passwordController.text.trim();
+                if (password.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Password is required'), backgroundColor: Colors.red),
+                  );
+                  return;
+                }
+                Navigator.pop(dialogContext); // Close prompt dialog
+                
+                _showLoadingDialog(context, 'Re-authenticating...');
+                try {
+                  await AuthService().reauthenticateWithEmail(password);
+                  if (!context.mounted) return;
+                  Navigator.pop(context); // Close loading dialog
+                  
+                  await _performAccountDeletion(context);
+                } catch (e) {
+                  if (!context.mounted) return;
+                  Navigator.pop(context); // Close loading dialog
+                  _showErrorSnackBar(context, 'Re-authentication failed: $e');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+              ),
+              child: const Text('Confirm'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _performAccountDeletion(BuildContext context) async {
+    _showLoadingDialog(context, 'Deleting your account and data...');
+    try {
+      await AuthService().deleteUserAccountAndData();
+      if (!context.mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Account successfully deleted.'), backgroundColor: Colors.green),
+      );
+      
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      Navigator.pop(context); // Close loading dialog
+      _showErrorSnackBar(context, 'Failed to delete account: $e');
+    }
+  }
+
+  void _showLoadingDialog(BuildContext context, String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return PopScope(
+          canPop: false,
+          child: AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            content: Row(
+              children: [
+                CircularProgressIndicator(color: context.colors.primaryTeal),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(fontWeight: FontWeight.w500),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showErrorSnackBar(BuildContext context, String error) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(error),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
       ),
     );
   }

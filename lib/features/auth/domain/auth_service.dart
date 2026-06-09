@@ -179,4 +179,137 @@ class AuthService {
       rethrow;
     }
   }
+
+  // Re-authenticate user with email and password
+  Future<void> reauthenticateWithEmail(String password) async {
+    final user = currentUser;
+    if (user == null || user.email == null) {
+      throw Exception('No user signed in or email is null');
+    }
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: password,
+    );
+    await user.reauthenticateWithCredential(credential);
+  }
+
+  // Re-authenticate user with Google
+  Future<void> reauthenticateWithGoogle() async {
+    try {
+      await _googleSignIn.signOut();
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Google Sign-In was cancelled by the user');
+      }
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final AuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+      final user = currentUser;
+      if (user == null) {
+        throw Exception('No user signed in');
+      }
+      await user.reauthenticateWithCredential(credential);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Delete user account and Firestore related data
+  Future<void> deleteUserAccountAndData() async {
+    final user = currentUser;
+    if (user == null) {
+      throw Exception('No user signed in');
+    }
+    final uid = user.uid;
+
+    // 1. Delete all Firestore related data
+    // A. Delete saved_items subcollection under users/uid
+    final savedItemsSnapshot = await _firestore
+        .collection('users')
+        .doc(uid)
+        .collection('saved_items')
+        .get();
+    for (var doc in savedItemsSnapshot.docs) {
+      await doc.reference.delete();
+    }
+
+    // B. Delete users/uid document
+    await _firestore.collection('users').doc(uid).delete();
+
+    // C. Delete reports where createdBy == uid
+    final reportsSnapshot = await _firestore
+        .collection('reports')
+        .where('createdBy', isEqualTo: uid)
+        .get();
+    for (var doc in reportsSnapshot.docs) {
+      await doc.reference.delete();
+    }
+
+    // D. Delete claim_requests where requesterUid == uid or ownerUid == uid
+    final claimsByRequester = await _firestore
+        .collection('claim_requests')
+        .where('requesterUid', isEqualTo: uid)
+        .get();
+    for (var doc in claimsByRequester.docs) {
+      await doc.reference.delete();
+    }
+
+    final claimsByOwner = await _firestore
+        .collection('claim_requests')
+        .where('ownerUid', isEqualTo: uid)
+        .get();
+    for (var doc in claimsByOwner.docs) {
+      await doc.reference.delete();
+    }
+
+    // E. Delete notifications where recipientId == uid
+    final notificationsSnapshot = await _firestore
+        .collection('notifications')
+        .where('recipientId', isEqualTo: uid)
+        .get();
+    for (var doc in notificationsSnapshot.docs) {
+      await doc.reference.delete();
+    }
+
+    // F. Delete reviews where reviewerUid == uid or revieweeUid == uid
+    final reviewsByReviewer = await _firestore
+        .collection('reviews')
+        .where('reviewerUid', isEqualTo: uid)
+        .get();
+    for (var doc in reviewsByReviewer.docs) {
+      await doc.reference.delete();
+    }
+
+    final reviewsByReviewee = await _firestore
+        .collection('reviews')
+        .where('revieweeUid', isEqualTo: uid)
+        .get();
+    for (var doc in reviewsByReviewee.docs) {
+      await doc.reference.delete();
+    }
+
+    // G. Delete chats where participantIds contains uid
+    final chatsSnapshot = await _firestore
+        .collection('chats')
+        .where('participantIds', arrayContains: uid)
+        .get();
+    for (var chatDoc in chatsSnapshot.docs) {
+      // Delete messages subcollection
+      final messagesSnapshot = await chatDoc.reference.collection('messages').get();
+      for (var msgDoc in messagesSnapshot.docs) {
+        await msgDoc.reference.delete();
+      }
+      // Delete chat document
+      await chatDoc.reference.delete();
+    }
+
+    // 2. Delete Auth User account
+    await user.delete();
+
+    // 3. Clear Google sign-in state
+    await _googleSignIn.signOut();
+  }
 }
+
