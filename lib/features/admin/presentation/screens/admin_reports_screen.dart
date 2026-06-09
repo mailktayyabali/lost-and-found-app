@@ -12,6 +12,7 @@ class AdminReportsScreen extends StatefulWidget {
 class _AdminReportsScreenState extends State<AdminReportsScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _statusFilter = 'All'; // 'All', 'Lost', 'Found', 'Resolved'
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _reportsStream;
 
   Future<void> _toggleReportResolution(String reportId, String currentStatus) async {
     final nextStatus = currentStatus == 'resolved' ? 'active' : 'resolved';
@@ -131,10 +132,10 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
           ),
           
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('reports').orderBy('createdAt', descending: true).snapshots(),
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _reportsStream ??= _firestore.collection('reports').orderBy('createdAt', descending: true).snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
@@ -145,7 +146,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
 
                 // Filter on client side
                 final filteredDocs = docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
+                  final data = doc.data();
                   final status = data['status'] ?? 'active';
                   final isLost = data['isLost'] ?? true;
                   final type = isLost ? 'Lost' : 'Found';
@@ -178,7 +179,7 @@ class _AdminReportsScreenState extends State<AdminReportsScreen> {
                   itemCount: filteredDocs.length,
                   itemBuilder: (context, index) {
                     final doc = filteredDocs[index];
-                    final data = doc.data() as Map<String, dynamic>;
+                    final data = doc.data();
                     final reportId = doc.id;
                     final itemName = data['itemName'] ?? 'Unnamed Item';
                     final category = data['category'] ?? 'Other';

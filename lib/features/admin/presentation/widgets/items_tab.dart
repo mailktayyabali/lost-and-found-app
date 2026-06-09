@@ -19,11 +19,19 @@ class _ItemsTabState extends State<ItemsTab> {
   String _activeFilter = 'ALL';
   List<Item> _allItems = [];
   bool _isLoading = true;
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     _loadItems();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _loadItems() async {
@@ -35,10 +43,18 @@ class _ItemsTabState extends State<ItemsTab> {
   }
 
   List<Item> get _filteredItems {
-    if (_activeFilter == 'ALL') {
-      return _allItems;
+    var list = _allItems;
+    if (_activeFilter != 'ALL') {
+      list = list.where((item) => item.status == _activeFilter).toList();
     }
-    return _allItems.where((item) => item.status == _activeFilter).toList();
+    if (_searchQuery.isNotEmpty) {
+      list = list.where((item) {
+        final title = item.title.toLowerCase();
+        final category = item.category.toLowerCase();
+        return title.contains(_searchQuery) || category.contains(_searchQuery);
+      }).toList();
+    }
+    return list;
   }
 
   int get _countActive {
@@ -139,8 +155,56 @@ class _ItemsTabState extends State<ItemsTab> {
         const SizedBox(height: 24),
 
         _buildFilterChips(),
+        const SizedBox(height: 16),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: context.colors.fieldBackground,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: context.colors.fieldBorder),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.search_rounded, color: context.colors.textLight),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val.trim().toLowerCase();
+                      });
+                    },
+                    style: TextStyle(color: context.colors.textDark),
+                    decoration: InputDecoration(
+                      hintText: 'Search items by name or category...',
+                      hintStyle: TextStyle(
+                        fontSize: 14,
+                        color: context.colors.textLight,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                  ),
+                ),
+                if (_searchQuery.isNotEmpty)
+                  IconButton(
+                    icon: Icon(Icons.clear_rounded, color: context.colors.textLight, size: 18),
+                    onPressed: () {
+                      _searchController.clear();
+                      setState(() {
+                        _searchQuery = '';
+                      });
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
         const SizedBox(height: 28),
-
         _buildStatsRow(),
         const SizedBox(height: 28),
 

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class AnalyticsTab extends StatefulWidget {
@@ -10,120 +12,194 @@ class AnalyticsTab extends StatefulWidget {
 
 class _AnalyticsTabState extends State<AnalyticsTab> {
   String _activeCategory = 'All';
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _usersStream;
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _reportsStream;
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(24.0),
-      children: [
-        Row(
-          children: [
-            Icon(Icons.analytics_rounded, color: context.colors.primaryTeal, size: 28),
-            const SizedBox(width: 8),
-            Text(
-              'System Analytics',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: context.colors.textDark,
-                letterSpacing: -0.5,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Monitor system activity and performance',
-          style: TextStyle(
-            fontSize: 14,
-            color: context.colors.textLight,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-        const SizedBox(height: 24),
+    _usersStream ??= FirebaseFirestore.instance.collection('users').snapshots();
+    _reportsStream ??= FirebaseFirestore.instance.collection('reports').snapshots();
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _usersStream,
+      builder: (context, usersSnapshot) {
+        return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+          stream: _reportsStream,
+          builder: (context, reportsSnapshot) {
+            if ((usersSnapshot.connectionState == ConnectionState.waiting && !usersSnapshot.hasData) ||
+                (reportsSnapshot.connectionState == ConnectionState.waiting && !reportsSnapshot.hasData)) {
+              return const Center(child: CircularProgressIndicator());
+            }
 
-        Row(
-          children: [
-            Expanded(
-              child: _buildTrendCard(
-                context,
-                'ACTIVE USERS',
-                '1,284',
-                '+ 12%',
-                true,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: _buildTrendCard(
-                context,
-                'TOTAL ITEMS',
-                '45.2k',
-                '+ 5%',
-                true,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 28),
+            final userDocs = usersSnapshot.data?.docs ?? [];
+            final reportDocs = reportsSnapshot.data?.docs ?? [];
 
-        _buildCategoryFilters(),
-        const SizedBox(height: 28),
+            final activeUsersCount = userDocs.where((doc) => doc.data()['isBanned'] != true).length;
+            final totalItemsCount = reportDocs.length;
 
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Recent Activity Log',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: context.colors.textDark,
-              ),
-            ),
-            Text(
-              'VIEW ALL',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.bold,
-                color: context.colors.primaryTeal,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 16),
+            final userLogs = userDocs.map((doc) {
+              final data = doc.data();
+              final name = data['name'] ?? 'No Name';
+              final timestamp = data['createdAt'] as Timestamp?;
+              return {
+                'type': 'User',
+                'title': 'New user $name joined',
+                'timestamp': timestamp,
+                'dateTime': timestamp?.toDate() ?? DateTime(2000),
+                'icon': Icons.person_add_rounded,
+                'iconColor': context.colors.primaryTeal,
+              };
+            }).toList();
 
-        _buildLogItem(
-          context,
-          'New user Admin joined',
-          '5/24/2026, 11:37:15 AM',
-          Icons.person_add_rounded,
-          context.colors.primaryTeal,
-        ),
-        _buildLogItem(
-          context,
-          'Collection Meridian Alpha updated',
-          '5/24/2026, 10:15:02 AM',
-          Icons.inventory_2_rounded,
-          Colors.orange,
-        ),
-        _buildLogItem(
-          context,
-          'Security audit Success',
-          '5/24/2026, 09:45:30 AM',
-          Icons.verified_user_rounded,
-          context.colors.tagFoundGreen,
-        ),
-        _buildLogItem(
-          context,
-          'Backup completed for Items DB',
-          '5/24/2026, 08:30:11 AM',
-          Icons.cloud_done_rounded,
-          Colors.blue,
-        ),
-        const SizedBox(height: 40),
-      ],
+            final reportLogs = reportDocs.map((doc) {
+              final data = doc.data();
+              final title = data['title'] ?? data['itemName'] ?? 'Untitled Item';
+              final isLost = data['isLost'] ?? true;
+              final timestamp = (data['createdAt'] ?? data['dateReported']) as Timestamp?;
+              return {
+                'type': 'Item',
+                'title': 'New ${isLost ? 'lost' : 'found'} item reported: "$title"',
+                'timestamp': timestamp,
+                'dateTime': timestamp?.toDate() ?? DateTime(2000),
+                'icon': isLost ? Icons.search_rounded : Icons.check_circle_outline_rounded,
+                'iconColor': isLost ? context.colors.tagLostRed : context.colors.tagFoundGreen,
+              };
+            }).toList();
+
+            final allLogs = [...userLogs, ...reportLogs];
+            allLogs.sort((a, b) => (b['dateTime'] as DateTime).compareTo(a['dateTime'] as DateTime));
+
+            final filteredLogs = allLogs.where((log) {
+              if (_activeCategory == 'All') return true;
+              if (_activeCategory == 'Users') return log['type'] == 'User';
+              if (_activeCategory == 'Items') return log['type'] == 'Item';
+              return true;
+            }).toList();
+
+            return ListView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(24.0),
+              children: [
+                Row(
+                  children: [
+                    Icon(Icons.analytics_rounded, color: context.colors.primaryTeal, size: 28),
+                    const SizedBox(width: 8),
+                    Text(
+                      'System Analytics',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: context.colors.textDark,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Monitor system activity and performance',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: context.colors.textLight,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildTrendCard(
+                        context,
+                        'ACTIVE USERS',
+                        activeUsersCount.toString(),
+                        '+ 12%',
+                        true,
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: _buildTrendCard(
+                        context,
+                        'TOTAL ITEMS',
+                        totalItemsCount.toString(),
+                        '+ 5%',
+                        true,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+
+                _buildCategoryFilters(),
+                const SizedBox(height: 28),
+
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Recent Activity Log',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: context.colors.textDark,
+                      ),
+                    ),
+                    Text(
+                      'VIEW ALL',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: context.colors.primaryTeal,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+
+                if (filteredLogs.isEmpty)
+                  Container(
+                    padding: const EdgeInsets.symmetric(vertical: 40),
+                    alignment: Alignment.center,
+                    child: Column(
+                      children: [
+                        Icon(Icons.notes_rounded, size: 48, color: context.colors.textLight.withValues(alpha: 0.5)),
+                        const SizedBox(height: 12),
+                        Text(
+                          'No activities recorded yet',
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: context.colors.textLight,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  )
+                else
+                  ListView.builder(
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: filteredLogs.length > 15 ? 15 : filteredLogs.length,
+                    itemBuilder: (context, index) {
+                      final log = filteredLogs[index];
+                      final timestampStr = log['timestamp'] != null
+                          ? DateFormat('M/d/yyyy, h:mm:ss a').format((log['timestamp'] as Timestamp).toDate())
+                          : 'N/A';
+                      return _buildLogItem(
+                        context,
+                        log['title'] as String,
+                        timestampStr,
+                        log['icon'] as IconData,
+                        log['iconColor'] as Color,
+                      );
+                    },
+                  ),
+                const SizedBox(height: 40),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -136,7 +212,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
   ) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.colors.dividerColor),
         boxShadow: [
@@ -213,31 +289,32 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
   Widget _buildCategoryFilters() {
     final categories = ['All', 'Users', 'Items'];
     return Container(
-      height: 48,
-      padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
-        color: const Color(0xFFF1F3F5),
-        borderRadius: BorderRadius.circular(12),
+        border: Border(
+          bottom: BorderSide(color: context.colors.dividerColor, width: 1),
+        ),
       ),
       child: Row(
         children: categories.map((cat) {
           final isSelected = _activeCategory == cat;
-          return Expanded(
-            child: GestureDetector(
-              onTap: () => setState(() => _activeCategory = cat),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: isSelected ? context.colors.primaryTeal : Colors.transparent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                alignment: Alignment.center,
-                child: Text(
-                  cat,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: isSelected ? Colors.white : context.colors.textLight,
+          return GestureDetector(
+            onTap: () => setState(() => _activeCategory = cat),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: isSelected ? context.colors.primaryTeal : Colors.transparent,
+                    width: 2,
                   ),
+                ),
+              ),
+              child: Text(
+                cat,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: isSelected ? context.colors.primaryTeal : context.colors.textLight,
                 ),
               ),
             ),
@@ -258,7 +335,7 @@ class _AnalyticsTabState extends State<AnalyticsTab> {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.colors.dividerColor),
       ),

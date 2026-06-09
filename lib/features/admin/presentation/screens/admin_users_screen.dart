@@ -13,6 +13,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _usersStream;
 
   @override
   void dispose() {
@@ -118,10 +119,10 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
           ),
           
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream: _firestore.collection('users').snapshots(),
+            child: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+              stream: _usersStream ??= _firestore.collection('users').snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
@@ -132,7 +133,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 
                 // Client side filter based on search query
                 final filteredDocs = docs.where((doc) {
-                  final data = doc.data() as Map<String, dynamic>;
+                  final data = doc.data();
                   final name = (data['name'] ?? '').toString().toLowerCase();
                   final email = (data['email'] ?? '').toString().toLowerCase();
                   return name.contains(_searchQuery) || email.contains(_searchQuery);
@@ -159,7 +160,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                   itemCount: filteredDocs.length,
                   itemBuilder: (context, index) {
                     final doc = filteredDocs[index];
-                    final data = doc.data() as Map<String, dynamic>;
+                    final data = doc.data();
                     final uid = doc.id;
                     final name = data['name'] ?? 'No Name';
                     final email = data['email'] ?? 'No Email';

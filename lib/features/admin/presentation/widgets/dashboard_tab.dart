@@ -1,68 +1,196 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
 import '../../../../core/theme/app_colors.dart';
 
-class DashboardTab extends StatelessWidget {
+class DashboardTab extends StatefulWidget {
   final VoidCallback signOut;
   final Function(int) onNavigate;
   const DashboardTab({super.key, required this.signOut, required this.onNavigate});
 
   @override
+  State<DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<DashboardTab> {
+  int _totalUsersCount = 0;
+  int _activeItemsCount = 0;
+  int _pendingReportsCount = 0;
+  int _resolvedCasesCount = 0;
+  List<double> _weeklyUserGrowth = [0, 0, 0, 0];
+  List<double> _weeklyItemActivity = [0, 0, 0, 0];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final db = FirebaseFirestore.instance;
+      
+      final usersQuery = await db.collection('users').get();
+      final totalUsers = usersQuery.size;
+
+      final reportsQuery = await db.collection('reports').get();
+      final activeItems = reportsQuery.docs.where((doc) {
+        final status = doc.data()['status'];
+        return status == 'LOST' || status == 'FOUND' || status == 'ACTIVE';
+      }).length;
+
+      final resolvedCases = reportsQuery.docs.where((doc) {
+        final status = doc.data()['status'];
+        return status == 'RESOLVED';
+      }).length;
+
+      final moderationQuery = await db.collection('moderation_queue')
+          .where('status', isEqualTo: 'PENDING')
+          .get();
+      final pendingReports = moderationQuery.size;
+
+      // Group weekly User growth & Item activity
+      final now = DateTime.now();
+      final w4Start = now.subtract(const Duration(days: 7));
+      final w3Start = now.subtract(const Duration(days: 14));
+      final w2Start = now.subtract(const Duration(days: 21));
+      final w1Start = now.subtract(const Duration(days: 30));
+
+      double w1Users = 0;
+      double w2Users = 0;
+      double w3Users = 0;
+      double w4Users = 0;
+
+      for (var doc in usersQuery.docs) {
+        final data = doc.data();
+        final createdAt = data['createdAt'] as Timestamp?;
+        if (createdAt == null) continue;
+        final date = createdAt.toDate();
+        if (date.isAfter(w4Start)) {
+          w4Users++;
+        } else if (date.isAfter(w3Start)) {
+          w3Users++;
+        } else if (date.isAfter(w2Start)) {
+          w2Users++;
+        } else if (date.isAfter(w1Start)) {
+          w1Users++;
+        }
+      }
+
+      double w1Items = 0;
+      double w2Items = 0;
+      double w3Items = 0;
+      double w4Items = 0;
+
+      for (var doc in reportsQuery.docs) {
+        final data = doc.data();
+        final createdAt = (data['createdAt'] ?? data['dateReported']) as Timestamp?;
+        if (createdAt == null) continue;
+        final date = createdAt.toDate();
+        if (date.isAfter(w4Start)) {
+          w4Items++;
+        } else if (date.isAfter(w3Start)) {
+          w3Items++;
+        } else if (date.isAfter(w2Start)) {
+          w2Items++;
+        } else if (date.isAfter(w1Start)) {
+          w1Items++;
+        }
+      }
+
+      if (mounted) {
+        setState(() {
+          _totalUsersCount = totalUsers;
+          _activeItemsCount = activeItems;
+          _pendingReportsCount = pendingReports;
+          _resolvedCasesCount = resolvedCases;
+          _weeklyUserGrowth = [w1Users, w2Users, w3Users, w4Users];
+          _weeklyItemActivity = [w1Items, w2Items, w3Items, w4Items];
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading dashboard stats: $e');
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      padding: const EdgeInsets.all(24.0),
-      children: [
-        Text(
-          'Dashboard Overview',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: context.colors.textDark,
-            letterSpacing: -0.5,
+    if (_isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadStats,
+      child: ListView(
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.all(24.0),
+        children: [
+          Text(
+            'Dashboard Overview',
+            style: TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+              color: context.colors.textDark,
+              letterSpacing: -0.5,
+            ),
           ),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          'Welcome back, here\'s what\'s happening today.',
-          style: TextStyle(
-            fontSize: 14,
-            color: context.colors.textLight,
-            fontWeight: FontWeight.w500,
+          const SizedBox(height: 4),
+          Text(
+            'Welcome back, here\'s what\'s happening today.',
+            style: TextStyle(
+              fontSize: 14,
+              color: context.colors.textLight,
+              fontWeight: FontWeight.w500,
+            ),
           ),
-        ),
-        const SizedBox(height: 24),
-        _buildOverviewCard(
-          context: context,
-          title: 'TOTAL USERS',
-          value: '12',
-          subtitle: '1 new this month',
-          icon: Icons.people_outline_rounded,
-          accentColor: context.colors.primaryTeal,
-        ),
-        _buildOverviewCard(
-          context: context,
-          title: 'ACTIVE ITEMS',
-          value: '2',
-          subtitle: '0 new this month',
-          icon: Icons.archive_outlined,
-          accentColor: context.colors.tagLostRed,
-        ),
-        _buildOverviewCard(
-          context: context,
-          title: 'PENDING REPORTS',
-          value: '0',
-          subtitle: 'Requires attention',
-          icon: Icons.warning_amber_rounded,
-          accentColor: Colors.orange,
-        ),
-        _buildOverviewCard(
-          context: context,
-          title: 'RESOLVED CASES',
-          value: '0',
-          subtitle: 'All time success',
-          icon: Icons.check_circle_outline_rounded,
-          accentColor: context.colors.buttonBlue,
-        ),
+          const SizedBox(height: 24),
+          GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 16,
+            crossAxisSpacing: 16,
+            childAspectRatio: 1.25,
+            children: [
+              _buildOverviewCard(
+                context: context,
+                title: 'TOTAL USERS',
+                value: _totalUsersCount.toString(),
+                subtitle: '${_weeklyUserGrowth[3].toInt()} new this week',
+                icon: Icons.people_outline_rounded,
+                accentColor: context.colors.primaryTeal,
+              ),
+              _buildOverviewCard(
+                context: context,
+                title: 'ACTIVE ITEMS',
+                value: _activeItemsCount.toString(),
+                subtitle: '${_weeklyItemActivity[3].toInt()} new this week',
+                icon: Icons.archive_outlined,
+                accentColor: context.colors.tagLostRed,
+              ),
+              _buildOverviewCard(
+                context: context,
+                title: 'PENDING REPORTS',
+                value: _pendingReportsCount.toString(),
+                subtitle: 'Requires attention',
+                icon: Icons.warning_amber_rounded,
+                accentColor: context.colors.tagFoundGreen,
+              ),
+              _buildOverviewCard(
+                context: context,
+                title: 'RESOLVED CASES',
+                value: _resolvedCasesCount.toString(),
+                subtitle: 'All time success',
+                icon: Icons.check_circle_outline_rounded,
+                accentColor: context.colors.buttonBlue,
+              ),
+            ],
+          ),
         const SizedBox(height: 24),
         _buildBarChart(context),
         const SizedBox(height: 24),
@@ -71,8 +199,9 @@ class DashboardTab extends StatelessWidget {
         _buildRecentActivitySection(context),
         const SizedBox(height: 40),
       ],
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildOverviewCard({
     required BuildContext context,
@@ -83,16 +212,15 @@ class DashboardTab extends StatelessWidget {
     required Color accentColor,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: context.colors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.colors.dividerColor),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.02),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.01),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -101,56 +229,63 @@ class DashboardTab extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             border: Border(
-              left: BorderSide(color: accentColor, width: 5),
+              left: BorderSide(color: accentColor, width: 4),
             ),
           ),
-          padding: const EdgeInsets.all(16),
-          child: Row(
+          padding: const EdgeInsets.all(12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Text(
                       title,
                       style: TextStyle(
-                        fontSize: 10,
+                        fontSize: 9,
                         fontWeight: FontWeight.bold,
                         color: context.colors.textLight,
                         letterSpacing: 0.5,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 6),
-                    Text(
-                      value,
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                        color: context.colors.textDark,
-                      ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.all(6),
+                    decoration: BoxDecoration(
+                      color: accentColor.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: context.colors.textLight,
-                      ),
+                    child: Icon(
+                      icon,
+                      color: accentColor,
+                      size: 16,
                     ),
-                  ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                value,
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                  color: context.colors.textDark,
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: accentColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 2),
+              Text(
+                subtitle,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: context.colors.textLight,
+                  fontWeight: FontWeight.w500,
                 ),
-                child: Icon(
-                  icon,
-                  color: accentColor,
-                  size: 24,
-                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -162,6 +297,20 @@ class DashboardTab extends StatelessWidget {
   Widget _buildBarChart(BuildContext context) {
     final barColor = const Color(0xFF80DEEA);
     final activeBarColor = context.colors.primaryTeal;
+
+    final w1Count = _weeklyUserGrowth[0];
+    final w2Count = _weeklyUserGrowth[1];
+    final w3Count = _weeklyUserGrowth[2];
+    final w4Count = _weeklyUserGrowth[3];
+
+    final maxCount = [w1Count, w2Count, w3Count, w4Count].reduce((a, b) => a > b ? a : b);
+    final double scale = maxCount > 0 ? 110.0 / maxCount : 1.0;
+
+    final h1 = w1Count > 0 ? (w1Count * scale) + 15.0 : 15.0;
+    final h2 = w2Count > 0 ? (w2Count * scale) + 15.0 : 15.0;
+    final h3 = w3Count > 0 ? (w3Count * scale) + 15.0 : 15.0;
+    final h4 = w4Count > 0 ? (w4Count * scale) + 15.0 : 15.0;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -193,10 +342,10 @@ class DashboardTab extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                _buildBar(context, 'WEEK 1', 60, barColor),
-                _buildBar(context, 'WEEK 2', 90, barColor),
-                _buildBar(context, 'WEEK 3', 75, barColor),
-                _buildBar(context, 'WEEK 4', 140, activeBarColor),
+                _buildBar(context, 'WEEK 1 (${w1Count.toInt()})', h1, barColor),
+                _buildBar(context, 'WEEK 2 (${w2Count.toInt()})', h2, barColor),
+                _buildBar(context, 'WEEK 3 (${w3Count.toInt()})', h3, barColor),
+                _buildBar(context, 'WEEK 4 (${w4Count.toInt()})', h4, activeBarColor),
               ],
             ),
           ),
@@ -233,6 +382,12 @@ class DashboardTab extends StatelessWidget {
 
   Widget _buildLineChart(BuildContext context) {
     final teal = context.colors.primaryTeal;
+    final now = DateTime.now();
+    final label1 = DateFormat('dd MMM').format(now.subtract(const Duration(days: 30))).toUpperCase();
+    final label2 = DateFormat('dd MMM').format(now.subtract(const Duration(days: 20))).toUpperCase();
+    final label3 = DateFormat('dd MMM').format(now.subtract(const Duration(days: 10))).toUpperCase();
+    final label4 = DateFormat('dd MMM').format(now).toUpperCase();
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -269,20 +424,6 @@ class DashboardTab extends StatelessWidget {
                     'UPLOADS',
                     style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: context.colors.textLight),
                   ),
-                  const SizedBox(width: 8),
-                  Container(
-                    width: 6,
-                    height: 6,
-                    decoration: BoxDecoration(
-                      color: context.colors.textLight.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'EDITS',
-                    style: TextStyle(fontSize: 8, fontWeight: FontWeight.bold, color: context.colors.textLight),
-                  ),
                 ],
               ),
             ],
@@ -292,13 +433,17 @@ class DashboardTab extends StatelessWidget {
             height: 120,
             width: double.infinity,
             child: CustomPaint(
-              painter: _LineChartPainter(lineColor: teal, gradientColor: teal),
+              painter: _LineChartPainter(
+                lineColor: teal,
+                gradientColor: teal,
+                dataPoints: _weeklyItemActivity,
+              ),
             ),
           ),
           const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: ['01 NOV', '10 NOV', '20 NOV', '30 NOV'].map((date) {
+            children: [label1, label2, label3, label4].map((date) {
               return Text(
                 date,
                 style: TextStyle(
@@ -422,28 +567,51 @@ class DashboardTab extends StatelessWidget {
 class _LineChartPainter extends CustomPainter {
   final Color lineColor;
   final Color gradientColor;
-  _LineChartPainter({required this.lineColor, required this.gradientColor});
+  final List<double> dataPoints;
+
+  _LineChartPainter({
+    required this.lineColor,
+    required this.gradientColor,
+    required this.dataPoints,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
+    if (dataPoints.isEmpty) return;
+
     final paint = Paint()
       ..color = lineColor
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3
       ..strokeCap = StrokeCap.round;
 
+    final maxVal = dataPoints.reduce((a, b) => a > b ? a : b);
+    final scale = maxVal > 0 ? (size.height * 0.75) / maxVal : 1.0;
+
     final path = Path();
-    path.moveTo(0, size.height * 0.7);
-    path.cubicTo(
-      size.width * 0.3, size.height * 0.8,
-      size.width * 0.5, size.height * 0.85,
-      size.width * 0.6, size.height * 0.6,
-    );
-    path.cubicTo(
-      size.width * 0.8, size.height * 0.3,
-      size.width * 0.9, size.height * 0.2,
-      size.width, size.height * 0.25,
-    );
+    final stepX = size.width / (dataPoints.length - 1);
+
+    double getY(int index) {
+      final val = dataPoints[index];
+      final height = size.height - (val * scale) - (size.height * 0.12);
+      return height.clamp(size.height * 0.1, size.height * 0.9);
+    }
+
+    path.moveTo(0, getY(0));
+
+    for (int i = 0; i < dataPoints.length - 1; i++) {
+      final x1 = i * stepX;
+      final y1 = getY(i);
+      final x2 = (i + 1) * stepX;
+      final y2 = getY(i + 1);
+
+      final controlX1 = x1 + stepX / 2;
+      final controlY1 = y1;
+      final controlX2 = x2 - stepX / 2;
+      final controlY2 = y2;
+
+      path.cubicTo(controlX1, controlY1, controlX2, controlY2, x2, y2);
+    }
 
     final fillPath = Path.from(path);
     fillPath.lineTo(size.width, size.height);
@@ -471,12 +639,14 @@ class _LineChartPainter extends CustomPainter {
       ..color = Colors.white
       ..style = PaintingStyle.fill;
 
-    final pointX = size.width * 0.6;
-    final pointY = size.height * 0.6;
+    final pointX = size.width;
+    final pointY = getY(dataPoints.length - 1);
     canvas.drawCircle(Offset(pointX, pointY), 8, activePointPaint);
     canvas.drawCircle(Offset(pointX, pointY), 4, activePointBorder);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _LineChartPainter oldDelegate) {
+    return oldDelegate.dataPoints != dataPoints;
+  }
 }

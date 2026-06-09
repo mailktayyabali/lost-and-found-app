@@ -21,7 +21,7 @@ class AdminItemCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 16, left: 24, right: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -102,17 +102,25 @@ class AdminItemCard extends StatelessWidget {
                   const SizedBox(height: 12),
                   Row(
                     children: [
-                      const CircleAvatar(
+                      CircleAvatar(
                         radius: 10,
-                        backgroundImage: NetworkImage('https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=100'),
+                        backgroundColor: context.colors.primaryTeal.withValues(alpha: 0.1),
+                        child: Text(
+                          (item.reporterName ?? 'C').isNotEmpty ? (item.reporterName ?? 'C')[0].toUpperCase() : 'C',
+                          style: TextStyle(
+                            color: context.colors.primaryTeal,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 6),
-                      const Expanded(
+                      Expanded(
                         child: Text(
-                          'Community Member',
+                          item.reporterName ?? 'Community Member',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: Color(0xFF6C757D),
                             fontSize: 11,
                             fontWeight: FontWeight.w600,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../../core/theme/app_colors.dart';
 
 class ModerationTab extends StatefulWidget {
@@ -10,132 +11,161 @@ class ModerationTab extends StatefulWidget {
 
 class _ModerationTabState extends State<ModerationTab> {
   String _activeFilter = 'PENDING';
-  late List<Map<String, dynamic>> _moderationItems;
-  late List<Map<String, dynamic>> _filteredItems;
+  Stream<QuerySnapshot<Map<String, dynamic>>>? _moderationStream;
 
-  @override
-  void initState() {
-    super.initState();
-    _moderationItems = [
-      {
-        'id': '1',
-        'title': 'Testing',
-        'reportedBy': 'Tayyab Ali',
-        'date': '5/24/2026',
-        'reason': 'fsds',
-        'status': 'PENDING',
-        'isUserReport': true,
-      },
-      {
-        'id': '2',
-        'title': 'wallet',
-        'reportedBy': 'Tayyab Ali',
-        'date': '5/24/2026',
-        'reason': 'thsdf',
-        'status': 'PENDING',
-        'isUserReport': false,
-      },
-    ];
-    _applyFilter();
-  }
-
-  void _applyFilter() {
-    setState(() {
-      _filteredItems = _moderationItems.where((item) => item['status'] == _activeFilter).toList();
-    });
-  }
-
-  void _updateStatus(String id, String newStatus, String snackbarMsg, Color color) {
-    setState(() {
-      final index = _moderationItems.indexWhere((item) => item['id'] == id);
-      if (index != -1) {
-        _moderationItems[index]['status'] = newStatus;
+  Future<void> _updateStatus(String id, String newStatus, String snackbarMsg, Color color) async {
+    try {
+      final docRef = FirebaseFirestore.instance.collection('moderation_queue').doc(id);
+      
+      if (newStatus == 'RESOLVED') {
+        final docSnapshot = await docRef.get();
+        final itemId = docSnapshot.data()?['itemId'];
+        if (itemId != null && itemId.toString().isNotEmpty) {
+          await FirebaseFirestore.instance.collection('reports').doc(itemId).delete();
+        }
       }
-      _applyFilter();
-    });
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(snackbarMsg),
-        backgroundColor: color,
-      ),
-    );
+      
+      await docRef.update({'status': newStatus});
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(snackbarMsg),
+            backgroundColor: color,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to update report: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      physics: const BouncingScrollPhysics(),
-      children: [
-        const SizedBox(height: 24),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    _moderationStream ??= FirebaseFirestore.instance.collection('moderation_queue').snapshots();
+    return StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
+      stream: _moderationStream,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(
+            child: Text(
+              'Error loading reports: ${snapshot.error}',
+              style: TextStyle(color: context.colors.textDark),
+            ),
+          );
+        }
+
+        final docs = snapshot.data?.docs ?? [];
+        final filteredItems = docs.map((doc) {
+          final data = doc.data();
+          return {
+            'id': doc.id,
+            'itemId': data['itemId'] ?? '',
+            'title': data['title'] ?? 'Untitled Item',
+            'reportedBy': data['reportedBy'] ?? 'Anonymous',
+            'date': data['date'] ?? 'N/A',
+            'reason': data['reason'] ?? '',
+            'status': data['status'] ?? 'PENDING',
+            'isUserReport': data['isUserReport'] ?? false,
+            'createdAt': data['createdAt'],
+          };
+        }).where((item) => item['status'] == _activeFilter).toList();
+
+        // Sort by createdAt descending
+        filteredItems.sort((a, b) {
+          final aTime = a['createdAt'] as Timestamp?;
+          final bTime = b['createdAt'] as Timestamp?;
+          if (aTime == null && bTime == null) return 0;
+          if (aTime == null) return 1;
+          if (bTime == null) return -1;
+          return bTime.compareTo(aTime);
+        });
+
+        return ListView(
+          physics: const BouncingScrollPhysics(),
+          children: [
+            const SizedBox(height: 24),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.gavel_rounded, color: context.colors.primaryTeal, size: 28),
-                  const SizedBox(width: 8),
+                  Row(
+                    children: [
+                      Icon(Icons.gavel_rounded, color: context.colors.primaryTeal, size: 28),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Moderation Queue',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.bold,
+                          color: context.colors.textDark,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
                   Text(
-                    'Moderation Queue',
+                    'Review user reports and flagged content across the ecosystem.',
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: context.colors.textDark,
-                      letterSpacing: -0.5,
+                      fontSize: 14,
+                      color: context.colors.textLight,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Review user reports and flagged content across the ecosystem.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: context.colors.textLight,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        _buildFilterChips(),
-        const SizedBox(height: 24),
-
-        if (_filteredItems.isEmpty)
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.done_all_rounded, size: 64, color: context.colors.tagFoundGreen),
-                const SizedBox(height: 16),
-                Text(
-                  'Moderation queue is empty',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: context.colors.textLight,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
             ),
-          )
-        else
-          ListView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: _filteredItems.length,
-            itemBuilder: (context, index) {
-              return _buildModerationCard(_filteredItems[index]);
-            },
-          ),
+            const SizedBox(height: 24),
 
-        _buildPaginationFooter(),
-      ],
+            _buildFilterChips(),
+            const SizedBox(height: 24),
+
+            if (filteredItems.isEmpty)
+              Container(
+                padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.done_all_rounded, size: 64, color: context.colors.tagFoundGreen),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Moderation queue is empty',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: context.colors.textLight,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              )
+            else
+              ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: filteredItems.length,
+                itemBuilder: (context, index) {
+                  return _buildModerationCard(filteredItems[index]);
+                },
+              ),
+
+            _buildPaginationFooter(filteredItems.length),
+          ],
+        );
+      },
     );
   }
 
@@ -155,14 +185,17 @@ class _ModerationTabState extends State<ModerationTab> {
             child: InkWell(
               onTap: () {
                 setState(() => _activeFilter = filter);
-                _applyFilter();
               },
               borderRadius: BorderRadius.circular(20),
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? context.colors.primaryTeal : const Color(0xFFE9ECEF),
+                  color: isSelected ? context.colors.primaryTeal : context.colors.fieldBackground,
                   borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? Colors.transparent : context.colors.dividerColor,
+                    width: 1,
+                  ),
                 ),
                 child: Center(
                   child: Text(
@@ -188,7 +221,7 @@ class _ModerationTabState extends State<ModerationTab> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16, left: 24, right: 24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -216,7 +249,7 @@ class _ModerationTabState extends State<ModerationTab> {
                 children: [
                   CircleAvatar(
                     radius: 20,
-                    backgroundColor: const Color(0xFFE9ECEF),
+                    backgroundColor: context.colors.background,
                     child: Icon(
                       item['isUserReport'] ? Icons.person_rounded : Icons.wallet_giftcard_rounded,
                       color: context.colors.textLight,
@@ -281,9 +314,9 @@ class _ModerationTabState extends State<ModerationTab> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FA),
+                  color: context.colors.background,
                   borderRadius: BorderRadius.circular(10),
-                  border: Border.all(color: const Color(0xFFE9ECEF)),
+                  border: Border.all(color: context.colors.dividerColor),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -359,27 +392,25 @@ class _ModerationTabState extends State<ModerationTab> {
     );
   }
 
-  Widget _buildPaginationFooter() {
+  Widget _buildPaginationFooter(int count) {
     return Padding(
       padding: const EdgeInsets.only(left: 24, right: 24, bottom: 32, top: 16),
-      child: Column(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'PAGE 1 OF 1 (${_filteredItems.length} ITEMS)',
+            'Page 1 of 1 ($count items)',
             style: TextStyle(
-              color: context.colors.textLight.withValues(alpha: 0.6),
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.8,
+              color: context.colors.textLight,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 12),
           Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              _buildArrowButton(Icons.chevron_left_rounded, onPressed: null),
-              const SizedBox(width: 16),
-              _buildArrowButton(Icons.chevron_right_rounded, onPressed: null),
+              _buildPaginationButton('Previous', onPressed: null),
+              const SizedBox(width: 8),
+              _buildPaginationButton('Next', onPressed: null),
             ],
           ),
         ],
@@ -387,18 +418,42 @@ class _ModerationTabState extends State<ModerationTab> {
     );
   }
 
-  Widget _buildArrowButton(IconData icon, {VoidCallback? onPressed}) {
+  Widget _buildPaginationButton(String label, {VoidCallback? onPressed}) {
     final isDisabled = onPressed == null;
     return Container(
       decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFFE9ECEF)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.01),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
-      child: IconButton(
+      child: ElevatedButton(
         onPressed: onPressed,
-        icon: Icon(icon),
-        color: isDisabled ? Colors.black26 : context.colors.textDark,
-        padding: const EdgeInsets.all(12),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: context.colors.surfaceWhite,
+          disabledBackgroundColor: context.colors.background,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+            side: BorderSide(
+              color: isDisabled ? Colors.transparent : context.colors.dividerColor,
+              width: 1,
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isDisabled ? Colors.black26 : context.colors.textDark,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+            letterSpacing: 0.5,
+          ),
+        ),
       ),
     );
   }

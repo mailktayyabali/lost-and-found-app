@@ -52,6 +52,59 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
+  String _getTabTitle(int index) {
+    switch (index) {
+      case 0:
+        return 'Dashboard Overview';
+      case 1:
+        return 'System Analytics';
+      case 2:
+        return 'Item Management';
+      case 3:
+        return 'Moderation Queue';
+      case 4:
+        return 'User Management';
+      default:
+        return 'Meridian Curator';
+    }
+  }
+
+  Widget _buildDrawerItem(int index, IconData icon, String title, {bool hasDot = false}) {
+    final isSelected = _currentIndex == index;
+    return ListTile(
+      selected: isSelected,
+      selectedTileColor: const Color(0xFF0D9488).withValues(alpha: 0.15),
+      leading: Icon(icon, color: isSelected ? const Color(0xFF14B8A6) : Colors.grey.shade400),
+      title: Row(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              color: isSelected ? Colors.white : Colors.grey.shade300,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              fontSize: 14,
+            ),
+          ),
+          if (hasDot) ...[
+            const SizedBox(width: 8),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: Color(0xFF14B8A6),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ],
+      ),
+      onTap: () {
+        setState(() => _currentIndex = index);
+        Navigator.pop(context); // Close drawer
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final tealColor = context.colors.primaryTeal;
@@ -79,13 +132,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         backgroundColor: cardBg,
         elevation: 0,
         centerTitle: false,
-        leading: IconButton(
-          icon: Icon(Icons.menu_rounded, color: tealColor, size: 26),
-          tooltip: 'Menu',
-          onPressed: () {},
+        leading: Builder(
+          builder: (context) => IconButton(
+            icon: Icon(Icons.menu_rounded, color: tealColor, size: 26),
+            tooltip: 'Menu',
+            onPressed: () => Scaffold.of(context).openDrawer(),
+          ),
         ),
         title: Text(
-          'Meridian Curator',
+          _getTabTitle(_currentIndex),
           style: TextStyle(
             color: tealColor,
             fontSize: 20,
@@ -116,6 +171,57 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             color: context.colors.dividerColor,
             height: 1,
           ),
+        ),
+      ),
+      drawer: Drawer(
+        backgroundColor: const Color(0xFF0F172A), // Dark Slate matching sidebar
+        child: Column(
+          children: [
+            UserAccountsDrawerHeader(
+              decoration: const BoxDecoration(color: Color(0xFF1E293B)),
+              currentAccountPicture: const CircleAvatar(
+                backgroundImage: NetworkImage('https://randomuser.me/api/portraits/men/32.jpg'),
+              ),
+              accountName: const Text('Admin', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+              accountEmail: const Text('admin@findit.com', style: TextStyle(color: Colors.white70)),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'OVERVIEW',
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                ),
+              ),
+            ),
+            _buildDrawerItem(0, Icons.grid_view_rounded, 'Dashboard'),
+            _buildDrawerItem(1, Icons.trending_up_rounded, 'Analytics'),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'MANAGEMENT',
+                  style: TextStyle(color: Colors.grey.shade400, fontSize: 11, fontWeight: FontWeight.bold, letterSpacing: 1),
+                ),
+              ),
+            ),
+            _buildDrawerItem(4, Icons.people_outline_rounded, 'Users'),
+            _buildDrawerItem(2, Icons.inventory_2_outlined, 'Items'),
+            _buildDrawerItem(3, Icons.gavel_rounded, 'Moderation Queue', hasDot: true),
+            const Spacer(),
+            const Divider(color: Colors.grey),
+            ListTile(
+              leading: const Icon(Icons.logout_rounded, color: Colors.redAccent),
+              title: const Text('Sign Out', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+              onTap: () {
+                Navigator.pop(context); // Close drawer
+                _signOut();
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
         ),
       ),
       body: IndexedStack(

@@ -22,7 +22,7 @@ class AdminUserCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 14),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: context.colors.surfaceWhite,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: context.colors.dividerColor),
       ),
@@ -116,37 +116,38 @@ class AdminUserCard extends StatelessWidget {
                   ),
                 ],
               ),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: onToggleBan,
-                    icon: Icon(
-                      isBanned ? Icons.gavel_rounded : Icons.block_rounded,
-                      color: isBanned ? context.colors.primaryTeal : Colors.orange,
-                      size: 20,
+              if (user['role'] != 'admin' && user['email'] != 'admin@admin.com' && user['email'] != 'admin@lostandfound.com')
+                Row(
+                  children: [
+                    IconButton(
+                      onPressed: onToggleBan,
+                      icon: Icon(
+                        isBanned ? Icons.gavel_rounded : Icons.block_rounded,
+                        color: isBanned ? context.colors.primaryTeal : Colors.orange,
+                        size: 20,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: context.colors.background,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.all(10),
+                      ),
                     ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1F3F5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.all(10),
+                    const SizedBox(width: 8),
+                    IconButton(
+                      onPressed: onDelete,
+                      icon: Icon(
+                        Icons.delete_outline_rounded,
+                        color: context.colors.tagLostRed,
+                        size: 20,
+                      ),
+                      style: IconButton.styleFrom(
+                        backgroundColor: context.colors.background,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        padding: const EdgeInsets.all(10),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    onPressed: onDelete,
-                    icon: Icon(
-                      Icons.delete_outline_rounded,
-                      color: context.colors.tagLostRed,
-                      size: 20,
-                    ),
-                    style: IconButton.styleFrom(
-                      backgroundColor: const Color(0xFFF1F3F5),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                      padding: const EdgeInsets.all(10),
-                    ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
             ],
           ),
         ],
