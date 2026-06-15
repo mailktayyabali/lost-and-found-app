@@ -91,7 +91,7 @@ class AdminItemCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${item.category} • ${item.location}',
+                    '${item.category} • ${item.displayLocation}',
                     style: TextStyle(
                       color: context.colors.textLight,
                       fontSize: 10,

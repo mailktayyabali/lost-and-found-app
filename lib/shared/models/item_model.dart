@@ -14,6 +14,8 @@ class Item {
   final String? reporterName;
   final String? reporterEmail;
   final String? reporterPhone;
+  final double? latitude;
+  final double? longitude;
 
   const Item({
     required this.id,
@@ -29,6 +31,8 @@ class Item {
     this.reporterName,
     this.reporterEmail,
     this.reporterPhone,
+    this.latitude,
+    this.longitude,
   });
 
   static String _calculateTimeAgo(dynamic timestamp) {
@@ -79,6 +83,8 @@ class Item {
       reporterName: json['reporterName'],
       reporterEmail: json['reporterEmail'],
       reporterPhone: json['reporterPhone'],
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
     );
   }
 
@@ -98,6 +104,8 @@ class Item {
       'reporterName': reporterName,
       'reporterEmail': reporterEmail,
       'reporterPhone': reporterPhone,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 
@@ -115,6 +123,8 @@ class Item {
     String? reporterName,
     String? reporterEmail,
     String? reporterPhone,
+    double? latitude,
+    double? longitude,
   }) {
     return Item(
       id: id ?? this.id,
@@ -130,7 +140,42 @@ class Item {
       reporterName: reporterName ?? this.reporterName,
       reporterEmail: reporterEmail ?? this.reporterEmail,
       reporterPhone: reporterPhone ?? this.reporterPhone,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
     );
+  }
+
+  String get displayLocation {
+    // If it's a raw coordinate format, clean it up for card/list display
+    final match = RegExp(
+      r'(?:Latitude|Lat):\s*([-\d.]+),\s*(?:Longitude|Lon|Lng):\s*([-\d.]+)',
+      caseSensitive: false,
+    ).firstMatch(location);
+
+    if (match != null) {
+      final lat = double.tryParse(match.group(1) ?? '');
+      final lng = double.tryParse(match.group(2) ?? '');
+      if (lat != null && lng != null) {
+        return _formatCoords(lat, lng);
+      }
+    }
+
+    final matchRaw = RegExp(r'^\s*([-\d.]+)\s*,\s*([-\d.]+)\s*$').firstMatch(location);
+    if (matchRaw != null) {
+      final lat = double.tryParse(matchRaw.group(1) ?? '');
+      final lng = double.tryParse(matchRaw.group(2) ?? '');
+      if (lat != null && lng != null) {
+        return _formatCoords(lat, lng);
+      }
+    }
+
+    return location;
+  }
+
+  static String _formatCoords(double lat, double lng) {
+    final latDir = lat >= 0 ? 'N' : 'S';
+    final lngDir = lng >= 0 ? 'E' : 'W';
+    return '${lat.abs().toStringAsFixed(4)}° $latDir, ${lng.abs().toStringAsFixed(4)}° $lngDir';
   }
 
   @override

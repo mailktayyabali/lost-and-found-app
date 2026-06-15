@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/app_colors.dart';
 import '../../../../../shared/widgets/mock_map_widget.dart';
+import 'package:latlong2/latlong.dart';
 import '../report_text_field.dart';
 
 class WhereAndWhenStep extends StatelessWidget {
@@ -11,6 +12,9 @@ class WhereAndWhenStep extends StatelessWidget {
   final VoidCallback onSelectDate;
   final VoidCallback onSelectTime;
   final VoidCallback onTapMap;
+  final double? latitude;
+  final double? longitude;
+  final void Function(LatLng point, String address)? onLocationChanged;
 
   const WhereAndWhenStep({
     super.key,
@@ -21,6 +25,9 @@ class WhereAndWhenStep extends StatelessWidget {
     required this.onSelectDate,
     required this.onSelectTime,
     required this.onTapMap,
+    this.latitude,
+    this.longitude,
+    this.onLocationChanged,
   });
 
   @override
@@ -40,6 +47,8 @@ class WhereAndWhenStep extends StatelessWidget {
         MockMapWidget(
           isPicker: true,
           height: 150,
+          center: latitude != null && longitude != null ? LatLng(latitude!, longitude!) : null,
+          onLocationChanged: onLocationChanged,
           onTap: onTapMap,
         ),
         const SizedBox(height: 8),

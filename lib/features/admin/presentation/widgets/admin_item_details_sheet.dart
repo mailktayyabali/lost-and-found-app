@@ -90,7 +90,7 @@ class AdminItemDetailsSheet extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Category: ${item.category}  |  Location: ${item.location}',
+            'Category: ${item.category}  |  Location: ${item.displayLocation}',
             style: TextStyle(
               color: context.colors.primaryTeal,
               fontSize: 14,

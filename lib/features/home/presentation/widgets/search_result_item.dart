@@ -111,7 +111,7 @@ class SearchResultItem extends StatelessWidget {
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
-                          item.location,
+                          item.displayLocation,
                           style: TextStyle(
                             color: context.colors.textLight,
                             fontSize: 12,

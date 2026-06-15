@@ -43,6 +43,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
   final _locationController = TextEditingController();
   final _dateController = TextEditingController();
   final _timeController = TextEditingController();
+  double? _latitude;
+  double? _longitude;
 
   // Form Controllers - Phase 3
   final _nameController = TextEditingController();
@@ -64,6 +66,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
       _nameController.text = item.reporterName ?? '';
       _emailController.text = item.reporterEmail ?? '';
       _phoneController.text = item.reporterPhone ?? '';
+      _latitude = item.latitude;
+      _longitude = item.longitude;
     }
   }
 
@@ -293,6 +297,8 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         reporterName: _nameController.text.trim().isEmpty ? (currentUser?.displayName ?? 'Anonymous') : _nameController.text.trim(),
         reporterEmail: _emailController.text.trim().isEmpty ? (currentUser?.email ?? '') : _emailController.text.trim(),
         reporterPhone: _phoneController.text.trim().isEmpty ? '' : _phoneController.text.trim(),
+        latitude: _latitude,
+        longitude: _longitude,
       );
 
       if (isEditing) {
@@ -352,14 +358,16 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
           isLost: _isLost,
           onSelectDate: () => _selectDate(context),
           onSelectTime: () => _selectTime(context),
-          onTapMap: () {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Mock Map Picker tapped')),
-            );
+          latitude: _latitude,
+          longitude: _longitude,
+          onLocationChanged: (point, address) {
             setState(() {
-              _locationController.text = 'Mock Selected Location';
+              _latitude = point.latitude;
+              _longitude = point.longitude;
+              _locationController.text = address;
             });
           },
+          onTapMap: () {},
         ),
         isActive: _currentStep >= 1,
         state: _currentStep > 1 ? StepState.complete : StepState.indexed,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'core/theme/app_theme.dart';
 import 'core/theme/theme_manager.dart';
 import 'features/splash/presentation/splash_screen.dart';
@@ -20,7 +21,11 @@ void main() async {
   // Initialize push notification listeners
   await PushNotificationService().initialize();
 
-  runApp(const LostAndFoundApp());
+  runApp(
+    const ProviderScope(
+      child: LostAndFoundApp(),
+    ),
+  );
 }
 
 class LostAndFoundApp extends StatelessWidget {

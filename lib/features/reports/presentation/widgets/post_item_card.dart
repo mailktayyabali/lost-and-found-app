@@ -105,7 +105,7 @@ class PostItemCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Expanded(
                                 child: Text(
-                                  item.location,
+                                  item.displayLocation,
                                   style: TextStyle(
                                     fontSize: 13,
                                     color: context.colors.textLight,

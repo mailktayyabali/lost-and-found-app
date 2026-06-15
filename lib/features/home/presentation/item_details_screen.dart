@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../shared/models/item_model.dart';
 import '../../../shared/services/saved_items_service.dart';
+import '../../../shared/services/geocoding_service.dart';
+import '../../../shared/widgets/mock_map_widget.dart';
 import 'widgets/home_bottom_nav_bar.dart';
 import 'widgets/info_card.dart';
 import 'widgets/reporter_profile_card.dart';
@@ -24,12 +27,75 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
   late Item _currentItem;
   ClaimRequest? _pendingClaimRequest;
   bool _isLoadingClaim = true;
+  String _displayLocation = '';
+  double? _parsedLatitude;
+  double? _parsedLongitude;
 
   @override
   void initState() {
     super.initState();
     _currentItem = widget.item;
+    _displayLocation = _currentItem.displayLocation;
+    _parsedLatitude = _currentItem.latitude;
+    _parsedLongitude = _currentItem.longitude;
     _loadPendingClaim();
+    _resolveLocationAddress();
+  }
+
+  Future<void> _resolveLocationAddress() async {
+    // 1. If coordinates are null, parse them directly from the location string
+    if (_parsedLatitude == null || _parsedLongitude == null) {
+      final match = RegExp(
+        r'(?:Latitude|Lat):\s*([-\d.]+),\s*(?:Longitude|Lon|Lng):\s*([-\d.]+)',
+        caseSensitive: false,
+      ).firstMatch(_currentItem.location);
+
+      if (match != null) {
+        _parsedLatitude = double.tryParse(match.group(1) ?? '');
+        _parsedLongitude = double.tryParse(match.group(2) ?? '');
+      } else {
+        final matchRaw = RegExp(r'^\s*([-\d.]+)\s*,\s*([-\d.]+)\s*$').firstMatch(_currentItem.location);
+        if (matchRaw != null) {
+          _parsedLatitude = double.tryParse(matchRaw.group(1) ?? '');
+          _parsedLongitude = double.tryParse(matchRaw.group(2) ?? '');
+        }
+      }
+    }
+
+    // 2. If we have coordinates, reverse geocode to resolve a clean address
+    if (_parsedLatitude != null && _parsedLongitude != null) {
+      final resolvedAddress = await GeocodingService.reverseGeocode(
+        _parsedLatitude!,
+        _parsedLongitude!,
+      );
+      if (resolvedAddress != null) {
+        if (mounted) {
+          setState(() {
+            _displayLocation = resolvedAddress;
+          });
+        }
+      } else {
+        // Fallback to formatted coordinates offline
+        if (mounted) {
+          setState(() {
+            _displayLocation = _formatCoordinates(_parsedLatitude!, _parsedLongitude!);
+          });
+        }
+      }
+    } else {
+      // Keep displaying the parsed/original displayLocation
+      if (mounted) {
+        setState(() {
+          _displayLocation = _currentItem.displayLocation;
+        });
+      }
+    }
+  }
+
+  String _formatCoordinates(double lat, double lng) {
+    final latDir = lat >= 0 ? 'N' : 'S';
+    final lngDir = lng >= 0 ? 'E' : 'W';
+    return '${lat.abs().toStringAsFixed(4)}° $latDir, ${lng.abs().toStringAsFixed(4)}° $lngDir';
   }
 
   Future<void> _loadPendingClaim() async {
@@ -229,26 +295,15 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Container(
+                        MockMapWidget(
                           height: 180,
-                          width: double.infinity,
-                          decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            color: context.colors.surfaceWhite,
-                            border: Border.all(color: context.colors.dividerColor),
-                            image: const DecorationImage(
-                              image: NetworkImage(
-                                'https://maps.googleapis.com/maps/api/staticmap?center=Dolores+Park,San+Francisco&zoom=15&size=600x300&maptype=roadmap&markers=color:red%7CDolores+Park,San+Francisco&key=YOUR_API_KEY_MOCK',
-                              ),
-                            ),
-                          ),
-                          child: Center(
-                            child: Icon(
-                              Icons.location_on,
-                              color: context.colors.tagLostRed,
-                              size: 48,
-                            ),
-                          ),
+                          isPicker: false,
+                          locationName: _displayLocation,
+                          center: _parsedLatitude != null && _parsedLongitude != null
+                              ? LatLng(_parsedLatitude!, _parsedLongitude!)
+                              : null,
+                          radiusKm: null,
+                          showUserLocationButton: false,
                         ),
                         const SizedBox(height: 8),
                         Row(
@@ -259,11 +314,13 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
                               color: context.colors.textLight,
                             ),
                             const SizedBox(width: 6),
-                            Text(
-                              'Near ${_currentItem.location}',
-                              style: TextStyle(
-                                color: context.colors.textLight,
-                                fontSize: 13,
+                            Expanded(
+                              child: Text(
+                                'Near $_displayLocation',
+                                style: TextStyle(
+                                  color: context.colors.textLight,
+                                  fontSize: 13,
+                                ),
                               ),
                             ),
                           ],

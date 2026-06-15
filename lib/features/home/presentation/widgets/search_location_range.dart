@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/mock_map_widget.dart';
 
@@ -7,6 +8,8 @@ class SearchLocationRange extends StatelessWidget {
   final ValueChanged<double> onSliderChanged;
   final String locationName;
   final VoidCallback onMapTap;
+  final LatLng? center;
+  final void Function(LatLng point, String address)? onLocationChanged;
 
   const SearchLocationRange({
     super.key,
@@ -14,6 +17,8 @@ class SearchLocationRange extends StatelessWidget {
     required this.onSliderChanged,
     required this.locationName,
     required this.onMapTap,
+    this.center,
+    this.onLocationChanged,
   });
 
   @override
@@ -68,6 +73,10 @@ class SearchLocationRange extends StatelessWidget {
                 MockMapWidget(
                   height: 120,
                   locationName: locationName,
+                  isPicker: true,
+                  center: center,
+                  radiusKm: sliderValue,
+                  onLocationChanged: onLocationChanged,
                   onTap: onMapTap,
                 ),
                 const SizedBox(height: 12),
@@ -75,12 +84,16 @@ class SearchLocationRange extends StatelessWidget {
                   children: [
                     Icon(Icons.location_on, color: context.colors.textLight, size: 20),
                     const SizedBox(width: 8),
-                    Text(
-                      locationName,
-                      style: TextStyle(
-                        color: context.colors.textDark,
-                        fontWeight: FontWeight.w500,
-                        fontSize: 14,
+                    Expanded(
+                      child: Text(
+                        locationName,
+                        style: TextStyle(
+                          color: context.colors.textDark,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],

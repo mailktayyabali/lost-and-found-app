@@ -1,39 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
-import '../../../shared/models/item_model.dart';
 import '../../../shared/services/saved_items_service.dart';
-import '../../reports/data/repositories/firebase_reports_repository.dart';
+import '../../reports/presentation/providers/reports_provider.dart';
 import 'widgets/home_bottom_nav_bar.dart';
 import 'widgets/search_category_chips.dart';
 import 'widgets/search_location_range.dart';
 import 'widgets/search_result_item.dart';
 import 'home_screen.dart';
 
-class SearchScreen extends StatefulWidget {
+class SearchScreen extends ConsumerStatefulWidget {
   const SearchScreen({super.key});
 
   @override
-  State<SearchScreen> createState() => _SearchScreenState();
+  ConsumerState<SearchScreen> createState() => _SearchScreenState();
 }
 
-class _SearchScreenState extends State<SearchScreen> {
-  final FirebaseReportsRepository _reportsRepository = FirebaseReportsRepository();
+class _SearchScreenState extends ConsumerState<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
-  
-  double _locationSliderValue = 15.0;
-  String _searchQuery = '';
-  String _selectedCategory = 'All Items';
   String _selectedTimePeriod = 'Last 24h';
-  String _selectedLocationName = 'New York City, NY';
-
-  List<Item> _allItems = [];
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadItems();
-  }
 
   @override
   void dispose() {
@@ -41,46 +27,27 @@ class _SearchScreenState extends State<SearchScreen> {
     super.dispose();
   }
 
-  Future<void> _loadItems() async {
-    try {
-      final list = await _reportsRepository.getItems();
-      if (mounted) {
-        setState(() {
-          _allItems = list;
-        });
-      }
-    } catch (e) {
-      debugPrint('SearchScreen: Error loading items: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  List<Item> get _filteredItems {
-    return _allItems.where((item) {
-      final matchesSearch = item.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-          item.description.toLowerCase().contains(_searchQuery.toLowerCase());
-      final matchesCategory = _selectedCategory == 'All Items' || item.category == _selectedCategory;
-      return matchesSearch && matchesCategory;
-    }).toList();
-  }
-
   void _clearFilters() {
+    ref.read(searchQueryProvider.notifier).state = '';
+    ref.read(selectedCategoryProvider.notifier).state = 'All Items';
+    ref.read(searchRadiusProvider.notifier).state = 15.0;
+    ref.read(selectedLocationNameProvider.notifier).state = 'New York City, NY';
+    ref.read(searchCenterProvider.notifier).state = const LatLng(40.785091, -73.968285);
+    _searchController.clear();
     setState(() {
-      _searchController.clear();
-      _searchQuery = '';
-      _selectedCategory = 'All Items';
       _selectedTimePeriod = 'Last 24h';
-      _locationSliderValue = 15.0;
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Watch Riverpod states
+    final selectedCategory = ref.watch(selectedCategoryProvider);
+    final locationSliderValue = ref.watch(searchRadiusProvider);
+    final selectedLocationName = ref.watch(selectedLocationNameProvider);
+    final searchCenter = ref.watch(searchCenterProvider);
+    final filteredReportsAsync = ref.watch(filteredReportsProvider);
+
     return Scaffold(
       backgroundColor: context.colors.background,
       appBar: AppBar(
@@ -114,173 +81,191 @@ class _SearchScreenState extends State<SearchScreen> {
         centerTitle: false,
         titleSpacing: 0,
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            // Search Field
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: TextField(
-                controller: _searchController,
-                onChanged: (value) {
-                  setState(() {
-                    _searchQuery = value;
-                  });
-                },
-                decoration: InputDecoration(
-                  hintText: 'Search keys, wallets, pets...',
-                  hintStyle: TextStyle(
-                    color: context.colors.textLight,
-                    fontSize: 14,
-                  ),
-                  prefixIcon: Icon(
-                    Icons.search,
-                    color: context.colors.textLight,
-                    size: 22,
-                  ),
-                  filled: true,
-                  fillColor: context.colors.surfaceWhite,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: context.colors.fieldBorder),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: context.colors.primaryTeal),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Divider(color: context.colors.dividerColor, thickness: 1, height: 1),
-            const SizedBox(height: 20),
-
-            // Category Section (Modularized)
-            SearchCategoryChips(
-              selectedCategory: _selectedCategory,
-              onCategoryChanged: (cat) {
-                setState(() => _selectedCategory = cat);
-              },
-              onClear: _clearFilters,
-            ),
-            const SizedBox(height: 24),
-
-            // Time Period Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Text(
-                'TIME PERIOD',
-                style: TextStyle(
-                  color: context.colors.textLight,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                  letterSpacing: 1.0,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                children: [
-                  Expanded(child: _buildTimeChip('Last 24h')),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildTimeChip('This Week')),
-                  const SizedBox(width: 8),
-                  Expanded(child: _buildTimeChip('Select Date')),
-                ],
-              ),
-            ),
-            const SizedBox(height: 24),
-
-            // Location Range Section (Modularized)
-            SearchLocationRange(
-              sliderValue: _locationSliderValue,
-              onSliderChanged: (value) {
-                setState(() => _locationSliderValue = value);
-              },
-              locationName: _selectedLocationName,
-              onMapTap: () {
-                setState(() => _selectedLocationName = 'Mock Pin Location');
-              },
-            ),
-            const SizedBox(height: 24),
-            Divider(color: context.colors.dividerColor, thickness: 1, height: 1),
-            const SizedBox(height: 16),
-
-            // Results Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    'Found ${_filteredItems.length} Results',
-                    style: TextStyle(
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(reportsListProvider);
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 8),
+              // Search Field
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    ref.read(searchQueryProvider.notifier).state = value;
+                  },
+                  decoration: InputDecoration(
+                    hintText: 'Search keys, wallets, pets...',
+                    hintStyle: TextStyle(
                       color: context.colors.textLight,
-                      fontWeight: FontWeight.bold,
                       fontSize: 14,
                     ),
+                    prefixIcon: Icon(
+                      Icons.search,
+                      color: context.colors.textLight,
+                      size: 22,
+                    ),
+                    filled: true,
+                    fillColor: context.colors.surfaceWhite,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 0),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: context.colors.fieldBorder),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: context.colors.primaryTeal),
+                    ),
                   ),
-                  Row(
-                    children: [
-                      Icon(Icons.swap_vert, color: context.colors.textDark, size: 16),
-                      const SizedBox(width: 4),
-                      Text(
-                        'Sort by: Recent',
-                        style: TextStyle(
-                          color: context.colors.textDark,
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              Divider(color: context.colors.dividerColor, thickness: 1, height: 1),
+              const SizedBox(height: 20),
 
-            // List of Items
-            _isLoading
-                ? const Center(child: Padding(
+              // Category Section (Modularized)
+              SearchCategoryChips(
+                selectedCategory: selectedCategory,
+                onCategoryChanged: (cat) {
+                  ref.read(selectedCategoryProvider.notifier).state = cat;
+                },
+                onClear: _clearFilters,
+              ),
+              const SizedBox(height: 24),
+
+              // Time Period Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Text(
+                  'TIME PERIOD',
+                  style: TextStyle(
+                    color: context.colors.textLight,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                    letterSpacing: 1.0,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  children: [
+                    Expanded(child: _buildTimeChip('Last 24h')),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildTimeChip('This Week')),
+                    const SizedBox(width: 8),
+                    Expanded(child: _buildTimeChip('Select Date')),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Location Range Section (Modularized)
+              SearchLocationRange(
+                sliderValue: locationSliderValue,
+                onSliderChanged: (value) {
+                  ref.read(searchRadiusProvider.notifier).state = value;
+                },
+                locationName: selectedLocationName,
+                center: searchCenter,
+                onLocationChanged: (point, address) {
+                  ref.read(searchCenterProvider.notifier).state = point;
+                  ref.read(selectedLocationNameProvider.notifier).state = address;
+                },
+                onMapTap: () {},
+              ),
+              const SizedBox(height: 24),
+              Divider(color: context.colors.dividerColor, thickness: 1, height: 1),
+              const SizedBox(height: 16),
+
+              // Results Header & List
+              filteredReportsAsync.when(
+                loading: () => const Center(
+                  child: Padding(
                     padding: EdgeInsets.symmetric(vertical: 40),
                     child: CircularProgressIndicator(),
-                  ))
-                : ListenableBuilder(
-                    listenable: SavedItemsService(),
-                    builder: (context, _) {
-                      final filtered = _filteredItems;
-                      if (filtered.isEmpty) {
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 40),
-                          child: Center(
-                            child: Column(
+                  ),
+                ),
+                error: (err, stack) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+                  child: Text('Error loading items: $err', style: const TextStyle(color: Colors.red)),
+                ),
+                data: (filteredItems) {
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              'Found ${filteredItems.length} Results',
+                              style: TextStyle(
+                                color: context.colors.textLight,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            Row(
                               children: [
-                                Icon(Icons.search_off, size: 64, color: context.colors.textLight.withValues(alpha: 0.5)),
-                                const SizedBox(height: 16),
+                                Icon(Icons.swap_vert, color: context.colors.textDark, size: 16),
+                                const SizedBox(width: 4),
                                 Text(
-                                  'No items match your search',
-                                  style: TextStyle(color: context.colors.textLight, fontSize: 16, fontWeight: FontWeight.w500),
+                                  'Sort by: Recent',
+                                  style: TextStyle(
+                                    color: context.colors.textDark,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),
-                          ),
-                        );
-                      }
-                      return Column(
-                        children: filtered.map((item) => SearchResultItem(
-                          item: item,
-                          onBookmarkToggled: () => setState(() {}),
-                        )).toList(),
-                      );
-                    },
-                  ),
-            const SizedBox(height: 24),
-          ],
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      ListenableBuilder(
+                        listenable: SavedItemsService(),
+                        builder: (context, _) {
+                          if (filteredItems.isEmpty) {
+                            return Padding(
+                              padding: const EdgeInsets.symmetric(vertical: 40),
+                              child: Center(
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.search_off, size: 64, color: context.colors.textLight.withValues(alpha: 0.5)),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No items match your search',
+                                      style: TextStyle(color: context.colors.textLight, fontSize: 16, fontWeight: FontWeight.w500),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+                          return Column(
+                            children: filteredItems.map((item) => SearchResultItem(
+                              item: item,
+                              onBookmarkToggled: () => setState(() {}),
+                            )).toList(),
+                          );
+                        },
+                      ),
+                    ],
+                  );
+                },
+              ),
+              const SizedBox(height: 24),
+            ],
+          ),
         ),
       ),
       bottomNavigationBar: const HomeBottomNavBar(currentIndex: 1),

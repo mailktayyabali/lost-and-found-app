@@ -164,7 +164,7 @@ class _RecentItemsListState extends State<RecentItemsList> {
                 child: ItemCard(
                   title: item.title,
                   timeAgo: item.timeAgo,
-                  location: item.location,
+                  location: item.displayLocation,
                   userAvatarUrl: '',
                   userName: item.reporterName ?? 'Reporter',
                   status: item.isLost ? ItemStatus.lost : ItemStatus.found,

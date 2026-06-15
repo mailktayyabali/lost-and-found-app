@@ -271,7 +271,7 @@ class _SavedItemsScreenState extends State<SavedItemsScreen> {
                         Icon(Icons.location_on, color: context.colors.textLight, size: 14),
                         SizedBox(width: 4),
                         Text(
-                          item.location,
+                          item.displayLocation,
                           style: TextStyle(
                             fontSize: 12,
                             color: context.colors.textLight,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
+import '../../../../shared/widgets/mock_map_widget.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../home/presentation/widgets/home_drawer.dart';
 
@@ -15,6 +17,8 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
   bool _isLostAlert = true;
   double _radius = 5.2;
   String? _selectedCategory;
+  LatLng _alertCenter = const LatLng(37.7749, -122.4194); // default SF
+  String _alertLocationName = 'San Francisco, California';
   final List<String> _categories = ['Electronics', 'Wallets', 'Keys', 'Pets', 'Bags', 'Other'];
 
   @override
@@ -195,12 +199,16 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                             children: [
                               Icon(Icons.my_location, color: context.colors.primaryTeal, size: 20),
                               SizedBox(width: 12),
-                              Text(
-                                'San Francisco, California',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: context.colors.textDark,
+                              Expanded(
+                                child: Text(
+                                  _alertLocationName,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                    color: context.colors.textDark,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
                             ],
@@ -209,12 +217,18 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                       ],
                     ),
                   ),
-                  // Map Mockup
-                  Image.network(
-                    'https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&q=80&w=600',
+                  // Interactive Map
+                  MockMapWidget(
                     height: 200,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
+                    isPicker: true,
+                    center: _alertCenter,
+                    radiusKm: _radius * 1.60934, // Convert Miles to Km
+                    onLocationChanged: (point, address) {
+                      setState(() {
+                        _alertCenter = point;
+                        _alertLocationName = address;
+                      });
+                    },
                   ),
                   Padding(
                     padding: EdgeInsets.all(20),

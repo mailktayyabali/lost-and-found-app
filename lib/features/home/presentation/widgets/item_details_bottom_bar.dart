@@ -101,13 +101,14 @@ class ItemDetailsBottomBar extends StatelessWidget {
                     final scaffoldMessenger = ScaffoldMessenger.of(context);
                     final currentUser = AuthService().currentUser;
                     final dateStr = DateFormat('M/d/yyyy').format(DateTime.now());
+                    final ownerUid = item.createdBy;
                     
                     final reportData = {
                       'itemId': item.id,
                       'title': item.title,
                       'reportedBy': currentUser?.displayName ?? 'Anonymous',
                       'reportedByUid': currentUser?.uid ?? 'anonymous',
-                      'ownerUid': item.createdBy ?? 'anonymous',
+                      'ownerUid': ownerUid ?? 'anonymous',
                       'reason': selectedReason + (commentController.text.trim().isNotEmpty ? ': ${commentController.text.trim()}' : ''),
                       'status': 'PENDING',
                       'date': dateStr,
@@ -118,10 +119,64 @@ class ItemDetailsBottomBar extends StatelessWidget {
                     Navigator.pop(dialogContext); // Close dialog
 
                     try {
-                      await FirebaseFirestore.instance.collection('moderation_queue').add(reportData);
+                      final db = FirebaseFirestore.instance;
+                      
+                      // 1. Submit the report to moderation queue
+                      await db.collection('moderation_queue').add(reportData);
+                      
+                      // 2. Notify the post owner about the report
+                      if (ownerUid != null && ownerUid.isNotEmpty) {
+                        await db.collection('notifications').add({
+                          'recipientId': ownerUid,
+                          'title': 'Post Reported',
+                          'description': 'Your post "${item.title}" has been reported for: $selectedReason.',
+                          'type': 'report',
+                          'relatedItemId': item.id,
+                          'isRead': false,
+                          'createdAt': FieldValue.serverTimestamp(),
+                        });
+                      }
+
+                      // 3. Count pending reports for this itemId
+                      final querySnapshot = await db
+                          .collection('moderation_queue')
+                          .where('itemId', isEqualTo: item.id)
+                          .where('status', isEqualTo: 'PENDING')
+                          .get();
+                      
+                      final reportsCount = querySnapshot.size;
+                      
+                      // 4. Auto-remove post if it gets 5 or more reports
+                      if (reportsCount >= 5) {
+                        // Delete the item report from reports collection
+                        await db.collection('reports').doc(item.id).delete();
+                        
+                        // Notify the owner that it was removed
+                        if (ownerUid != null && ownerUid.isNotEmpty) {
+                          await db.collection('notifications').add({
+                            'recipientId': ownerUid,
+                            'title': 'Post Automatically Removed',
+                            'description': 'Your post "${item.title}" was automatically removed after receiving 5 reports.',
+                            'type': 'moderation',
+                            'relatedItemId': item.id,
+                            'isRead': false,
+                            'createdAt': FieldValue.serverTimestamp(),
+                          });
+                        }
+                        
+                        // Resolve all these pending reports in moderation queue
+                        final batch = db.batch();
+                        for (var doc in querySnapshot.docs) {
+                          batch.update(doc.reference, {'status': 'RESOLVED'});
+                        }
+                        await batch.commit();
+                      }
+
                       scaffoldMessenger.showSnackBar(
-                        const SnackBar(
-                          content: Text('Thank you. The item report has been submitted to moderators.'),
+                        SnackBar(
+                          content: Text(reportsCount >= 5 
+                              ? 'The item has been automatically removed due to multiple reports.' 
+                              : 'Thank you. The item report has been submitted to moderators.'),
                           backgroundColor: Colors.green,
                         ),
                       );
