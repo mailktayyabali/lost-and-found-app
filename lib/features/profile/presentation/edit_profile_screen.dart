@@ -1,4 +1,9 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:http/http.dart' as http;
+import '../../../core/config/cloudinary_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/domain/auth_service.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
@@ -21,6 +26,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _bioController;
   bool _isSaving = false;
+  bool _isUploadingAvatar = false;
+  String? _uploadedPhotoUrl;
   final AuthService _authService = AuthService();
 
   @override
@@ -78,9 +85,78 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  Future<void> _pickAndUploadImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+
+    if (pickedFile == null) return;
+
+    final user = _authService.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      _isUploadingAvatar = true;
+    });
+
+    try {
+      // Upload to Cloudinary instead of Firebase Storage
+      final url = Uri.parse('https://api.cloudinary.com/v1_1/${CloudinaryConfig.cloudName}/image/upload');
+      final request = http.MultipartRequest('POST', url)
+        ..fields['upload_preset'] = CloudinaryConfig.uploadPreset
+        ..files.add(await http.MultipartFile.fromPath('file', pickedFile.path));
+        
+      final response = await request.send();
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final responseData = await response.stream.bytesToString();
+        final jsonResponse = jsonDecode(responseData);
+        final downloadUrl = jsonResponse['secure_url'] as String;
+
+        // Update Auth Profile
+        await user.updatePhotoURL(downloadUrl);
+        
+        // Update Firestore user record
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).update({
+          'photoURL': downloadUrl,
+        });
+
+        setState(() {
+          _uploadedPhotoUrl = downloadUrl;
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Profile picture updated successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } else {
+        throw Exception('Cloudinary upload failed with status code: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error uploading avatar: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload profile picture: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isUploadingAvatar = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = _authService.currentUser;
+    final photoUrlToShow = _uploadedPhotoUrl ?? user?.photoURL;
     
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -109,43 +185,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             children: [
               const SizedBox(height: 24),
               // Profile Avatar
-              Stack(
-                children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: const Color(0xFF0D2534),
-                      border: Border.all(color: Colors.white, width: 4),
-                      image: user?.photoURL != null 
-                        ? DecorationImage(image: NetworkImage(user!.photoURL!), fit: BoxFit.cover)
-                        : null,
-                    ),
-                    child: user?.photoURL == null 
-                      ? const Center(
-                          child: Icon(
-                            Icons.person,
-                            size: 60,
-                            color: Color(0xFFF3D2BA),
-                          ),
-                        )
-                      : null,
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(6),
+              GestureDetector(
+                onTap: (_isSaving || _isUploadingAvatar) ? null : _pickAndUploadImage,
+                child: Stack(
+                  children: [
+                    Container(
+                      width: 100,
+                      height: 100,
                       decoration: BoxDecoration(
-                        color: context.colors.primaryTeal,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white, width: 2),
+                        color: const Color(0xFF0D2534),
+                        border: Border.all(color: Colors.white, width: 4),
+                        image: photoUrlToShow != null 
+                          ? DecorationImage(image: NetworkImage(photoUrlToShow), fit: BoxFit.cover)
+                          : null,
                       ),
-                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                      child: _isUploadingAvatar
+                        ? const Center(
+                            child: CircularProgressIndicator(color: Colors.white),
+                          )
+                        : photoUrlToShow == null 
+                          ? const Center(
+                              child: Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Color(0xFFF3D2BA),
+                              ),
+                            )
+                          : null,
                     ),
-                  ),
-                ],
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: context.colors.primaryTeal,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 2),
+                        ),
+                        child: const Icon(Icons.camera_alt, color: Colors.white, size: 14),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 24),
               Text(

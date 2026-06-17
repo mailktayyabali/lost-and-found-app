@@ -279,14 +279,25 @@ class _ChatScreenState extends State<ChatScreen> {
             child: SafeArea(
               child: Row(
                 children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: context.colors.textLight,
-                      shape: BoxShape.circle,
+                  GestureDetector(
+                    onTap: () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: const Text('Media sharing is coming soon!'),
+                          backgroundColor: context.colors.primaryTeal,
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                    },
+                    child: Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: context.colors.textLight,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(Icons.add, color: context.colors.surfaceWhite, size: 20),
                     ),
-                    child: Icon(Icons.add, color: context.colors.surfaceWhite, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

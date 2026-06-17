@@ -1,23 +1,14 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../auth/domain/auth_service.dart';
+import 'providers/notifications_provider.dart';
 import 'widgets/alert_notification_item.dart';
 import 'widgets/chat_notification_item.dart';
 
-class NotificationsScreen extends StatefulWidget {
+class NotificationsScreen extends ConsumerWidget {
   const NotificationsScreen({super.key});
-
-  @override
-  State<NotificationsScreen> createState() => _NotificationsScreenState();
-}
-
-class _NotificationsScreenState extends State<NotificationsScreen> {
-  final List<QueryDocumentSnapshot> _docs = [];
-  bool _isLoading = true;
-  String? _errorMessage;
-  StreamSubscription? _subscription;
 
   static String _calculateTimeAgo(dynamic timestamp) {
     if (timestamp == null) return 'Just now';
@@ -49,89 +40,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    _subscribeNotifications();
-  }
-
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
-  }
-
-  void _subscribeNotifications() {
+  Widget build(BuildContext context, WidgetRef ref) {
     final currentUser = AuthService().currentUser;
-    if (currentUser == null) {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-      return;
-    }
-
-    final query = FirebaseFirestore.instance
-        .collection('notifications')
-        .where('recipientId', isEqualTo: currentUser.uid)
-        .orderBy('createdAt', descending: true);
-
-    _subscription = query.snapshots().listen((snapshot) {
-      if (mounted) {
-        setState(() {
-          _docs.clear();
-          _docs.addAll(snapshot.docs);
-          _isLoading = false;
-          _errorMessage = null;
-        });
-      }
-    }, onError: (err) {
-      debugPrint('NotificationsScreen: Primary stream failed (indexing error likely): $err');
-      _subscription?.cancel();
-
-      // Fallback stream without orderBy
-      final fallbackQuery = FirebaseFirestore.instance
-          .collection('notifications')
-          .where('recipientId', isEqualTo: currentUser.uid);
-
-      _subscription = fallbackQuery.snapshots().listen((snapshot) {
-        final sortedDocs = List<QueryDocumentSnapshot>.from(snapshot.docs);
-        sortedDocs.sort((a, b) {
-          final aTime = (a.data() as Map<String, dynamic>?)?['createdAt'];
-          final bTime = (b.data() as Map<String, dynamic>?)?['createdAt'];
-          if (aTime == null && bTime == null) return 0;
-          if (aTime == null) return 1;
-          if (bTime == null) return -1;
-
-          if (aTime is Timestamp && bTime is Timestamp) {
-            return bTime.compareTo(aTime);
-          } else {
-            return bTime.toString().compareTo(aTime.toString());
-          }
-        });
-
-        if (mounted) {
-          setState(() {
-            _docs.clear();
-            _docs.addAll(sortedDocs);
-            _isLoading = false;
-            _errorMessage = null;
-          });
-        }
-      }, onError: (fallbackErr) {
-        if (mounted) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage = fallbackErr.toString();
-          });
-        }
-      });
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final currentUser = AuthService().currentUser;
+    final notificationsAsync = ref.watch(notificationsStreamProvider);
 
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -210,74 +121,78 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       ),
       body: currentUser == null
           ? const Center(child: Text('Please sign in to view notifications.'))
-          : _isLoading
-              ? const Center(child: CircularProgressIndicator())
-              : _errorMessage != null
-                  ? Center(child: Text('Error loading notifications: $_errorMessage'))
-                  : _docs.isEmpty
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.notifications_off_outlined, size: 64, color: context.colors.textLight),
-                              const SizedBox(height: 16),
-                              Text(
-                                'All caught up!',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: context.colors.textLight,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+          : notificationsAsync.when(
+              loading: () => const Center(child: CircularProgressIndicator()),
+              error: (err, stack) => Center(child: Text('Error loading notifications: $err')),
+              data: (docs) {
+                if (docs.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.notifications_off_outlined, size: 64, color: context.colors.textLight),
+                        const SizedBox(height: 16),
+                        Text(
+                          'All caught up!',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: context.colors.textLight,
+                            fontWeight: FontWeight.bold,
                           ),
-                        )
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(bottom: 32),
-                          itemCount: _docs.length,
-                          itemBuilder: (context, index) {
-                            final doc = _docs[index];
-                            final data = doc.data() as Map<String, dynamic>;
-                            final type = data['type'] ?? 'alert';
-                            
-                            if (type == 'chat') {
-                              return ChatNotificationItem(
-                                avatarUrl: data['avatarUrl'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
-                                title: data['title'] ?? 'New Message',
-                                subtitle: data['description'] ?? '',
-                                timeAgo: _calculateTimeAgo(data['createdAt']),
-                                isUnread: !(data['isRead'] ?? false),
-                              );
-                            } else if (type == 'system') {
-                              return AlertNotificationItem(
-                                icon: Icons.security,
-                                iconColor: context.colors.textLight,
-                                iconBackgroundColor: context.colors.background,
-                                title: data['title'] ?? 'Security Alert',
-                                subtitle: data['description'] ?? '',
-                                timeAgo: _calculateTimeAgo(data['createdAt']),
-                              );
-                            } else if (type == 'claim') {
-                              return AlertNotificationItem(
-                                icon: Icons.verified,
-                                iconColor: context.colors.primaryTeal,
-                                iconBackgroundColor: context.colors.primaryTeal.withValues(alpha: 0.1),
-                                title: data['title'] ?? 'Claim Request',
-                                subtitle: data['description'] ?? '',
-                                timeAgo: _calculateTimeAgo(data['createdAt']),
-                              );
-                            } else {
-                              return AlertNotificationItem(
-                                icon: Icons.search,
-                                iconColor: context.colors.buttonBlue,
-                                iconBackgroundColor: const Color(0xFFE8F2FF),
-                                title: data['title'] ?? 'Alert',
-                                subtitle: data['description'] ?? '',
-                                timeAgo: _calculateTimeAgo(data['createdAt']),
-                              );
-                            }
-                          },
                         ),
+                      ],
+                    ),
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.only(bottom: 32),
+                  itemCount: docs.length,
+                  itemBuilder: (context, index) {
+                    final doc = docs[index];
+                    final data = doc.data() as Map<String, dynamic>;
+                    final type = data['type'] ?? 'alert';
+                    
+                    if (type == 'chat') {
+                      return ChatNotificationItem(
+                        avatarUrl: data['avatarUrl'] ?? 'https://randomuser.me/api/portraits/men/32.jpg',
+                        title: data['title'] ?? 'New Message',
+                        subtitle: data['description'] ?? '',
+                        timeAgo: _calculateTimeAgo(data['createdAt']),
+                        isUnread: !(data['isRead'] ?? false),
+                      );
+                    } else if (type == 'system') {
+                      return AlertNotificationItem(
+                        icon: Icons.security,
+                        iconColor: context.colors.textLight,
+                        iconBackgroundColor: context.colors.background,
+                        title: data['title'] ?? 'Security Alert',
+                        subtitle: data['description'] ?? '',
+                        timeAgo: _calculateTimeAgo(data['createdAt']),
+                      );
+                    } else if (type == 'claim') {
+                      return AlertNotificationItem(
+                        icon: Icons.verified,
+                        iconColor: context.colors.primaryTeal,
+                        iconBackgroundColor: context.colors.primaryTeal.withValues(alpha: 0.1),
+                        title: data['title'] ?? 'Claim Request',
+                        subtitle: data['description'] ?? '',
+                        timeAgo: _calculateTimeAgo(data['createdAt']),
+                      );
+                    } else {
+                      return AlertNotificationItem(
+                        icon: Icons.search,
+                        iconColor: context.colors.buttonBlue,
+                        iconBackgroundColor: const Color(0xFFE8F2FF),
+                        title: data['title'] ?? 'Alert',
+                        subtitle: data['description'] ?? '',
+                        timeAgo: _calculateTimeAgo(data['createdAt']),
+                      );
+                    }
+                  },
+                );
+              },
+            ),
     );
   }
 }

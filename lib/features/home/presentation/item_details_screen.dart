@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../shared/models/item_model.dart';
@@ -163,7 +164,18 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           ),
           IconButton(
             icon: Icon(Icons.share, color: context.colors.textDark),
-            onPressed: () {},
+            onPressed: () {
+              Clipboard.setData(
+                ClipboardData(text: 'lostandfound://item/${_currentItem.id}'),
+              );
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: const Text('Post link copied to clipboard!'),
+                  backgroundColor: context.colors.primaryTeal,
+                  behavior: SnackBarBehavior.floating,
+                ),
+              );
+            },
           ),
         ],
       ),

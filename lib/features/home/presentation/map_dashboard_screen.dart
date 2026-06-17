@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/item_model.dart';
 import '../../../shared/widgets/mock_map_widget.dart';
 import '../../reports/presentation/providers/reports_provider.dart';
+import 'item_details_screen.dart';
 import 'widgets/item_card.dart';
 
 class MapDashboardScreen extends ConsumerStatefulWidget {
@@ -194,14 +195,28 @@ class _MapDashboardScreenState extends ConsumerState<MapDashboardScreen> {
                   bottom: 32,
                   left: 0,
                   right: 0,
-                  child: ItemCard(
-                    title: _selectedItem!.title,
-                    timeAgo: _selectedItem!.timeAgo,
-                    location: _selectedItem!.displayLocation,
-                    userAvatarUrl: '',
-                    userName: _selectedItem!.reporterName ?? 'Anonymous',
-                    status: _selectedItem!.isLost ? ItemStatus.lost : ItemStatus.found,
-                    imageUrl: _selectedItem!.imageUrl,
+                  child: GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ItemDetailsScreen(item: _selectedItem!),
+                      ),
+                    ),
+                    child: ItemCard(
+                      title: _selectedItem!.title,
+                      timeAgo: _selectedItem!.timeAgo,
+                      location: _selectedItem!.displayLocation,
+                      userAvatarUrl: '',
+                      userName: _selectedItem!.reporterName ?? 'Anonymous',
+                      status: _selectedItem!.isLost ? ItemStatus.lost : ItemStatus.found,
+                      imageUrl: _selectedItem!.imageUrl,
+                      onActionPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => ItemDetailsScreen(item: _selectedItem!),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
               

@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_dimensions.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
@@ -144,6 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     final currentUid = _authService.currentUser?.uid;
     final isOwnProfile = widget.userId == null || widget.userId == currentUid;
+    final profileUid = widget.userId ?? currentUid;
 
     final name = _userData?['name'] ?? _currentUser?.displayName ?? 'User';
     final email = _userData?['email'] ?? _currentUser?.email ?? '';
@@ -332,7 +334,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               const SizedBox(width: 16),
                               Expanded(
                                 child: ElevatedButton(
-                                  onPressed: () {},
+                                  onPressed: () {
+                                    final uid = profileUid ?? '';
+                                    Clipboard.setData(
+                                      ClipboardData(text: 'lostandfound://profile/$uid'),
+                                    );
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(
+                                        content: const Text('Profile link copied to clipboard!'),
+                                        backgroundColor: context.colors.primaryTeal,
+                                        behavior: SnackBarBehavior.floating,
+                                      ),
+                                    );
+                                  },
                                   style: ElevatedButton.styleFrom(
                                     backgroundColor: Colors.grey[200],
                                     foregroundColor: context.colors.textDark,

@@ -4,6 +4,7 @@ import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/theme_manager.dart';
 import '../../auth/domain/auth_service.dart';
 import '../../auth/presentation/login_screen.dart';
+import '../../alerts/presentation/manage_alerts_screen.dart';
 import 'support_screens.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -36,14 +37,19 @@ class SettingsScreen extends StatelessWidget {
             icon: Icons.notifications_none_rounded,
             title: 'Notifications',
             subtitle: 'Manage push notifications and alerts',
-            onTap: () {},
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const ManageAlertsScreen()),
+              );
+            },
           ),
           _buildSettingItem(
             context,
             icon: Icons.language_rounded,
             title: 'Language',
             subtitle: 'English (United States)',
-            onTap: () {},
+            onTap: () => _showLanguageBottomSheet(context),
           ),
           const SizedBox(height: 32),
           _buildSectionHeader(context, 'LEGAL & SUPPORT'),
@@ -368,6 +374,71 @@ class SettingsScreen extends StatelessWidget {
         backgroundColor: Colors.red,
         behavior: SnackBarBehavior.floating,
       ),
+    );
+  }
+
+  void _showLanguageBottomSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: context.colors.surfaceWhite,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20.0),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 8.0),
+                  child: Text(
+                    'Select Language',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: context.colors.textDark,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _buildLanguageTile(context, 'English (United States)', true),
+                _buildLanguageTile(context, 'Español (España)', false),
+                _buildLanguageTile(context, 'العربية (Arabic)', false),
+                _buildLanguageTile(context, 'Urdu (Pakistan)', false),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildLanguageTile(BuildContext context, String language, bool isSelected) {
+    return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 24.0),
+      title: Text(
+        language,
+        style: TextStyle(
+          color: context.colors.textDark,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+        ),
+      ),
+      trailing: isSelected 
+          ? Icon(Icons.check_circle_rounded, color: context.colors.primaryTeal) 
+          : null,
+      onTap: () {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Language changed to $language'),
+            backgroundColor: context.colors.primaryTeal,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      },
     );
   }
 }

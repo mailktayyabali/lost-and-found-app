@@ -141,12 +141,6 @@ class _LeaveReviewScreenState extends State<LeaveReviewScreen> {
             fontWeight: FontWeight.bold,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.account_circle_outlined, color: context.colors.primaryTeal),
-            onPressed: () {},
-          ),
-        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

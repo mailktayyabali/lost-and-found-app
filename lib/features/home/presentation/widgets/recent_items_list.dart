@@ -152,15 +152,18 @@ class _RecentItemsListState extends State<RecentItemsList> {
           )
         else
           ...activeList.take(3).map((item) {
+            void navigateToDetails() {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ItemDetailsScreen(item: item),
+                ),
+              );
+            }
             return Padding(
               padding: const EdgeInsets.only(bottom: 16),
               child: GestureDetector(
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ItemDetailsScreen(item: item),
-                  ),
-                ),
+                onTap: navigateToDetails,
                 child: ItemCard(
                   title: item.title,
                   timeAgo: item.timeAgo,
@@ -169,6 +172,7 @@ class _RecentItemsListState extends State<RecentItemsList> {
                   userName: item.reporterName ?? 'Reporter',
                   status: item.isLost ? ItemStatus.lost : ItemStatus.found,
                   imageUrl: item.imageUrl,
+                  onActionPressed: navigateToDetails,
                 ),
               ),
             );

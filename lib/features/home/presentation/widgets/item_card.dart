@@ -11,6 +11,7 @@ class ItemCard extends StatelessWidget {
   final String userName;
   final ItemStatus status;
   final String imageUrl;
+  final VoidCallback? onActionPressed;
 
   const ItemCard({
     super.key,
@@ -21,6 +22,7 @@ class ItemCard extends StatelessWidget {
     required this.userName,
     required this.status,
     required this.imageUrl,
+    this.onActionPressed,
   });
 
   @override
@@ -147,7 +149,7 @@ class ItemCard extends StatelessWidget {
                       ],
                     ),
                     ElevatedButton(
-                      onPressed: () {},
+                      onPressed: onActionPressed,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: isFound ? context.colors.primaryTeal : Colors.white,
                         foregroundColor: isFound ? Colors.white : context.colors.primaryTeal,

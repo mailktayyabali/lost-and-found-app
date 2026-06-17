@@ -1,25 +1,40 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../shared/widgets/mock_map_widget.dart';
 import '../../home/presentation/widgets/home_bottom_nav_bar.dart';
 import '../../home/presentation/widgets/home_drawer.dart';
+import '../../auth/domain/auth_service.dart';
+import '../../../../shared/models/alert_model.dart';
+import '../data/repositories/firebase_alerts_repository.dart';
 
-class CreateAlertScreen extends StatefulWidget {
+class CreateAlertScreen extends ConsumerStatefulWidget {
   const CreateAlertScreen({super.key});
 
   @override
-  State<CreateAlertScreen> createState() => _CreateAlertScreenState();
+  ConsumerState<CreateAlertScreen> createState() => _CreateAlertScreenState();
 }
 
-class _CreateAlertScreenState extends State<CreateAlertScreen> {
+class _CreateAlertScreenState extends ConsumerState<CreateAlertScreen> {
   bool _isLostAlert = true;
   double _radius = 5.2;
   String? _selectedCategory;
-  LatLng _alertCenter = const LatLng(37.7749, -122.4194); // default SF
-  String _alertLocationName = 'San Francisco, California';
+  LatLng _alertCenter = const LatLng(31.5204, 74.3587); // Default to Lahore coordinate
+  String _alertLocationName = 'Lahore, Punjab, Pakistan';
   final List<String> _categories = ['Electronics', 'Wallets', 'Keys', 'Pets', 'Bags', 'Other'];
+
+  final _nameController = TextEditingController();
+  final _keywordsController = TextEditingController();
+  bool _isSubmitting = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _keywordsController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,9 +100,9 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                 children: [
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _isLostAlert = true),
+                      onTap: _isSubmitting ? null : () => setState(() => _isLostAlert = true),
                       child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: _isLostAlert ? Colors.white : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
@@ -115,9 +130,9 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                   ),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => setState(() => _isLostAlert = false),
+                      onTap: _isSubmitting ? null : () => setState(() => _isLostAlert = false),
                       child: Container(
-                        padding: EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: !_isLostAlert ? Colors.white : Colors.transparent,
                           borderRadius: BorderRadius.circular(8),
@@ -146,11 +161,11 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
             // Form Fields Card
             Container(
-              padding: EdgeInsets.all(20),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: context.colors.surfaceWhite,
                 borderRadius: BorderRadius.circular(16),
@@ -160,17 +175,26 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildLabel('ALERT NAME'),
-                  _buildTextField(hint: 'e.g., My Lost Keys'),
-                  SizedBox(height: 24),
+                  _buildTextField(
+                    hint: 'e.g., My Lost Keys',
+                    controller: _nameController,
+                    enabled: !_isSubmitting,
+                  ),
+                  const SizedBox(height: 24),
                   _buildLabel('KEYWORDS'),
-                  _buildTextField(hint: 'Silver keys, leather keychain...', suffixIcon: Icons.search),
-                  SizedBox(height: 24),
+                  _buildTextField(
+                    hint: 'Silver keys, leather keychain...',
+                    controller: _keywordsController,
+                    enabled: !_isSubmitting,
+                    suffixIcon: Icons.search,
+                  ),
+                  const SizedBox(height: 24),
                   _buildLabel('CATEGORY'),
                   _buildDropdownField('Select Category'),
                 ],
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
 
             // Location Card
             Container(
@@ -183,14 +207,14 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Padding(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         _buildLabel('LOCATION SELECTION'),
-                        SizedBox(height: 12),
+                        const SizedBox(height: 12),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                           decoration: BoxDecoration(
                             color: context.colors.background,
                             borderRadius: BorderRadius.circular(12),
@@ -198,7 +222,7 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                           child: Row(
                             children: [
                               Icon(Icons.my_location, color: context.colors.primaryTeal, size: 20),
-                              SizedBox(width: 12),
+                              const SizedBox(width: 12),
                               Expanded(
                                 child: Text(
                                   _alertLocationName,
@@ -220,18 +244,20 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                   // Interactive Map
                   MockMapWidget(
                     height: 200,
-                    isPicker: true,
+                    isPicker: !_isSubmitting,
                     center: _alertCenter,
                     radiusKm: _radius * 1.60934, // Convert Miles to Km
-                    onLocationChanged: (point, address) {
-                      setState(() {
-                        _alertCenter = point;
-                        _alertLocationName = address;
-                      });
-                    },
+                    onLocationChanged: _isSubmitting
+                        ? null
+                        : (point, address) {
+                            setState(() {
+                              _alertCenter = point;
+                              _alertLocationName = address;
+                            });
+                          },
                   ),
                   Padding(
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     child: Column(
                       children: [
                         Row(
@@ -261,7 +287,9 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                             value: _radius,
                             min: 1,
                             max: 50,
-                            onChanged: (v) => setState(() => _radius = v),
+                            onChanged: _isSubmitting
+                                ? null
+                                : (v) => setState(() => _radius = v),
                           ),
                         ),
                         Row(
@@ -277,28 +305,95 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                 ],
               ),
             ),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
 
             // Create Button
             SizedBox(
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Alert created successfully!'),
-                      backgroundColor: context.colors.primaryTeal,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
-                  Future.delayed(const Duration(seconds: 1), () {
-                    if (context.mounted) Navigator.pop(context);
-                  });
-                },
+                onPressed: _isSubmitting
+                    ? null
+                    : () async {
+                        final name = _nameController.text.trim();
+                        final keywords = _keywordsController.text.trim();
+
+                        if (name.isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please enter an alert name.'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final currentUser = AuthService().currentUser;
+                        if (currentUser == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Please sign in to create an alert.'),
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                          return;
+                        }
+
+                        final scaffoldMessenger = ScaffoldMessenger.of(context);
+                        final tealColor = context.colors.primaryTeal;
+                        final navigator = Navigator.of(context);
+
+                        setState(() {
+                          _isSubmitting = true;
+                        });
+
+                        final alert = Alert(
+                          id: '',
+                          name: name,
+                          keywords: keywords,
+                          category: _selectedCategory ?? 'Other',
+                          latitude: _alertCenter.latitude,
+                          longitude: _alertCenter.longitude,
+                          radius: _radius,
+                          isLostAlert: _isLostAlert,
+                          createdBy: currentUser.uid,
+                          createdAt: DateTime.now(),
+                        );
+
+                        try {
+                          await FirebaseAlertsRepository().addAlert(alert);
+                          if (!mounted) return;
+
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(
+                              content: const Text('Alert created successfully!'),
+                              backgroundColor: tealColor,
+                              behavior: SnackBarBehavior.floating,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          );
+
+                          Future.delayed(const Duration(seconds: 1), () {
+                            if (mounted) {
+                              navigator.pop();
+                            }
+                          });
+                        } catch (e) {
+                          if (!mounted) return;
+                          setState(() {
+                            _isSubmitting = false;
+                          });
+                          scaffoldMessenger.showSnackBar(
+                            SnackBar(
+                              content: Text('Failed to create alert: $e'),
+                              backgroundColor: Colors.red,
+                              behavior: SnackBarBehavior.floating,
+                            ),
+                          );
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: context.colors.primaryTeal,
                   foregroundColor: Colors.white,
@@ -307,16 +402,25 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                   ),
                   elevation: 0,
                 ),
-                child: Text(
-                  'Create Alert',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+                child: _isSubmitting
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.5,
+                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                        ),
+                      )
+                    : const Text(
+                        'Create Alert',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Center(
               child: Text(
                 'You can manage or silence alerts anytime in Profile settings.',
@@ -326,11 +430,11 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                 ),
               ),
             ),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
         ),
       ),
-      bottomNavigationBar: const HomeBottomNavBar(currentIndex: 2), // Highlighting Alerts tab
+      bottomNavigationBar: const HomeBottomNavBar(currentIndex: 2),
     );
   }
 
@@ -346,10 +450,18 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
     );
   }
 
-  Widget _buildTextField({required String hint, IconData? suffixIcon}) {
+  Widget _buildTextField({
+    required String hint,
+    required TextEditingController controller,
+    required bool enabled,
+    IconData? suffixIcon,
+  }) {
     return Padding(
-      padding: EdgeInsets.only(top: 12.0),
+      padding: const EdgeInsets.only(top: 12.0),
       child: TextField(
+        controller: controller,
+        enabled: enabled,
+        style: TextStyle(color: context.colors.textDark, fontSize: 15),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(color: context.colors.textLight, fontSize: 15),
@@ -360,7 +472,7 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );
@@ -387,11 +499,13 @@ class _CreateAlertScreenState extends State<CreateAlertScreen> {
                 child: Text(category, style: TextStyle(color: context.colors.textDark, fontSize: 15)),
               );
             }).toList(),
-            onChanged: (v) {
-              setState(() {
-                _selectedCategory = v;
-              });
-            },
+            onChanged: _isSubmitting
+                ? null
+                : (v) {
+                    setState(() {
+                      _selectedCategory = v;
+                    });
+                  },
           ),
         ),
       ),
