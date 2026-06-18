@@ -116,7 +116,7 @@ class AdminUserCard extends StatelessWidget {
                   ),
                 ],
               ),
-              if (user['role'] != 'admin' && user['email'] != 'admin@admin.com' && user['email'] != 'admin@lostandfound.com')
+              if (user['role'] != 'admin' && user['email'] != 'admin@findit.com')
                 Row(
                   children: [
                     IconButton(

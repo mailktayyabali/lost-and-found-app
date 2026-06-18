@@ -5,6 +5,7 @@ import '../domain/auth_service.dart';
 import 'forgot_password_screen.dart';
 import 'sign_up_screen.dart';
 import '../../admin/presentation/screens/item_management.dart';
+import 'phone_auth_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -260,47 +261,80 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               SizedBox(height: 24),
               Center(
-                child: InkWell(
-                  onTap: _isLoading ? null : () async {
-                    setState(() => _isLoading = true);
-                    try {
-                      await AuthService().signInWithGoogle();
-                      if (!context.mounted) return;
-                      
-                      final isAdmin = await AuthService().isAdmin();
-                      if (!context.mounted) return;
-                      
-                      Navigator.of(context).pushReplacement(
-                        MaterialPageRoute(
-                          builder: (_) => isAdmin ? const AdminDashboardScreen() : const HomeScreen(),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Google Sign-In
+                    InkWell(
+                      onTap: _isLoading ? null : () async {
+                        setState(() => _isLoading = true);
+                        try {
+                          await AuthService().signInWithGoogle();
+                          if (!context.mounted) return;
+                          
+                          final isAdmin = await AuthService().isAdmin();
+                          if (!context.mounted) return;
+                          
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (_) => isAdmin ? const AdminDashboardScreen() : const HomeScreen(),
+                            ),
+                          );
+                        } catch (e) {
+                          if (!context.mounted) return;
+                          // Handle the "cancelled" case specifically if desired
+                          if (e.toString().contains('cancelled')) {
+                            return;
+                          }
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text(e.toString())),
+                          );
+                        } finally {
+                          if (context.mounted) {
+                            setState(() => _isLoading = false);
+                          }
+                        }
+                      },
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: context.colors.background,
+                          border: Border.all(color: context.colors.fieldBorder),
                         ),
-                      );
-                    } catch (e) {
-                      if (!context.mounted) return;
-                      // Handle the "cancelled" case specifically if desired
-                      if (e.toString().contains('cancelled')) {
-                        return;
-                      }
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
-                      );
-                    } finally {
-                      if (context.mounted) {
-                        setState(() => _isLoading = false);
-                      }
-                    }
-                  },
-                  borderRadius: BorderRadius.circular(24),
-                  child: Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: context.colors.background,
+                        alignment: Alignment.center,
+                        child: _buildGoogleLogo(),
+                      ),
                     ),
-                    alignment: Alignment.center,
-                    child: _buildGoogleLogo(),
-                  ),
+                    const SizedBox(width: 24),
+                    // Phone Sign-In
+                    InkWell(
+                      onTap: _isLoading ? null : () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (_) => const PhoneAuthScreen()),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(24),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: context.colors.background,
+                          border: Border.all(color: context.colors.fieldBorder),
+                        ),
+                        alignment: Alignment.center,
+                        child: Icon(
+                          Icons.phone_android_rounded,
+                          color: context.colors.primaryTeal,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               SizedBox(height: 24),

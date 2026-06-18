@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../home/presentation/home_screen.dart';
 import '../domain/auth_service.dart';
+import '../../admin/presentation/screens/item_management.dart';
 
 class SignUpScreen extends StatefulWidget {
   const SignUpScreen({super.key});
@@ -244,8 +245,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                         name: _nameController.text.trim(),
                       );
                       if (!context.mounted) return;
+                      final isAdmin = await AuthService().isAdmin();
+                      if (!context.mounted) return;
                       Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const HomeScreen()),
+                        MaterialPageRoute(
+                          builder: (_) => isAdmin ? const AdminDashboardScreen() : const HomeScreen(),
+                        ),
                         (route) => false,
                       );
                     } catch (e) {

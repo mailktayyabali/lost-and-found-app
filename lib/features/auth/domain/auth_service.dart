@@ -46,7 +46,7 @@ class AuthService {
           'uid': credential.user!.uid,
           'email': email,
           'name': name,
-          'role': 'user', // Default role
+          'role': email == 'admin@findit.com' ? 'admin' : 'user', // Set admin role for main admin email
           'isBanned': false,
           'createdAt': FieldValue.serverTimestamp(),
         });
@@ -66,7 +66,8 @@ class AuthService {
         'uid': user.uid,
         'email': user.email ?? '',
         'name': user.displayName ?? '',
-        'role': 'user',
+        'phoneNumber': user.phoneNumber ?? '',
+        'role': user.email == 'admin@findit.com' ? 'admin' : 'user',
         'isBanned': false,
         'createdAt': FieldValue.serverTimestamp(),
       });
@@ -91,8 +92,8 @@ class AuthService {
     final user = currentUser;
     if (user == null) return false;
     
-    // Developer Backdoor: Automatically grant admin access to these test emails
-    if (user.email == 'admin@admin.com' || user.email == 'admin@lostandfound.com') {
+    // Developer Backdoor: Automatically grant admin access to the sole admin email
+    if (user.email == 'admin@findit.com') {
       return true;
     }
 
@@ -310,6 +311,38 @@ class AuthService {
 
     // 3. Clear Google sign-in state
     await _googleSignIn.signOut();
+  }
+
+  // Phone auth verification
+  Future<void> verifyPhoneNumber({
+    required String phoneNumber,
+    required Function(PhoneAuthCredential) verificationCompleted,
+    required Function(FirebaseAuthException) verificationFailed,
+    required Function(String, int?) codeSent,
+    required Function(String) codeAutoRetrievalTimeout,
+  }) async {
+    try {
+      await _firebaseAuth.verifyPhoneNumber(
+        phoneNumber: phoneNumber,
+        verificationCompleted: verificationCompleted,
+        verificationFailed: verificationFailed,
+        codeSent: codeSent,
+        codeAutoRetrievalTimeout: codeAutoRetrievalTimeout,
+      );
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Sign in with phone credential
+  Future<UserCredential> signInWithPhoneCredential(PhoneAuthCredential credential) async {
+    try {
+      final userCredential = await _firebaseAuth.signInWithCredential(credential);
+      await _ensureUserDocumentExists(userCredential.user);
+      return userCredential;
+    } catch (e) {
+      rethrow;
+    }
   }
 }
 

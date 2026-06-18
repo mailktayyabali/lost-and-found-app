@@ -21,22 +21,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
     super.dispose();
   }
 
-  Future<void> _toggleUserRole(String uid, String currentRole) async {
-    final nextRole = currentRole == 'admin' ? 'user' : 'admin';
-    try {
-      await _firestore.collection('users').doc(uid).update({'role': nextRole});
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Successfully updated user role to $nextRole.')),
-      );
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error updating role: $e')),
-      );
-    }
-  }
-
   Future<void> _toggleUserBan(String uid, bool currentBanStatus) async {
     final nextBanStatus = !currentBanStatus;
     try {
@@ -252,22 +236,6 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                               runSpacing: 8,
                               alignment: WrapAlignment.end,
                               children: [
-                                OutlinedButton.icon(
-                                  icon: Icon(
-                                    role == 'admin' ? Icons.person_outline_rounded : Icons.security_rounded,
-                                    size: 16,
-                                    color: context.colors.textDark,
-                                  ),
-                                  label: Text(
-                                    role == 'admin' ? 'Make User' : 'Make Admin',
-                                    style: TextStyle(color: context.colors.textDark, fontSize: 13),
-                                  ),
-                                  style: OutlinedButton.styleFrom(
-                                    side: BorderSide(color: context.colors.fieldBorder),
-                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                  ),
-                                  onPressed: () => _toggleUserRole(uid, role),
-                                ),
                                 OutlinedButton.icon(
                                   icon: Icon(
                                     isBanned ? Icons.check_circle_outline_rounded : Icons.block_flipped,
