@@ -4,6 +4,7 @@ import 'onboarding_screen.dart';
 import '../../auth/domain/auth_service.dart';
 import '../../home/presentation/home_screen.dart';
 import '../../admin/presentation/screens/item_management.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -11,14 +12,60 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen> {
-  
+class _SplashScreenState extends State<SplashScreen> with TickerProviderStateMixin {
+  late AnimationController _entryController;
+  late AnimationController _bounceController;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _rotateAnimation;
+  late Animation<double> _bounceAnimation;
+
   @override
   void initState() {
     super.initState();
-    
-    // Navigate after 3 seconds
-    Future.delayed(const Duration(seconds: 3), () async {
+
+    // 1. Controller for screen entry animations (Scale, Rotation)
+    _entryController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    );
+
+    // 2. Controller for the continuous bouncing pin animation
+    _bounceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _entryController,
+        curve: Curves.elasticOut,
+      ),
+    );
+
+    _rotateAnimation = Tween<double>(begin: -0.25, end: 0.0).animate(
+      CurvedAnimation(
+        parent: _entryController,
+        curve: Curves.easeOutBack,
+      ),
+    );
+
+    _bounceAnimation = Tween<double>(begin: 0.0, end: -12.0).animate(
+      CurvedAnimation(
+        parent: _bounceController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
+    // Start entry animations
+    _entryController.forward().then((_) {
+      if (mounted) {
+        // Start continuous bouncing once entered
+        _bounceController.repeat(reverse: true);
+      }
+    });
+
+    // Navigate after 3.5 seconds
+    Future.delayed(const Duration(milliseconds: 3500), () async {
       if (mounted) {
         final authService = AuthService();
         final isLoggedIn = authService.currentUser != null;
@@ -45,6 +92,13 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   @override
+  void dispose() {
+    _entryController.dispose();
+    _bounceController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: context.colors.background,
@@ -54,17 +108,17 @@ class _SplashScreenState extends State<SplashScreen> {
           children: [
             const Spacer(flex: 3),
             _buildLogo(),
-            SizedBox(height: 32),
+            const SizedBox(height: 32),
             _buildTitle(),
-            SizedBox(height: 6),
+            const SizedBox(height: 6),
             _buildSubtitle(),
             const Spacer(flex: 2),
             _buildProgressBar(),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             _buildStatusText(),
             const Spacer(flex: 3),
             _buildFooter(),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
           ],
         ),
       ),
@@ -72,64 +126,78 @@ class _SplashScreenState extends State<SplashScreen> {
   }
 
   Widget _buildLogo() {
-    return Container(
-      width: 140,
-      height: 140,
-      decoration: BoxDecoration(
-        color: Colors.white,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: context.colors.textDark.withValues(alpha: 0.04),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Magnifying Glass
-          Icon(
-            Icons.search_rounded,
-            size: 100,
-            color: context.colors.textDark,
-          ),
-          // Inner group
-          Positioned(
-            top: 25,
-            left: 28,
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                // Wallet inside
-                Icon(
-                  Icons.account_balance_wallet_rounded,
-                  size: 42,
-                  color: context.colors.textDark,
-                ),
-                // Location pin offset to top-left
-                Positioned(
-                  top: -12,
-                  left: -8,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: context.colors.background,
-                    ),
-                    padding: EdgeInsets.all(2),
-                    child: Icon(
-                      Icons.location_on_rounded,
-                      size: 24,
-                      color: context.colors.textDark,
+    return AnimatedBuilder(
+      animation: Listenable.merge([_entryController, _bounceController]),
+      builder: (context, child) {
+        return Transform.scale(
+          scale: _scaleAnimation.value,
+          child: Transform.rotate(
+            angle: _rotateAnimation.value,
+            child: Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: context.colors.textDark.withValues(alpha: 0.04),
+                    blurRadius: 24,
+                    offset: const Offset(0, 12),
+                  ),
+                ],
+              ),
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  // Magnifying Glass
+                  Icon(
+                    Icons.search_rounded,
+                    size: 100,
+                    color: context.colors.textDark,
+                  ),
+                  // Inner group
+                  Positioned(
+                    top: 25,
+                    left: 28,
+                    child: Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        // Wallet inside
+                        Icon(
+                          Icons.account_balance_wallet_rounded,
+                          size: 42,
+                          color: context.colors.textDark,
+                        ),
+                        // Location pin offset to top-left - Animated Bounce
+                        Positioned(
+                          top: -12,
+                          left: -8,
+                          child: Transform.translate(
+                            offset: Offset(0, _bounceAnimation.value),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: context.colors.background,
+                              ),
+                              padding: const EdgeInsets.all(2),
+                              child: Icon(
+                                Icons.location_on_rounded,
+                                size: 24,
+                                color: context.colors.textDark,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -159,11 +227,11 @@ class _SplashScreenState extends State<SplashScreen> {
 
   Widget _buildProgressBar() {
     return Padding(
-      padding: EdgeInsets.symmetric(horizontal: 48.0),
+      padding: const EdgeInsets.symmetric(horizontal: 48.0),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(4),
         child: LinearProgressIndicator(
-          value: null, // Indeterminate without animation
+          value: null,
           backgroundColor: context.colors.primaryTeal.withValues(alpha: 0.12),
           valueColor: AlwaysStoppedAnimation<Color>(context.colors.primaryTeal),
           minHeight: 4,

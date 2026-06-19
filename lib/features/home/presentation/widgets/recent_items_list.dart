@@ -6,9 +6,11 @@ import '../../../../shared/models/item_model.dart';
 import 'section_header.dart';
 import 'item_card.dart';
 import '../../../../shared/widgets/empty_state_widget.dart';
+import '../../../../core/database/local_database.dart';
 
 class RecentItemsList extends StatefulWidget {
-  const RecentItemsList({super.key});
+  final String selectedCategory;
+  const RecentItemsList({super.key, required this.selectedCategory});
 
   @override
   State<RecentItemsList> createState() => _RecentItemsListState();
@@ -26,17 +28,52 @@ class _RecentItemsListState extends State<RecentItemsList> {
     _loadRecentItems();
   }
 
+  bool _areListsDifferent(List<Item> listA, List<Item> listB) {
+    if (listA.length != listB.length) return true;
+    for (int i = 0; i < listA.length; i++) {
+      if (listA[i].id != listB[i].id ||
+          listA[i].imageUrl != listB[i].imageUrl ||
+          listA[i].status != listB[i].status ||
+          listA[i].title != listB[i].title ||
+          listA[i].timeAgo != listB[i].timeAgo) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Future<void> _loadRecentItems() async {
+    // 1. Instantly load from SQLite cache to show posts immediately
     try {
-      final list = await _reportsRepository.getItems();
-      if (mounted) {
+      final cachedList = await LocalDatabase.instance.getCachedItems();
+      if (cachedList.isNotEmpty && mounted) {
         setState(() {
-          _allItems = list;
+          _allItems = cachedList;
+          _isLoading = false; // Stop loading spinner immediately
         });
       }
+    } catch (dbError) {
+      debugPrint('RecentItemsList: Error loading local cache: $dbError');
+    }
+
+    // 2. Fetch fresh data from Firestore in the background
+    try {
+      final freshList = await _reportsRepository.getItems();
+      if (mounted) {
+        final hasChanged = _areListsDifferent(_allItems, freshList);
+        if (hasChanged) {
+          setState(() {
+            _allItems = freshList;
+            _isLoading = false;
+          });
+        } else if (_isLoading) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
+      }
     } catch (e) {
-      debugPrint('RecentItemsList: Error loading items: $e');
-    } finally {
+      debugPrint('RecentItemsList: Silent network error / offline: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -85,10 +122,14 @@ class _RecentItemsListState extends State<RecentItemsList> {
   @override
   Widget build(BuildContext context) {
     final activeList = _allItems.where((item) {
-      if (_filter == 'ALL') {
-        return item.status == 'LOST' || item.status == 'FOUND';
-      }
-      return item.status == _filter;
+      final matchesStatus = _filter == 'ALL'
+          ? (item.status == 'LOST' || item.status == 'FOUND' || item.status == 'RESOLVED' || item.status == 'ACTIVE')
+          : item.status == _filter;
+
+      final matchesCategory = widget.selectedCategory == 'All' ||
+          item.category.toLowerCase() == widget.selectedCategory.toLowerCase();
+
+      return matchesStatus && matchesCategory;
     }).toList();
 
     return Column(
@@ -161,6 +202,7 @@ class _RecentItemsListState extends State<RecentItemsList> {
               );
             }
             return Padding(
+              key: ValueKey(item.id),
               padding: const EdgeInsets.only(bottom: 16),
               child: GestureDetector(
                 onTap: navigateToDetails,

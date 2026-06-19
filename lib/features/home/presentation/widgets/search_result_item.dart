@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/models/item_model.dart';
-import '../../../../shared/services/saved_items_service.dart';
+import '../../../../shared/widgets/heartbeat_bookmark_button.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 import '../item_details_screen.dart';
 
 class SearchResultItem extends StatelessWidget {
@@ -16,7 +17,6 @@ class SearchResultItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isSaved = SavedItemsService().isSaved(item.id);
     final badgeColor = item.isLost 
         ? context.colors.tagLostRed.withValues(alpha: 0.15) 
         : context.colors.tagFoundGreen.withValues(alpha: 0.15);
@@ -28,7 +28,7 @@ class SearchResultItem extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => ItemDetailsScreen(item: item),
+            builder: (_) => ItemDetailsScreen(item: item),
           ),
         );
       },
@@ -45,19 +45,38 @@ class SearchResultItem extends StatelessWidget {
             // Image
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                item.imageUrl,
-                width: 80,
-                height: 80,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return Container(
-                    width: 80,
-                    height: 80,
-                    color: context.colors.iconBackground,
-                  );
-                },
-              ),
+              child: item.imageUrl.isNotEmpty
+                  ? Image.network(
+                      item.imageUrl,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const ShimmerLoader(
+                          width: 80,
+                          height: 80,
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        width: 80,
+                        height: 80,
+                        color: context.colors.iconBackground,
+                        child: Icon(
+                          Icons.broken_image_rounded,
+                          color: context.colors.textLight.withValues(alpha: 0.5),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      width: 80,
+                      height: 80,
+                      color: context.colors.iconBackground,
+                      child: Icon(
+                        Icons.image,
+                        color: context.colors.textLight.withValues(alpha: 0.5),
+                      ),
+                    ),
             ),
             const SizedBox(width: 16),
             // Details
@@ -126,26 +145,10 @@ class SearchResultItem extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            // Bookmark Icon
-            GestureDetector(
-              onTap: () {
-                SavedItemsService().toggleSave(item);
-                if (onBookmarkToggled != null) {
-                  onBookmarkToggled!();
-                }
-              },
-              child: Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: context.colors.background,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  isSaved ? Icons.bookmark : Icons.bookmark_border,
-                  color: isSaved ? context.colors.primaryTeal : context.colors.textLight,
-                  size: 20,
-                ),
-              ),
+            HeartbeatBookmarkButton(
+              item: item,
+              onToggled: onBookmarkToggled,
+              isCircleBg: true,
             ),
           ],
         ),

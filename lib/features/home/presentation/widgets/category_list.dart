@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
 import 'category_item.dart';
 
-class CategoryList extends StatefulWidget {
-  const CategoryList({super.key});
+class CategoryList extends StatelessWidget {
+  final String selectedCategory;
+  final ValueChanged<String> onCategoryChanged;
 
-  @override
-  State<CategoryList> createState() => _CategoryListState();
-}
-
-class _CategoryListState extends State<CategoryList> {
-  int _selectedIndex = 0;
+  CategoryList({
+    super.key,
+    required this.selectedCategory,
+    required this.onCategoryChanged,
+  });
 
   final List<Map<String, dynamic>> _categories = [
+    {'icon': Icons.grid_view, 'label': 'All'},
     {'icon': Icons.devices_other, 'label': 'Electronics'},
     {'icon': Icons.pets, 'label': 'Pets'},
     {'icon': Icons.key, 'label': 'Keys'},
@@ -30,15 +31,12 @@ class _CategoryListState extends State<CategoryList> {
         separatorBuilder: (context, index) => const SizedBox(width: 16),
         itemBuilder: (context, index) {
           final category = _categories[index];
+          final label = category['label'] as String;
           return CategoryItem(
             icon: category['icon'] as IconData,
-            label: category['label'] as String,
-            isSelected: _selectedIndex == index,
-            onTap: () {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
+            label: label,
+            isSelected: selectedCategory == label,
+            onTap: () => onCategoryChanged(label),
           );
         },
       ),

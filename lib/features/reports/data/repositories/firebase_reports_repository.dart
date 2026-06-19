@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../../../shared/models/item_model.dart';
 import '../../domain/repositories/reports_repository.dart';
+import '../../../../core/database/local_database.dart';
 
 class FirebaseReportsRepository implements ReportsRepository {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -18,16 +19,34 @@ class FirebaseReportsRepository implements ReportsRepository {
           .collection('reports')
           .orderBy('createdAt', descending: true)
           .get();
-      return _parseReportDocs(snapshot.docs);
+      final items = _parseReportDocs(snapshot.docs);
+      
+      // Cache items in local SQLite database in background
+      LocalDatabase.instance.cacheItems(items).catchError((err) {
+        debugPrint('FirebaseReportsRepository: Failed to save to local SQLite cache: $err');
+      });
+      
+      return items;
     } catch (e) {
-      debugPrint('FirebaseReportsRepository: Failed to fetch sorted items: $e');
-      // In case of indexing errors in fresh firebase projects, fallback to unordered query
+      debugPrint('FirebaseReportsRepository: Failed to fetch sorted items from Firestore: $e');
       try {
         final snapshot = await _firestore.collection('reports').get();
-        return _parseReportDocs(snapshot.docs);
+        final items = _parseReportDocs(snapshot.docs);
+        
+        LocalDatabase.instance.cacheItems(items).catchError((err) {
+          debugPrint('FirebaseReportsRepository: Failed to save to local SQLite cache (fallback): $err');
+        });
+        
+        return items;
       } catch (err) {
-        debugPrint('FirebaseReportsRepository: Failed fallback fetch: $err');
-        rethrow;
+        debugPrint('FirebaseReportsRepository: Failed Firestore fetch. Loading from local SQLite cache... Error: $err');
+        try {
+          final cachedItems = await LocalDatabase.instance.getCachedItems();
+          return cachedItems;
+        } catch (dbError) {
+          debugPrint('FirebaseReportsRepository: Failed to read local SQLite cache: $dbError');
+          rethrow;
+        }
       }
     }
   }

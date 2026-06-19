@@ -17,6 +17,8 @@ class Item {
   final double? latitude;
   final double? longitude;
 
+  final List<String> imageUrls;
+
   const Item({
     required this.id,
     required this.title,
@@ -33,6 +35,7 @@ class Item {
     this.reporterPhone,
     this.latitude,
     this.longitude,
+    this.imageUrls = const [],
   });
 
   static String _calculateTimeAgo(dynamic timestamp) {
@@ -69,14 +72,22 @@ class Item {
   }
 
   factory Item.fromJson(Map<String, dynamic> json, String docId) {
+    final rawImageUrls = json['imageUrls'];
+    final List<String> parsedImageUrls = rawImageUrls != null
+        ? List<String>.from(rawImageUrls)
+        : [json['imageUrl'] as String? ?? ''];
+
+    final calculatedTime = _calculateTimeAgo(json['createdAt'] ?? json['dateReported']);
+    final displayTime = calculatedTime == 'some time ago' ? (json['timeAgo'] ?? 'Just now') : calculatedTime;
+
     return Item(
       id: docId,
       title: json['title'] ?? json['itemName'] ?? '',
       location: json['location'] ?? '',
       description: json['description'] ?? '',
       isLost: json['isLost'] ?? true,
-      imageUrl: json['imageUrl'] ?? '',
-      timeAgo: json['timeAgo'] ?? _calculateTimeAgo(json['createdAt'] ?? json['dateReported']),
+      imageUrl: parsedImageUrls.isNotEmpty ? parsedImageUrls.first : (json['imageUrl'] ?? ''),
+      timeAgo: displayTime,
       category: json['category'] ?? 'Other',
       status: json['status'] ?? ((json['isLost'] ?? true) ? 'LOST' : 'FOUND'),
       createdBy: json['createdBy'],
@@ -85,6 +96,7 @@ class Item {
       reporterPhone: json['reporterPhone'],
       latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
       longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      imageUrls: parsedImageUrls,
     );
   }
 
@@ -106,6 +118,7 @@ class Item {
       'reporterPhone': reporterPhone,
       'latitude': latitude,
       'longitude': longitude,
+      'imageUrls': imageUrls,
     };
   }
 
@@ -125,6 +138,7 @@ class Item {
     String? reporterPhone,
     double? latitude,
     double? longitude,
+    List<String>? imageUrls,
   }) {
     return Item(
       id: id ?? this.id,
@@ -142,6 +156,7 @@ class Item {
       reporterPhone: reporterPhone ?? this.reporterPhone,
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
+      imageUrls: imageUrls ?? this.imageUrls,
     );
   }
 

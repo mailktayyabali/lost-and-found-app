@@ -3,8 +3,41 @@ import '../../../../core/theme/app_colors.dart';
 import '../../home/presentation/home_screen.dart';
 import 'my_posts_screen.dart';
 
-class ReportSuccessScreen extends StatelessWidget {
+class ReportSuccessScreen extends StatefulWidget {
   const ReportSuccessScreen({super.key});
+
+  @override
+  State<ReportSuccessScreen> createState() => _ReportSuccessScreenState();
+}
+
+class _ReportSuccessScreenState extends State<ReportSuccessScreen>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
+
+    _scaleAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _controller,
+        curve: Curves.elasticOut,
+      ),
+    );
+
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -19,32 +52,35 @@ class ReportSuccessScreen extends StatelessWidget {
             children: [
               const Spacer(),
               // Success Icon Animation/Graphic
-              Container(
-                width: 120,
-                height: 120,
-                decoration: BoxDecoration(
-                  color: context.colors.primaryTeal.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Center(
-                  child: Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: context.colors.primaryTeal,
-                      shape: BoxShape.circle,
-                      boxShadow: [
-                        BoxShadow(
-                          color: context.colors.primaryTeal.withValues(alpha: 0.3),
-                          blurRadius: 20,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
-                    ),
-                    child: const Icon(
-                      Icons.check_rounded,
-                      color: Colors.white,
-                      size: 50,
+              ScaleTransition(
+                scale: _scaleAnimation,
+                child: Container(
+                  width: 120,
+                  height: 120,
+                  decoration: BoxDecoration(
+                    color: context.colors.primaryTeal.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        color: context.colors.primaryTeal,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: context.colors.primaryTeal.withValues(alpha: 0.3),
+                            blurRadius: 20,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.check_rounded,
+                        color: Colors.white,
+                        size: 50,
+                      ),
                     ),
                   ),
                 ),

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_dimensions.dart';
 import '../../../../shared/models/item_model.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 
 class PostItemCard extends StatelessWidget {
   final Item item;
@@ -214,7 +215,21 @@ class PostItemCard extends StatelessWidget {
       ),
       child: item.imageUrl.isNotEmpty
           ? (item.imageUrl.startsWith('http')
-              ? Image.network(item.imageUrl, fit: BoxFit.cover)
+              ? Image.network(
+                  item.imageUrl,
+                  fit: BoxFit.cover,
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const ShimmerLoader(
+                      width: 100,
+                      height: 100,
+                    );
+                  },
+                  errorBuilder: (context, error, stackTrace) => Icon(
+                    Icons.broken_image_rounded,
+                    color: context.colors.textLight,
+                  ),
+                )
               : Image.file(File(item.imageUrl), fit: BoxFit.cover))
           : Icon(Icons.image, color: context.colors.textLight),
     );

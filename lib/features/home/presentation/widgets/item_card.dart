@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../shared/widgets/empty_state_widget.dart';
 
 enum ItemStatus { found, lost }
 
@@ -32,10 +33,30 @@ class ItemCard extends StatelessWidget {
     final String badgeText = isFound ? 'FOUND' : 'LOST';
     final String actionText = isFound ? 'Claim Item' : 'I Found This';
 
-    // To prevent actual external network calls failing without images, 
-    // we use a colored container as a placeholder if imageUrl is empty.
     Widget imageWidget = imageUrl.isNotEmpty
-        ? Image.network(imageUrl, height: 160, width: double.infinity, fit: BoxFit.cover)
+        ? Image.network(
+            imageUrl,
+            height: 160,
+            width: double.infinity,
+            fit: BoxFit.cover,
+            loadingBuilder: (context, child, loadingProgress) {
+              if (loadingProgress == null) return child;
+              return const ShimmerLoader(
+                width: double.infinity,
+                height: 160,
+                borderRadius: 0,
+              );
+            },
+            errorBuilder: (context, error, stackTrace) => Container(
+              height: 160,
+              width: double.infinity,
+              color: context.colors.iconBackground,
+              child: Icon(
+                Icons.broken_image_rounded,
+                color: context.colors.textLight.withValues(alpha: 0.5),
+              ),
+            ),
+          )
         : Container(height: 160, width: double.infinity, color: context.colors.iconBackground);
 
     return Container(

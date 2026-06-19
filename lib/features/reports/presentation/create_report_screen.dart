@@ -277,11 +277,21 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
     final reportId = isEditing ? widget.itemToEdit!.id : FirebaseFirestore.instance.collection('reports').doc().id;
 
     try {
-      String uploadedImageUrl = isEditing ? widget.itemToEdit!.imageUrl : 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200';
+      final List<String> uploadedImageUrls = isEditing ? List<String>.from(widget.itemToEdit!.imageUrls) : [];
       
       if (_selectedImages.isNotEmpty) {
-        uploadedImageUrl = await _uploadImageToCloudinary(_selectedImages.first.path);
+        uploadedImageUrls.clear();
+        for (var image in _selectedImages) {
+          final url = await _uploadImageToCloudinary(image.path);
+          uploadedImageUrls.add(url);
+        }
       }
+      
+      if (uploadedImageUrls.isEmpty) {
+        uploadedImageUrls.add(isEditing ? widget.itemToEdit!.imageUrl : 'https://images.unsplash.com/photo-1627123424574-724758594e93?auto=format&fit=crop&q=80&w=200');
+      }
+
+      final mainImageUrl = uploadedImageUrls.first;
 
       final newItem = Item(
         id: reportId,
@@ -289,7 +299,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         location: _locationController.text.trim().isEmpty ? 'Unknown Location' : _locationController.text.trim(),
         description: _descriptionController.text.trim(),
         isLost: _isLost,
-        imageUrl: uploadedImageUrl,
+        imageUrl: mainImageUrl,
         timeAgo: isEditing ? widget.itemToEdit!.timeAgo : 'Just now',
         category: _selectedCategory,
         status: _isLost ? 'LOST' : 'FOUND',
@@ -299,6 +309,7 @@ class _CreateReportScreenState extends State<CreateReportScreen> {
         reporterPhone: _phoneController.text.trim().isEmpty ? '' : _phoneController.text.trim(),
         latitude: _latitude,
         longitude: _longitude,
+        imageUrls: uploadedImageUrls,
       );
 
       if (isEditing) {

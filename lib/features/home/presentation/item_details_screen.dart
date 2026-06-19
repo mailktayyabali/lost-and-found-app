@@ -3,8 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:latlong2/latlong.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../shared/models/item_model.dart';
-import '../../../shared/services/saved_items_service.dart';
 import '../../../shared/services/geocoding_service.dart';
+import '../../../shared/widgets/heartbeat_bookmark_button.dart';
 import '../../../shared/widgets/mock_map_widget.dart';
 import 'widgets/home_bottom_nav_bar.dart';
 import 'widgets/info_card.dart';
@@ -147,21 +147,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
           ),
         ),
         actions: [
-          ListenableBuilder(
-            listenable: SavedItemsService(),
-            builder: (context, _) {
-              final isSaved = SavedItemsService().isSaved(_currentItem.id);
-              return IconButton(
-                icon: Icon(
-                  isSaved ? Icons.bookmark : Icons.bookmark_border,
-                  color: isSaved ? context.colors.primaryTeal : context.colors.textDark,
-                ),
-                onPressed: () {
-                  SavedItemsService().toggleSave(_currentItem);
-                },
-              );
-            },
-          ),
+          HeartbeatBookmarkButton(item: _currentItem),
           IconButton(
             icon: Icon(Icons.share, color: context.colors.textDark),
             onPressed: () {
@@ -186,7 +172,7 @@ class _ItemDetailsScreenState extends State<ItemDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  ItemImageGallery(imageUrl: _currentItem.imageUrl),
+                  ItemImageGallery(imageUrls: _currentItem.imageUrls),
                   Padding(
                     padding: const EdgeInsets.all(20.0),
                     child: Column(

@@ -8,8 +8,15 @@ import 'widgets/recent_items_list.dart';
 import 'widgets/home_bottom_nav_bar.dart';
 import 'widgets/home_drawer.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  String _selectedCategory = 'All';
 
   @override
   Widget build(BuildContext context) {
@@ -21,18 +28,25 @@ class HomeScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             const SearchField(),
-            SizedBox(height: 24),
+            const SizedBox(height: 24),
             SectionHeader(
               title: 'Categories',
               actionText: 'See All',
               onActionTap: () {},
             ),
-            SizedBox(height: 16),
-            const CategoryList(),
-            SizedBox(height: 24),
-            const RecentItemsList(),
+            const SizedBox(height: 16),
+            CategoryList(
+              selectedCategory: _selectedCategory,
+              onCategoryChanged: (category) {
+                setState(() {
+                  _selectedCategory = category;
+                });
+              },
+            ),
+            const SizedBox(height: 24),
+            RecentItemsList(selectedCategory: _selectedCategory),
           ],
         ),
       ),
